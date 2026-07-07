@@ -1,7 +1,14 @@
 import type { UserRole } from "./roles";
+import type { OrderEstado } from "@/lib/orders/state-machine";
 
-// Tipado manual espejo de supabase/migrations/0001_init_schema.sql.
-// Reemplazar por `supabase gen types typescript` una vez exista el proyecto real.
+export type GeoPoint = {
+  lat: number;
+  lng: number;
+  direccion: string;
+};
+
+// Tipado manual espejo de supabase/migrations/*.sql.
+// Reemplazar por `supabase gen types typescript` una vez haga falta.
 export type Database = {
   public: {
     Tables: {
@@ -51,7 +58,7 @@ export type Database = {
           user_id: string;
           company_id: string;
           disponibilidad: boolean;
-          ubicacion_actual: Record<string, unknown> | null;
+          ubicacion_actual: GeoPoint | null;
           vehiculo: Record<string, unknown> | null;
           created_at: string;
         };
@@ -60,7 +67,7 @@ export type Database = {
           user_id: string;
           company_id: string;
           disponibilidad?: boolean;
-          ubicacion_actual?: Record<string, unknown> | null;
+          ubicacion_actual?: GeoPoint | null;
           vehiculo?: Record<string, unknown> | null;
         };
         Update: Partial<Database["public"]["Tables"]["drivers"]["Insert"]>;
@@ -73,9 +80,9 @@ export type Database = {
           company_id: string | null;
           driver_id: string | null;
           tipo: "flete" | "mudanza" | "larga_distancia";
-          origen: Record<string, unknown> | null;
-          destino: Record<string, unknown> | null;
-          estado: string;
+          origen: GeoPoint | null;
+          destino: GeoPoint | null;
+          estado: OrderEstado;
           monto_total: number | null;
           created_at: string;
         };
@@ -85,12 +92,31 @@ export type Database = {
           company_id?: string | null;
           driver_id?: string | null;
           tipo: "flete" | "mudanza" | "larga_distancia";
-          origen?: Record<string, unknown> | null;
-          destino?: Record<string, unknown> | null;
-          estado?: string;
+          origen?: GeoPoint | null;
+          destino?: GeoPoint | null;
+          estado?: OrderEstado;
           monto_total?: number | null;
         };
         Update: Partial<Database["public"]["Tables"]["orders"]["Insert"]>;
+        Relationships: [];
+      };
+      push_subscriptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["push_subscriptions"]["Insert"]>;
         Relationships: [];
       };
     };
