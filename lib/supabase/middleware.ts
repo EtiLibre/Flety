@@ -1,0 +1,54 @@
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
+
+const PROTECTED_PREFIXES = [
+  "/cliente",
+  "/empresa",
+  "/chofer",
+  "/admin",
+  "/contabilidad",
+];
+
+// Refresca la sesión en cada request y redirige a /login si la ruta está
+// protegida y no hay usuario autenticado. El chequeo de ROL (no solo sesión)
+// pasa en cada layout.tsx de sección — ver lib/auth/get-user-profile.ts.
+export async function updateSession(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({ request });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const isProtected = PROTECTED_PREFIXES.some((prefix) =>
+    request.nextUrl.pathname.startsWith(prefix)
+  );
+
+  if (isProtected && !user) {
+    const redirectUrl = new URL("/login", request.url);
+    redirectUrl.searchParams.set("redirectTo", request.nextUrl.pathname);
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  return supabaseResponse;
+}
