@@ -10,17 +10,50 @@ export type FotoLocal = {
   file?: File;
 };
 
-export type Franja = 'manana' | 'tarde' | 'noche';
+// Pedido programado: día (clave local AAAA-MM-DD) y hora en punto.
+export type Cuando = { modo: 'ahora' } | { modo: 'programado'; fecha: string; hora: number };
 
-export const FRANJAS: Record<Franja, { label: string; hora: number }> = {
-  manana: { label: '8 a 12 h', hora: 8 },
-  tarde: { label: '12 a 16 h', hora: 12 },
-  noche: { label: '16 a 20 h', hora: 16 },
-};
+// Horarios que se pueden reservar (de 7 a 20 h) y hasta cuántos días adelante.
+export const HORA_DESDE = 7;
+export const HORA_HASTA = 20;
+export const DIAS_ADELANTE = 60;
+// Un programado tiene que ser al menos 1 hora después de ahora.
+const ANTICIPACION_MS = 60 * 60 * 1000;
 
-export const DIAS = ['Hoy', 'Mañana', 'Pasado mañana'] as const;
+export function fechaKey(date: Date): string {
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${m}-${d}`;
+}
 
-export type Cuando = { modo: 'ahora' } | { modo: 'programado'; dia: 0 | 1 | 2; franja: Franja };
+export function fechaDeKey(key: string): Date {
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+export function horarioDisponible(fecha: string, hora: number, ahora = new Date()): boolean {
+  const date = fechaDeKey(fecha);
+  date.setHours(hora, 0, 0, 0);
+  const limite = new Date(ahora);
+  limite.setHours(0, 0, 0, 0);
+  limite.setDate(limite.getDate() + DIAS_ADELANTE);
+  return date.getTime() >= ahora.getTime() + ANTICIPACION_MS && date <= limite;
+}
+
+// Primer horario libre de ese día (o null si ya no queda ninguno).
+export function primeraHoraDisponible(fecha: string, ahora = new Date()): number | null {
+  for (let hora = HORA_DESDE; hora <= HORA_HASTA; hora++) {
+    if (horarioDisponible(fecha, hora, ahora)) return hora;
+  }
+  return null;
+}
+
+// Al tocar "Programar": mañana a las 9.
+export function cuandoProgramadoInicial(ahora = new Date()): Cuando {
+  const manana = new Date(ahora);
+  manana.setDate(manana.getDate() + 1);
+  return { modo: 'programado', fecha: fechaKey(manana), hora: 9 };
+}
 
 export type PedidoDraft = {
   tipo: TipoServicio;
@@ -83,12 +116,11 @@ export function usePedidoDraft() {
   return ctx;
 }
 
-// Fecha/hora de inicio de la franja elegida, o null si es "ahora".
+// Fecha y hora elegidas, o null si es "ahora".
 export function programadoPara(cuando: Cuando): Date | null {
   if (cuando.modo === 'ahora') return null;
-  const date = new Date();
-  date.setDate(date.getDate() + cuando.dia);
-  date.setHours(FRANJAS[cuando.franja].hora, 0, 0, 0);
+  const date = fechaDeKey(cuando.fecha);
+  date.setHours(cuando.hora, 0, 0, 0);
   return date;
 }
 
@@ -97,6 +129,9 @@ export function draftListoParaCotizar(draft: PedidoDraft): string | null {
   if (!draft.destino) return 'Elegí la dirección de entrega.';
   if (draft.origen.lat === draft.destino.lat && draft.origen.lng === draft.destino.lng) {
     return 'El retiro y la entrega no pueden ser el mismo lugar.';
+  }
+  if (draft.cuando.modo === 'programado' && !horarioDisponible(draft.cuando.fecha, draft.cuando.hora)) {
+    return 'Ese horario ya pasó o está muy cerca. Elegí otro día u hora.';
   }
   return null;
 }

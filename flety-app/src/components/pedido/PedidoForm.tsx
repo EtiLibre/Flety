@@ -3,12 +3,13 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Button } from '@/components/Button';
-import { DIAS, FRANJAS, draftListoParaCotizar, usePedidoDraft, type Franja } from '@/lib/pedido-draft';
+import { cuandoProgramadoInicial, draftListoParaCotizar, usePedidoDraft } from '@/lib/pedido-draft';
 import { TAMANO_LABEL, TIPO_LABEL, type Tamano, type TipoServicio } from '@/lib/types';
 import { colors, fonts, radius } from '@/theme';
 
 import { AddressField } from './AddressField';
 import { Choice, Segmented } from './Choice';
+import { FechaHoraPicker } from './FechaHoraPicker';
 import { PhotoPicker } from './PhotoPicker';
 
 const TIPOS: { tipo: TipoServicio; Icon: typeof Truck }[] = [
@@ -125,35 +126,13 @@ export function PedidoForm({ onContinue }: { onContinue: () => void }) {
             { value: 'programado', label: 'Programar' },
           ]}
           value={draft.cuando.modo}
-          onChange={(modo) =>
-            update({ cuando: modo === 'ahora' ? { modo: 'ahora' } : { modo: 'programado', dia: 1, franja: 'manana' } })
-          }
+          onChange={(modo) => update({ cuando: modo === 'ahora' ? { modo: 'ahora' } : cuandoProgramadoInicial() })}
         />
         {draft.cuando.modo === 'programado' ? (
-          <View style={styles.section}>
-            <View style={styles.row}>
-              {DIAS.map((dia, index) => (
-                <Choice
-                  key={dia}
-                  title={dia}
-                  selected={draft.cuando.modo === 'programado' && draft.cuando.dia === index}
-                  onPress={() =>
-                    draft.cuando.modo === 'programado' && update({ cuando: { ...draft.cuando, dia: index as 0 | 1 | 2 } })
-                  }
-                />
-              ))}
-            </View>
-            <View style={styles.row}>
-              {(Object.keys(FRANJAS) as Franja[]).map((franja) => (
-                <Choice
-                  key={franja}
-                  title={FRANJAS[franja].label}
-                  selected={draft.cuando.modo === 'programado' && draft.cuando.franja === franja}
-                  onPress={() => draft.cuando.modo === 'programado' && update({ cuando: { ...draft.cuando, franja } })}
-                />
-              ))}
-            </View>
-          </View>
+          <FechaHoraPicker
+            value={draft.cuando}
+            onChange={({ fecha, hora }) => update({ cuando: { modo: 'programado', fecha, hora } })}
+          />
         ) : null}
       </View>
 
