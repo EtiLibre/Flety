@@ -1,0 +1,9 @@
+/* Baja la saturación de las teselas de OpenStreetMap para acercarlas al mapa sobrio del diseño. */
+.flety-tiles {
+  filter: saturate(0.35) brightness(1.04);
+}
+
+.leaflet-container {
+  background: #e9ecef;
+  font-family: 'Figtree_500Medium', sans-serif;
+}
