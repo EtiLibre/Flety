@@ -1,19 +1,20 @@
 import * as Linking from 'expo-linking';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { AppMap } from '@/components/map/AppMap';
-import type { LatLng, MapMarker } from '@/components/map/types';
+import type { MapMarker } from '@/components/map/types';
 import { MobileMapLayout } from '@/components/MobileMapLayout';
 import { Timeline } from '@/components/pedido/Timeline';
 import { ClienteShell } from '@/components/web/ClienteShell';
 import { useIsWide } from '@/hooks/use-is-wide';
+import { usePedidoEnVivo } from '@/hooks/use-pedido-en-vivo';
 import { useRuta } from '@/hooks/use-ruta';
 import { confirmar } from '@/lib/confirm';
 import { describirCuando, plural } from '@/lib/format';
-import { fotosDelPedido, PEDIDO_COLUMNS, type Pedido } from '@/lib/orders';
+import { PEDIDO_COLUMNS, type Pedido } from '@/lib/orders';
 import { formatARS } from '@/lib/pricing';
 import { EN_VIAJE, tramoSeguimiento } from '@/lib/seguimiento';
 import { getAvailableActions, TERMINAL_ESTADOS, type OrderAction, type OrderEstado } from '@/lib/state-machine';
@@ -49,66 +50,7 @@ const SUBTITULOS: Partial<Record<OrderEstado, string>> = {
 export default function SeguimientoPedido() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const isWide = useIsWide();
-  const [pedido, setPedido] = useState<Pedido | null>(null);
-  const [notFound, setNotFound] = useState(false);
-  const [chofer, setChofer] = useState<LatLng | null>(null);
-  const [fotos, setFotos] = useState<string[]>([]);
-
-  // Pedido + actualizaciones en vivo (Supabase Realtime sobre orders).
-  useEffect(() => {
-    if (!id) return;
-    let cancelled = false;
-    supabase
-      .from('orders')
-      .select(PEDIDO_COLUMNS)
-      .eq('id', id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (cancelled) return;
-        if (data) setPedido(data as Pedido);
-        else setNotFound(true);
-      });
-    fotosDelPedido(id).then((urls) => !cancelled && setFotos(urls));
-
-    const channel = supabase
-      .channel(`pedido-${id}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${id}` }, (payload) => {
-        setPedido((prev) => (prev ? { ...prev, ...(payload.new as Partial<Pedido>) } : prev));
-      })
-      .subscribe();
-
-    return () => {
-      cancelled = true;
-      supabase.removeChannel(channel);
-    };
-  }, [id]);
-
-  // Ubicación del chofer en vivo (Realtime sobre drivers).
-  const driverId = pedido?.driver_id ?? null;
-  useEffect(() => {
-    if (!driverId) return;
-    let cancelled = false;
-    const read = (row: { ubicacion_actual?: LatLng | null }) => setChofer(row.ubicacion_actual ?? null);
-
-    supabase
-      .from('drivers')
-      .select('ubicacion_actual')
-      .eq('id', driverId)
-      .maybeSingle()
-      .then(({ data }) => !cancelled && data && read(data));
-
-    const channel = supabase
-      .channel(`chofer-${driverId}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'drivers', filter: `id=eq.${driverId}` }, (payload) =>
-        read(payload.new as { ubicacion_actual?: LatLng | null })
-      )
-      .subscribe();
-
-    return () => {
-      cancelled = true;
-      supabase.removeChannel(channel);
-    };
-  }, [driverId]);
+  const { pedido, setPedido, notFound, chofer, fotos } = usePedidoEnVivo(id);
 
   const tramo = pedido ? tramoSeguimiento(pedido.estado, pedido.origen, pedido.destino, chofer) : null;
   const { ruta } = useRuta(tramo?.puntos ?? [null, null]);

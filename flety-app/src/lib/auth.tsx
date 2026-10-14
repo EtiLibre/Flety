@@ -8,6 +8,8 @@ type AuthState = {
   session: Session | null;
   role: UserRole | null;
   nombre: string | null;
+  // Empresa a la que pertenece (rol empresa/chofer), si tiene.
+  companyId: string | null;
   // true solo mientras se lee la sesión guardada al abrir la app.
   initializing: boolean;
   // true si hay sesión pero todavía no llegó el rol desde public.users.
@@ -18,6 +20,7 @@ const AuthContext = createContext<AuthState>({
   session: null,
   role: null,
   nombre: null,
+  companyId: null,
   initializing: true,
   loadingProfile: false,
 });
@@ -25,7 +28,12 @@ const AuthContext = createContext<AuthState>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [sessionLoaded, setSessionLoaded] = useState(false);
-  const [profile, setProfile] = useState<{ userId: string; role: UserRole; nombre: string | null } | null>(null);
+  const [profile, setProfile] = useState<{
+    userId: string;
+    role: UserRole;
+    nombre: string | null;
+    companyId: string | null;
+  } | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -47,13 +55,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     supabase
       .from('users')
-      .select('role, nombre')
+      .select('role, nombre, company_id')
       .eq('id', userId)
       .single()
       .then(({ data }) => {
         if (cancelled) return;
         // Sin fila todavía: se trata como cliente (es el rol por defecto del trigger).
-        setProfile({ userId, role: (data?.role as UserRole) ?? 'cliente', nombre: data?.nombre ?? null });
+        setProfile({
+          userId,
+          role: (data?.role as UserRole) ?? 'cliente',
+          nombre: data?.nombre ?? null,
+          companyId: data?.company_id ?? null,
+        });
       });
     return () => {
       cancelled = true;
@@ -68,9 +81,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         session,
         role: currentProfile?.role ?? null,
         nombre: currentProfile?.nombre ?? null,
+        companyId: currentProfile?.companyId ?? null,
         initializing: !sessionLoaded,
         loadingProfile: !!userId && !currentProfile,
       }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+// SOLO DESARROLLO: sesión simulada para las vistas previas (/preview-*), que
+// no tocan Supabase. La seguridad real no depende de esto (RLS).
+export function AuthPreview({ value, children }: { value: Partial<AuthState>; children: React.ReactNode }) {
+  return (
+    <AuthContext.Provider
+      value={{ session: null, role: null, nombre: null, companyId: null, initializing: false, loadingProfile: false, ...value }}>
       {children}
     </AuthContext.Provider>
   );

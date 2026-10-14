@@ -6,6 +6,7 @@ const fechaHora = new Intl.DateTimeFormat('es-AR', {
   month: 'short',
   hour: '2-digit',
   minute: '2-digit',
+  hour12: false,
 });
 
 const diaCorto = new Intl.DateTimeFormat('es-AR', { weekday: 'short', day: 'numeric', month: 'short' });
