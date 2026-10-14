@@ -5,10 +5,12 @@ import { LngLatBounds, Map as MapLibreMap, Marker, type GeoJSONSource, type Styl
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 
+import { metrosEntre, rumbo } from '@/lib/geo';
 import { colors } from '@/theme';
 
 import { applyFletyPalette, OPENFREEMAP_STYLE_URL } from './flety-style';
-import type { AppMapProps, MapMarker } from './types';
+import { TRUCK_3D_SVG } from './truck-sprite';
+import type { AppMapProps, LatLng, MapMarker } from './types';
 
 // En web: MapLibre + teselas vectoriales de OpenFreeMap (gratis, sin API key),
 // recoloreadas con la paleta de Flety. En iOS/Android se usa AppMap.tsx.
@@ -21,14 +23,11 @@ function loadStyle() {
   return stylePromise;
 }
 
-const TRUCK_SVG =
-  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFC233" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6h12v10H2z"/><path d="M14 10h4l4 4v2h-8z"/><circle cx="6.5" cy="17.5" r="2"/><circle cx="17.5" cy="17.5" r="2"/></svg>';
-
 const MARKER_HTML: Record<MapMarker['kind'], string> = {
   user: `<div class="flety-pin flety-pin-user"><div></div></div>`,
   origen: `<div class="flety-pin flety-pin-origen"></div>`,
   destino: `<div class="flety-pin flety-pin-destino"></div>`,
-  chofer: `<div class="flety-pin flety-pin-chofer"><div>${TRUCK_SVG}</div></div>`,
+  chofer: `<div class="flety-truck"><div class="flety-truck-pulse"></div>${TRUCK_3D_SVG}</div>`,
 };
 
 function createMarkerElement(marker: MapMarker) {
@@ -38,12 +37,35 @@ function createMarkerElement(marker: MapMarker) {
   return el;
 }
 
+type MarkerEntry = {
+  marker: Marker;
+  kind: MapMarker['kind'];
+  position: LatLng;
+  heading: number;
+  frame: number | null;
+};
+
 const ROUTE_SOURCE = 'flety-ruta';
+const MOVE_MS = 1000;
+
+// Desliza el marcador hasta la nueva posición (en vez de "saltar").
+function animateTo(entry: MarkerEntry, target: LatLng) {
+  if (entry.frame !== null) cancelAnimationFrame(entry.frame);
+  const from = entry.marker.getLngLat();
+  const start = performance.now();
+  const step = (now: number) => {
+    const t = Math.min(1, (now - start) / MOVE_MS);
+    const ease = t * (2 - t);
+    entry.marker.setLngLat([from.lng + (target.lng - from.lng) * ease, from.lat + (target.lat - from.lat) * ease]);
+    entry.frame = t < 1 ? requestAnimationFrame(step) : null;
+  };
+  entry.frame = requestAnimationFrame(step);
+}
 
 export function AppMap({ center, markers = [], line, fitToMarkers, padding, style }: AppMapProps) {
   const containerRef = useRef<View>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
-  const markerRefs = useRef(new Map<string, { marker: Marker; kind: MapMarker['kind'] }>());
+  const markerRefs = useRef(new Map<string, MarkerEntry>());
   const [ready, setReady] = useState(false);
   const initialCenter = useRef(center);
 
@@ -62,7 +84,6 @@ export function AppMap({ center, markers = [], line, fitToMarkers, padding, styl
         zoom: 14,
         attributionControl: { compact: true },
         dragRotate: false,
-        pitchWithRotate: false,
       });
       map.touchZoomRotate.disableRotation();
       map.on('load', () => {
@@ -86,38 +107,61 @@ export function AppMap({ center, markers = [], line, fitToMarkers, padding, styl
       mapRef.current = map;
     });
 
-    const markersById = markerRefs.current;
+    const entries = markerRefs.current;
     return () => {
       cancelled = true;
-      markersById.forEach(({ marker }) => marker.remove());
-      markersById.clear();
+      entries.forEach((entry) => {
+        if (entry.frame !== null) cancelAnimationFrame(entry.frame);
+        entry.marker.remove();
+      });
+      entries.clear();
       mapRef.current?.remove();
       mapRef.current = null;
     };
   }, []);
 
-  // Marcadores: crear, mover o sacar según la lista recibida.
-  const markersKey = markers.map((m) => `${m.id}:${m.kind}:${m.position.lat},${m.position.lng}`).join('|');
+  // Marcadores: crear, mover (el chofer se desliza y gira hacia donde va) o sacar.
+  const markersKey = markers.map((m) => `${m.id}:${m.kind}:${m.position.lat},${m.position.lng}:${m.heading ?? ''}`).join('|');
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
     const current = markerRefs.current;
     const ids = new Set(markers.map((m) => m.id));
 
-    current.forEach(({ marker }, id) => {
+    current.forEach((entry, id) => {
       if (!ids.has(id)) {
-        marker.remove();
+        if (entry.frame !== null) cancelAnimationFrame(entry.frame);
+        entry.marker.remove();
         current.delete(id);
       }
     });
+
     for (const m of markers) {
       const existing = current.get(m.id);
       if (existing && existing.kind === m.kind) {
-        existing.marker.setLngLat([m.position.lng, m.position.lat]);
+        if (m.kind === 'chofer') {
+          const moved = metrosEntre(existing.position, m.position) > 3;
+          const heading = m.heading ?? (moved ? rumbo(existing.position, m.position) : existing.heading);
+          existing.heading = heading;
+          existing.marker.setRotation(heading);
+          if (moved) animateTo(existing, m.position);
+        } else {
+          existing.marker.setLngLat([m.position.lng, m.position.lat]);
+        }
+        existing.position = m.position;
       } else {
         existing?.marker.remove();
-        const marker = new Marker({ element: createMarkerElement(m) }).setLngLat([m.position.lng, m.position.lat]).addTo(map);
-        current.set(m.id, { marker, kind: m.kind });
+        const isTruck = m.kind === 'chofer';
+        const marker = new Marker({
+          element: createMarkerElement(m),
+          // El camión "apoya" sobre el mapa: gira con el rumbo y se inclina con la perspectiva.
+          rotationAlignment: isTruck ? 'map' : 'viewport',
+          pitchAlignment: isTruck ? 'map' : 'viewport',
+          rotation: isTruck ? (m.heading ?? 0) : 0,
+        })
+          .setLngLat([m.position.lng, m.position.lat])
+          .addTo(map);
+        current.set(m.id, { marker, kind: m.kind, position: m.position, heading: m.heading ?? 0, frame: null });
       }
     }
     // markersKey resume la lista para no recrear marcadores en cada render.
@@ -141,20 +185,28 @@ export function AppMap({ center, markers = [], line, fitToMarkers, padding, styl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lineKey, ready]);
 
-  // Encuadre.
+  // Encuadre: se recalcula cuando cambian los puntos fijos (retiro/entrega) o
+  // aparece/desaparece el chofer, no con cada paso del camión.
+  const fitKey = markers
+    .map((m) => (m.kind === 'chofer' ? 'chofer' : `${m.id}:${m.position.lat},${m.position.lng}`))
+    .join('|');
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
     if (fitToMarkers && markers.length > 1) {
       const bounds = new LngLatBounds();
       markers.forEach((m) => bounds.extend([m.position.lng, m.position.lat]));
-      map.fitBounds(bounds, { padding: padding ?? { top: 80, right: 80, bottom: 80, left: 80 }, maxZoom: 15.5, duration: 600 });
+      map.fitBounds(bounds, {
+        padding: padding ?? { top: 80, right: 80, bottom: 80, left: 80 },
+        maxZoom: 15.5,
+        duration: 700,
+      });
     } else {
-      map.easeTo({ center: [center.lng, center.lat], duration: 600 });
+      map.easeTo({ center: [center.lng, center.lat], duration: 700 });
     }
-    // markersKey resume los marcadores.
+    // fitKey resume los puntos que importan para el encuadre.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [center.lat, center.lng, markersKey, fitToMarkers, ready]);
+  }, [center.lat, center.lng, fitKey, fitToMarkers, ready]);
 
   // El contenedor interno es el que toma MapLibre (le pone position: relative),
   // así no pisa el posicionamiento que recibe el componente por `style`.

@@ -58,6 +58,35 @@
   box-shadow: 0 4px 10px rgba(18, 22, 28, 0.3);
 }
 
+/* Camioncito 3D del chofer: sprite con volumen + pulso suave debajo. */
+.flety-truck {
+  position: relative;
+  width: 40px;
+  height: 72px;
+}
+.flety-truck svg {
+  position: relative;
+  display: block;
+}
+.flety-truck-pulse {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 88px;
+  height: 88px;
+  margin: -44px 0 0 -44px;
+  border-radius: 44px;
+  background: rgba(255, 194, 51, 0.28);
+  animation: flety-pulse 2s ease-out infinite;
+}
+@keyframes flety-pulse {
+  0% { transform: scale(0.45); opacity: 0.9; }
+  100% { transform: scale(1.25); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flety-truck-pulse { animation: none; opacity: 0.4; }
+}
+
 .maplibregl-ctrl-attrib {
   font-family: 'Figtree_500Medium', sans-serif;
   font-size: 11px;

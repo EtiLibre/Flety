@@ -33,7 +33,9 @@ export const PEDIDO_COLUMNS =
 export async function crearPedido(
   draft: PedidoDraft,
   vehiculo: Vehiculo,
-  clienteId: string
+  clienteId: string,
+  // Distancia por calles (ruteo). Si no está disponible, se estima en línea recta.
+  distanciaKm?: number
 ): Promise<{ id: string; fotosFallidas: number }> {
   if (!draft.origen || !draft.destino) throw new Error('Falta origen o destino');
 
@@ -49,7 +51,7 @@ export async function crearPedido(
       programado_para: programadoPara(draft.cuando)?.toISOString() ?? null,
       nota: draft.nota.trim() || null,
       vehiculo,
-      distancia_km: distanciaEstimadaKm(draft.origen, draft.destino),
+      distancia_km: distanciaKm ?? distanciaEstimadaKm(draft.origen, draft.destino),
     })
     .select('id')
     .single();

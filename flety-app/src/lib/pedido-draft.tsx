@@ -57,8 +57,14 @@ type DraftContext = {
 const Ctx = createContext<DraftContext | null>(null);
 
 // Borrador del pedido compartido entre "nuevo pedido" y "elegir vehículo".
-export function PedidoDraftProvider({ children }: { children: React.ReactNode }) {
-  const [draft, setDraft] = useState<PedidoDraft>(INITIAL);
+export function PedidoDraftProvider({
+  children,
+  initial,
+}: {
+  children: React.ReactNode;
+  initial?: Partial<PedidoDraft>;
+}) {
+  const [draft, setDraft] = useState<PedidoDraft>(() => ({ ...INITIAL, ...initial }));
   return (
     <Ctx.Provider
       value={{

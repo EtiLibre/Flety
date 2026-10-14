@@ -10,10 +10,12 @@ import { MobileMapLayout } from '@/components/MobileMapLayout';
 import { Timeline } from '@/components/pedido/Timeline';
 import { ClienteShell } from '@/components/web/ClienteShell';
 import { useIsWide } from '@/hooks/use-is-wide';
+import { useRuta } from '@/hooks/use-ruta';
 import { confirmar } from '@/lib/confirm';
 import { describirCuando, plural } from '@/lib/format';
 import { fotosDelPedido, PEDIDO_COLUMNS, type Pedido } from '@/lib/orders';
 import { formatARS } from '@/lib/pricing';
+import { EN_VIAJE, tramoSeguimiento } from '@/lib/seguimiento';
 import { getAvailableActions, TERMINAL_ESTADOS, type OrderAction, type OrderEstado } from '@/lib/state-machine';
 import { supabase } from '@/lib/supabase';
 import { TAMANO_LABEL, TIPO_LABEL, VEHICULO_LABEL } from '@/lib/types';
@@ -108,6 +110,9 @@ export default function SeguimientoPedido() {
     };
   }, [driverId]);
 
+  const tramo = pedido ? tramoSeguimiento(pedido.estado, pedido.origen, pedido.destino, chofer) : null;
+  const { ruta } = useRuta(tramo?.puntos ?? [null, null]);
+
   if (notFound) {
     return (
       <View style={styles.center}>
@@ -128,19 +133,22 @@ export default function SeguimientoPedido() {
   const markers: MapMarker[] = [];
   if (pedido.origen) markers.push({ id: 'origen', kind: 'origen', position: pedido.origen, label: 'Retiro' });
   if (pedido.destino) markers.push({ id: 'destino', kind: 'destino', position: pedido.destino, label: 'Entrega' });
-  if (chofer) markers.push({ id: 'chofer', kind: 'chofer', position: chofer, label: 'Chofer' });
+  // El camión aparece solo mientras el viaje está en curso.
+  const choferEnViaje = chofer && EN_VIAJE.includes(pedido.estado) ? chofer : null;
+  if (choferEnViaje) markers.push({ id: 'chofer', kind: 'chofer', position: choferEnViaje, label: 'Chofer' });
 
   const map = (
     <AppMap
-      center={chofer ?? pedido.origen ?? { lat: -32.8895, lng: -68.8458 }}
+      center={choferEnViaje ?? pedido.origen ?? { lat: -32.8895, lng: -68.8458 }}
       markers={markers}
-      line={pedido.origen && pedido.destino ? [pedido.origen, pedido.destino] : undefined}
+      line={ruta?.coords}
       fitToMarkers
       style={StyleSheet.absoluteFill}
     />
   );
 
-  const contenido = <Contenido pedido={pedido} fotos={fotos} onChange={setPedido} />;
+  const eta = tramo?.conChofer && tramo.etaLabel && ruta ? `${tramo.etaLabel} ${ruta.duracionMin} min` : null;
+  const contenido = <Contenido pedido={pedido} fotos={fotos} eta={eta} onChange={setPedido} />;
 
   if (isWide) return <ClienteShell active="pedidos" panel={contenido} map={map} />;
   return (
@@ -150,7 +158,17 @@ export default function SeguimientoPedido() {
   );
 }
 
-function Contenido({ pedido, fotos, onChange }: { pedido: Pedido; fotos: string[]; onChange: (p: Pedido) => void }) {
+function Contenido({
+  pedido,
+  fotos,
+  eta,
+  onChange,
+}: {
+  pedido: Pedido;
+  fotos: string[];
+  eta: string | null;
+  onChange: (p: Pedido) => void;
+}) {
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const activo = !TERMINAL_ESTADOS.includes(pedido.estado);
@@ -188,6 +206,7 @@ function Contenido({ pedido, fotos, onChange }: { pedido: Pedido; fotos: string[
         <Text style={styles.title} accessibilityRole="header">
           {TITULOS[pedido.estado]}
         </Text>
+        {eta ? <Text style={styles.eta}>{eta}</Text> : null}
         {SUBTITULOS[pedido.estado] ? <Text style={styles.subtitle}>{SUBTITULOS[pedido.estado]}</Text> : null}
       </View>
 
@@ -270,6 +289,17 @@ const styles = StyleSheet.create({
   liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#22A06B' },
   liveText: { fontFamily: fonts.bold, fontSize: 12, color: colors.success },
   title: { fontFamily: fonts.display, fontSize: 28, letterSpacing: -0.5, color: colors.ink },
+  eta: {
+    alignSelf: 'flex-start',
+    fontFamily: fonts.display,
+    fontSize: 16,
+    color: colors.ink,
+    backgroundColor: colors.accent,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
   subtitle: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 21, color: colors.muted },
   details: { gap: 10, paddingTop: 4 },
   detail: { flexDirection: 'row', justifyContent: 'space-between', gap: 16 },

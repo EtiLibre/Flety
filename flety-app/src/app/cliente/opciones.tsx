@@ -10,6 +10,7 @@ import { RouteSummary } from '@/components/pedido/RouteSummary';
 import { VehicleOption } from '@/components/pedido/VehicleOption';
 import { ClienteShell } from '@/components/web/ClienteShell';
 import { useIsWide } from '@/hooks/use-is-wide';
+import { useRuta } from '@/hooks/use-ruta';
 import { useAuth } from '@/lib/auth';
 import { avisar } from '@/lib/confirm';
 import { distanciaEstimadaKm } from '@/lib/distance';
@@ -17,6 +18,7 @@ import { describirCuandoDraft, plural } from '@/lib/format';
 import { crearPedido } from '@/lib/orders';
 import { draftListoParaCotizar, usePedidoDraft } from '@/lib/pedido-draft';
 import { fetchTarifas, formatARS, precioEstimado, type Tarifa } from '@/lib/pricing';
+import type { Ruta } from '@/lib/routing';
 import { TAMANO_LABEL, TIPO_LABEL, VEHICULO_LABEL, type Tamano, type Vehiculo } from '@/lib/types';
 import { colors, fonts } from '@/theme';
 
@@ -26,6 +28,7 @@ const SUGERIDO: Record<Tamano, Vehiculo> = { chico: 'utilitario', mediano: 'cami
 export default function Opciones() {
   const isWide = useIsWide();
   const { draft } = usePedidoDraft();
+  const { ruta, cargando } = useRuta([draft.origen, draft.destino]);
 
   // Al recargar la página en web el borrador se pierde: volvemos al formulario.
   if (draftListoParaCotizar(draft)) {
@@ -41,11 +44,12 @@ export default function Opciones() {
         { id: 'origen', kind: 'origen', position: origen, label: 'Retiro' },
         { id: 'destino', kind: 'destino', position: destino, label: 'Entrega' },
       ]}
-      line={[origen, destino]}
+      line={ruta?.coords}
       fitToMarkers
       style={StyleSheet.absoluteFill}
     />
   );
+  const contenido = <OpcionesContenido ruta={ruta} cargandoRuta={cargando} />;
 
   if (isWide) {
     return (
@@ -57,7 +61,7 @@ export default function Opciones() {
               <ChevronLeft size={18} color={colors.ink} strokeWidth={2.2} />
               <Text style={styles.backText}>Editar pedido</Text>
             </Pressable>
-            <OpcionesContenido />
+            {contenido}
           </>
         }
         map={map}
@@ -65,10 +69,10 @@ export default function Opciones() {
     );
   }
 
-  return <MobileMapLayout map={map}>{<OpcionesContenido />}</MobileMapLayout>;
+  return <MobileMapLayout map={map}>{contenido}</MobileMapLayout>;
 }
 
-function OpcionesContenido() {
+function OpcionesContenido({ ruta, cargandoRuta }: { ruta: Ruta | null; cargandoRuta: boolean }) {
   const { session } = useAuth();
   const { draft, update, reset } = usePedidoDraft();
   const [tarifas, setTarifas] = useState<Tarifa[] | null>(null);
@@ -77,7 +81,8 @@ function OpcionesContenido() {
   const [error, setError] = useState<string | null>(null);
 
   const vehiculo = draft.vehiculo ?? SUGERIDO[draft.tamano];
-  const km = distanciaEstimadaKm(draft.origen!, draft.destino!);
+  // Distancia real por calles; si el ruteo falla, una estimación en línea recta.
+  const km = ruta?.distanciaKm ?? distanciaEstimadaKm(draft.origen!, draft.destino!);
 
   useEffect(() => {
     fetchTarifas()
@@ -95,7 +100,7 @@ function OpcionesContenido() {
     setEnviando(true);
     setError(null);
     try {
-      const { id, fotosFallidas } = await crearPedido({ ...draft, vehiculo }, vehiculo, session.user.id);
+      const { id, fotosFallidas } = await crearPedido({ ...draft, vehiculo }, vehiculo, session.user.id, ruta?.distanciaKm);
       reset();
       if (fotosFallidas > 0) {
         avisar(`Tu pedido se creó, pero ${plural(fotosFallidas, 'foto no se pudo', 'fotos no se pudieron')} subir.`);
@@ -116,7 +121,7 @@ function OpcionesContenido() {
           `${TIPO_LABEL[draft.tipo]} · ${TAMANO_LABEL[draft.tamano].titulo}`,
           plural(draft.ayudantes, 'ayudante', 'ayudantes'),
           describirCuandoDraft(draft.cuando),
-          `~${km} km`,
+          ruta ? `${ruta.distanciaKm} km · ${ruta.duracionMin} min de viaje` : `~${km} km`,
           ...(draft.fotos.length ? [plural(draft.fotos.length, 'foto', 'fotos')] : []),
         ]}
       />
@@ -146,7 +151,13 @@ function OpcionesContenido() {
         </View>
       ) : null}
 
-      <Button title={`Confirmar ${VEHICULO_LABEL[vehiculo].titulo.toLowerCase()}`} variant="dark" onPress={confirmar} loading={enviando} />
+      <Button
+        title={`Confirmar ${VEHICULO_LABEL[vehiculo].titulo.toLowerCase()}`}
+        variant="dark"
+        onPress={confirmar}
+        loading={enviando}
+        disabled={cargandoRuta}
+      />
     </>
   );
 }

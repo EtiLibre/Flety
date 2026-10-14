@@ -1,18 +1,36 @@
-import { Truck } from 'lucide-react-native';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
+import { metrosEntre, rumbo } from '@/lib/geo';
 import { colors } from '@/theme';
 
 import { GOOGLE_MAP_STYLE } from './flety-style';
-import type { AppMapProps, MapMarker } from './types';
+import { TruckSprite } from './TruckSprite';
+import type { AppMapProps, LatLng, MapMarker } from './types';
 
 const DELTA = 0.012;
 
 export function AppMap({ center, markers = [], line, fitToMarkers, padding, style }: AppMapProps) {
   const mapRef = useRef<MapView>(null);
-  const markersKey = markers.map((m) => `${m.id}:${m.position.lat},${m.position.lng}`).join('|');
+
+  // Última posición/rumbo del chofer, para girar el camión hacia donde va
+  // (patrón de React "guardar info del render anterior").
+  const chofer = markers.find((m) => m.kind === 'chofer');
+  const choferKey = chofer ? `${chofer.position.lat},${chofer.position.lng}` : '';
+  const [truck, setTruck] = useState<{ key: string; position: LatLng | null; heading: number }>({
+    key: '',
+    position: null,
+    heading: 0,
+  });
+  if (chofer && truck.key !== choferKey) {
+    const moved = truck.position ? metrosEntre(truck.position, chofer.position) > 3 : false;
+    const heading = chofer.heading ?? (moved && truck.position ? rumbo(truck.position, chofer.position) : truck.heading);
+    setTruck({ key: choferKey, position: chofer.position, heading });
+  }
+  const truckHeading = chofer?.heading ?? truck.heading;
+
+  const fitKey = markers.map((m) => (m.kind === 'chofer' ? 'chofer' : `${m.id}:${m.position.lat},${m.position.lng}`)).join('|');
 
   useEffect(() => {
     const map = mapRef.current;
@@ -28,9 +46,9 @@ export function AppMap({ center, markers = [], line, fitToMarkers, padding, styl
         400
       );
     }
-    // markersKey resume los marcadores para no reencuadrar en cada render.
+    // fitKey resume los puntos que importan para el encuadre.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [center.lat, center.lng, markersKey, fitToMarkers]);
+  }, [center.lat, center.lng, fitKey, fitToMarkers]);
 
   return (
     <MapView
@@ -54,6 +72,9 @@ export function AppMap({ center, markers = [], line, fitToMarkers, padding, styl
           key={marker.id}
           coordinate={{ latitude: marker.position.lat, longitude: marker.position.lng }}
           anchor={{ x: 0.5, y: 0.5 }}
+          // El camión "apoya" sobre el mapa y gira con el rumbo del chofer.
+          flat={marker.kind === 'chofer'}
+          rotation={marker.kind === 'chofer' ? truckHeading : 0}
           tracksViewChanges={false}
           accessibilityLabel={marker.label}>
           <MarkerView kind={marker.kind} />
@@ -76,13 +97,7 @@ function MarkerView({ kind }: { kind: MapMarker['kind'] }) {
     case 'destino':
       return <View style={styles.destino} />;
     case 'chofer':
-      return (
-        <View style={styles.choferHalo}>
-          <View style={styles.chofer}>
-            <Truck size={18} color={colors.accent} strokeWidth={2.2} />
-          </View>
-        </View>
-      );
+      return <TruckSprite />;
   }
 }
 
@@ -98,13 +113,4 @@ const styles = StyleSheet.create({
   dot: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.ink, borderWidth: 4, borderColor: colors.white },
   origen: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.white, borderWidth: 5, borderColor: colors.ink },
   destino: { width: 22, height: 22, borderRadius: 6, backgroundColor: colors.accent, borderWidth: 4, borderColor: colors.ink },
-  choferHalo: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(255, 194, 51, 0.3)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  chofer: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
 });

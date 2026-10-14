@@ -15,6 +15,7 @@ import { ClienteShell } from '@/components/web/ClienteShell';
 import { useCurrentLocation } from '@/hooks/use-current-location';
 import { useIsWide } from '@/hooks/use-is-wide';
 import { useMisPedidos } from '@/hooks/use-mis-pedidos';
+import { useRuta } from '@/hooks/use-ruta';
 import { useAuth } from '@/lib/auth';
 import { usePedidoDraft } from '@/lib/pedido-draft';
 import { TERMINAL_ESTADOS } from '@/lib/state-machine';
@@ -40,8 +41,8 @@ function useMapMarkers() {
   if (location.status === 'located') markers.push({ id: 'yo', kind: 'user', position: location.position, label: 'Tu ubicación' });
   if (draft.origen) markers.push({ id: 'origen', kind: 'origen', position: draft.origen, label: 'Retiro' });
   if (draft.destino) markers.push({ id: 'destino', kind: 'destino', position: draft.destino, label: 'Entrega' });
-  const line = draft.origen && draft.destino ? [draft.origen, draft.destino] : undefined;
-  return { location, markers, line };
+  const { ruta } = useRuta([draft.origen, draft.destino]);
+  return { location, markers, line: ruta?.coords };
 }
 
 function InicioDesktop() {
@@ -69,7 +70,7 @@ function InicioDesktop() {
           center={location.position}
           markers={markers}
           line={line}
-          fitToMarkers={!!line}
+          fitToMarkers={markers.some((m) => m.kind !== 'user')}
           style={StyleSheet.absoluteFill}
         />
       }

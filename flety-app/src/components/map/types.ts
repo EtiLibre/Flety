@@ -4,7 +4,14 @@ export type LatLng = { lat: number; lng: number };
 
 export type MapMarkerKind = 'user' | 'origen' | 'destino' | 'chofer';
 
-export type MapMarker = { id: string; position: LatLng; kind: MapMarkerKind; label?: string };
+export type MapMarker = {
+  id: string;
+  position: LatLng;
+  kind: MapMarkerKind;
+  label?: string;
+  // Rumbo en grados (solo chofer). Si falta, se calcula a partir del movimiento.
+  heading?: number;
+};
 
 export type AppMapProps = {
   center: LatLng;
