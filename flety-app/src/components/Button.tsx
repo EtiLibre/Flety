@@ -2,13 +2,14 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, type StyleProp, type Vi
 
 import { colors, fonts, radius } from '@/theme';
 
-type Variant = 'accent' | 'dark' | 'light' | 'outline';
+type Variant = 'accent' | 'dark' | 'light' | 'outline' | 'danger';
 
 const VARIANTS: Record<Variant, { bg: string; fg: string; border?: string }> = {
   accent: { bg: colors.accent, fg: colors.ink },
   dark: { bg: colors.ink, fg: colors.white },
   light: { bg: colors.white, fg: colors.ink },
   outline: { bg: 'transparent', fg: colors.ink, border: colors.line },
+  danger: { bg: colors.dangerBg, fg: colors.danger },
 };
 
 export function Button({

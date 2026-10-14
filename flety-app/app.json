@@ -41,6 +41,13 @@
         {
           "locationWhenInUsePermission": "Flety usa tu ubicación para mostrarte en el mapa y coordinar el retiro de tu carga."
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Flety usa tus fotos para que la empresa y el chofer vean qué vas a mover.",
+          "cameraPermission": "Flety usa la cámara para sacar fotos de tu carga."
+        }
       ]
     ],
     "experiments": {

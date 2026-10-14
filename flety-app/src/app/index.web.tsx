@@ -1,0 +1,363 @@
+import { Link, router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { Check, MapPin, Package, Route, ShieldCheck, Star, Tag, Truck } from 'lucide-react-native';
+import { useRef } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
+
+import { Button } from '@/components/Button';
+import { PublicOnly } from '@/components/Guards';
+import { HeroPreview } from '@/components/landing/HeroPreview';
+import { colors, fonts, radius } from '@/theme';
+
+// Landing pública (solo web). En iOS/Android, "/" es la bienvenida (index.tsx).
+export default function Landing() {
+  return (
+    <PublicOnly dark>
+      <LandingPage />
+    </PublicOnly>
+  );
+}
+
+type SectionKey = 'como' | 'servicios' | 'empresas';
+
+const PASOS = [
+  { titulo: 'Contanos qué movés', texto: 'Dirección de retiro y entrega, qué vas a llevar y cuándo. Si querés, sumá fotos de la carga.' },
+  { titulo: 'Elegí el vehículo', texto: 'Utilitario, camioneta o camión. Ves el precio estimado antes de confirmar.' },
+  { titulo: 'Seguilo en vivo', texto: 'Mirá al chofer en el mapa desde que sale a buscar tu carga hasta que la entrega.' },
+];
+
+const SERVICIOS = [
+  { titulo: 'Flete', texto: 'Para pocas cosas: un electrodoméstico, algunos muebles o una compra grande.', Icon: Truck, accent: true },
+  { titulo: 'Mudanza', texto: 'Tu casa o departamento, con ayudantes para cargar y descargar.', Icon: Package, accent: false },
+  { titulo: 'Larga distancia', texto: 'Traslados entre ciudades con empresas que hacen ese recorrido.', Icon: Route, accent: false },
+];
+
+const MOTIVOS = [
+  {
+    titulo: 'Solo empresas verificadas',
+    texto: 'Revisamos CUIT, documentación y seguro de carga antes de que una empresa pueda recibir pedidos.',
+    Icon: ShieldCheck,
+    bg: colors.successBg,
+    fg: colors.success,
+  },
+  { titulo: 'Precio antes de confirmar', texto: 'Ves un precio estimado según distancia y ayudantes antes de pedir.', Icon: Tag, bg: '#FFF3D6', fg: '#7A4F00' },
+  { titulo: 'Seguimiento en tiempo real', texto: 'La ubicación del chofer y el estado de tu pedido se actualizan al instante.', Icon: MapPin, bg: '#E8EEFF', fg: '#2F45B5' },
+  { titulo: 'Calificaciones mutuas', texto: 'Después de cada viaje, cliente y empresa se califican. La reputación cuenta.', Icon: Star, bg: colors.surface, fg: colors.ink },
+];
+
+const BENEFICIOS_EMPRESA = [
+  'Pedidos de tu zona en una cola en tiempo real',
+  'Asigná choferes de tu flota en un clic',
+  'Fotos de la carga antes de aceptar',
+];
+
+function LandingPage() {
+  const { width } = useWindowDimensions();
+  const isWide = width >= 900;
+  const isMid = width >= 640;
+  const scrollRef = useRef<ScrollView>(null);
+  const offsets = useRef<Partial<Record<SectionKey, number>>>({});
+
+  function remember(key: SectionKey, e: LayoutChangeEvent) {
+    offsets.current[key] = e.nativeEvent.layout.y;
+  }
+  const goTo = (key: SectionKey) => scrollRef.current?.scrollTo({ y: offsets.current[key] ?? 0, animated: true });
+
+  const h1Size = isWide ? 68 : isMid ? 52 : 40;
+  const h2Size = isWide ? 44 : 32;
+  const sectionPad = isWide ? 88 : 56;
+
+  return (
+    <ScrollView ref={scrollRef} style={styles.page}>
+      <StatusBar style="light" />
+
+      {/* Header + hero */}
+      <View style={styles.dark}>
+        <View style={[styles.container, styles.headerRow]}>
+          <View style={styles.brand}>
+            <View style={styles.brandMark}>
+              <Truck size={22} color={colors.ink} strokeWidth={2} />
+            </View>
+            <Text style={styles.brandWord}>flety</Text>
+          </View>
+          {isWide ? (
+            <View style={styles.navLinks}>
+              <Pressable accessibilityRole="link" onPress={() => goTo('como')}>
+                <Text style={styles.navLink}>Cómo funciona</Text>
+              </Pressable>
+              <Pressable accessibilityRole="link" onPress={() => goTo('servicios')}>
+                <Text style={styles.navLink}>Servicios</Text>
+              </Pressable>
+              <Pressable accessibilityRole="link" onPress={() => goTo('empresas')}>
+                <Text style={styles.navLink}>Para empresas</Text>
+              </Pressable>
+            </View>
+          ) : null}
+          <View style={styles.headerActions}>
+            <Link href="/login" style={styles.loginLink}>
+              Iniciar sesión
+            </Link>
+            {isMid ? <Button title="Pedir un flete" onPress={() => router.push('/registro')} style={styles.headerButton} /> : null}
+          </View>
+        </View>
+
+        <View style={[styles.container, styles.hero, { flexDirection: isWide ? 'row' : 'column', paddingBottom: isWide ? 80 : 48 }]}>
+          <View style={[styles.heroCopy, isWide && { flex: 1 }]}>
+            <View style={styles.badge}>
+              <View style={styles.badgeDot} />
+              <Text style={styles.badgeText}>Mendoza · empresas verificadas</Text>
+            </View>
+            <Text style={[styles.h1, { fontSize: h1Size, lineHeight: h1Size * 1.02 }]} accessibilityRole="header">
+              Mové lo que necesites, <Text style={{ color: colors.accent }}>cuando lo necesites.</Text>
+            </Text>
+            <Text style={styles.heroText}>
+              Pedí un flete o una mudanza en minutos. Empresas verificadas, precio estimado antes de confirmar y tu carga en el mapa
+              hasta que llega.
+            </Text>
+            <View style={styles.heroButtons}>
+              <Button title="Pedir un flete" onPress={() => router.push('/registro')} style={styles.heroButton} />
+              <Pressable accessibilityRole="button" onPress={() => goTo('empresas')} style={styles.ghostButton}>
+                <Text style={styles.ghostButtonText}>Soy empresa de mudanzas</Text>
+              </Pressable>
+            </View>
+          </View>
+          <View style={isWide ? { flex: 1 } : { width: '100%' }}>
+            <HeroPreview height={isWide ? 460 : 380} />
+          </View>
+        </View>
+      </View>
+
+      {/* Cómo funciona */}
+      <View onLayout={(e) => remember('como', e)} style={[styles.container, { paddingVertical: sectionPad, gap: 40 }]}>
+        <SectionTitle eyebrow="Cómo funciona" title="Tres pasos y tu carga está en camino" size={h2Size} />
+        <View style={styles.grid}>
+          {PASOS.map((paso, index) => (
+            <View key={paso.titulo} style={[styles.card, styles.cardGray]}>
+              <View style={styles.stepNumber}>
+                <Text style={styles.stepNumberText}>{index + 1}</Text>
+              </View>
+              <Text style={styles.cardTitle}>{paso.titulo}</Text>
+              <Text style={styles.cardText}>{paso.texto}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      {/* Servicios */}
+      <View onLayout={(e) => remember('servicios', e)} style={styles.grayBand}>
+        <View style={[styles.container, { paddingVertical: sectionPad, gap: 40 }]}>
+          <SectionTitle eyebrow="Servicios" title="Desde una heladera hasta toda tu casa" size={h2Size} />
+          <View style={styles.grid}>
+            {SERVICIOS.map(({ titulo, texto, Icon, accent }) => (
+              <View key={titulo} style={[styles.card, styles.cardWhite]}>
+                <View style={[styles.iconTile, { backgroundColor: accent ? colors.accent : colors.surface }]}>
+                  <Icon size={28} color={colors.ink} strokeWidth={1.9} />
+                </View>
+                <Text style={[styles.cardTitle, { fontSize: 22 }]}>{titulo}</Text>
+                <Text style={styles.cardText}>{texto}</Text>
+                <Link href="/registro" style={styles.cardLink}>
+                  Pedir {titulo.toLowerCase()}
+                </Link>
+              </View>
+            ))}
+          </View>
+        </View>
+      </View>
+
+      {/* Por qué Flety */}
+      <View style={[styles.container, { paddingVertical: sectionPad, gap: 40, flexDirection: isWide ? 'row' : 'column' }]}>
+        <View style={[{ gap: 12 }, isWide && { flex: 1 }]}>
+          <SectionTitle eyebrow="Por qué Flety" title="Una red curada, no una vidriera abierta" size={h2Size} />
+          <Text style={styles.lead}>Ninguna empresa opera en Flety sin pasar antes por una aprobación manual.</Text>
+        </View>
+        <View style={[styles.grid, isWide && { flex: 2 }]}>
+          {MOTIVOS.map(({ titulo, texto, Icon, bg, fg }) => (
+            <View key={titulo} style={styles.motivo}>
+              <View style={[styles.motivoIcon, { backgroundColor: bg }]}>
+                <Icon size={22} color={fg} strokeWidth={2} />
+              </View>
+              <Text style={[styles.cardTitle, { fontSize: 18 }]}>{titulo}</Text>
+              <Text style={[styles.cardText, { fontSize: 15 }]}>{texto}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      {/* Para empresas */}
+      <View onLayout={(e) => remember('empresas', e)} style={[styles.container, { paddingBottom: sectionPad }]}>
+        <View style={[styles.empresas, { flexDirection: isWide ? 'row' : 'column', padding: isWide ? 56 : 28 }]}>
+          <View style={[{ gap: 20 }, isWide && { flex: 1 }]}>
+            <Text style={[styles.eyebrow, { color: colors.accent }]}>Para empresas</Text>
+            <Text style={[styles.h2, { fontSize: isWide ? 40 : 30, color: colors.white }]}>¿Tenés una empresa de fletes o mudanzas?</Text>
+            <Text style={[styles.lead, { color: colors.mutedOnInk }]}>Sumate a la red y recibí pedidos de tu zona sin salir a buscarlos.</Text>
+            <View style={{ gap: 12 }}>
+              {BENEFICIOS_EMPRESA.map((b) => (
+                <View key={b} style={styles.beneficio}>
+                  <Check size={20} color={colors.accent} strokeWidth={2.4} />
+                  <Text style={styles.beneficioText}>{b}</Text>
+                </View>
+              ))}
+            </View>
+            <Button title="Postular mi empresa" onPress={() => router.push('/registro')} style={styles.empresasButton} />
+          </View>
+          <View style={[styles.queueCard, isWide && { flex: 1 }]}>
+            <View style={styles.queueHeader}>
+              <Text style={styles.queueTitle}>Cola de pedidos</Text>
+              <View style={styles.liveChip}>
+                <View style={styles.liveDot} />
+                <Text style={styles.liveText}>En vivo</Text>
+              </View>
+            </View>
+            {[
+              ['Mudanza · Mediano', 'Ahora · 1 ayudante'],
+              ['Flete · Chico', 'Programado · sin ayudantes'],
+              ['Larga distancia · Grande', 'Programado · 2 ayudantes'],
+            ].map(([titulo, detalle]) => (
+              <View key={titulo} style={styles.queueRow}>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={styles.queueRowTitle}>{titulo}</Text>
+                  <Text style={styles.queueRowDetail}>{detalle}</Text>
+                </View>
+                <Text style={styles.queueAccept}>Aceptar</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </View>
+
+      {/* CTA */}
+      <View style={{ backgroundColor: colors.accent }}>
+        <View style={[styles.container, styles.cta]}>
+          <Text style={[styles.h2, { fontSize: isWide ? 48 : 32 }]}>¿Qué movemos hoy?</Text>
+          <Button title="Pedir un flete" variant="dark" onPress={() => router.push('/registro')} style={styles.ctaButton} />
+        </View>
+      </View>
+
+      {/* Footer */}
+      <View style={styles.dark}>
+        <View style={[styles.container, styles.footer]}>
+          <View style={[styles.footerTop, { flexDirection: isMid ? 'row' : 'column' }]}>
+            <View style={{ gap: 12, maxWidth: 360 }}>
+              <Text style={styles.footerBrand}>flety</Text>
+              <Text style={styles.footerText}>Fletes y mudanzas con empresas verificadas. Mendoza, Argentina.</Text>
+            </View>
+            <View style={styles.footerCols}>
+              <View style={{ gap: 10 }}>
+                <Text style={styles.footerHead}>Plataforma</Text>
+                <Link href="/registro" style={styles.footerLink}>
+                  Pedir un flete
+                </Link>
+                <Link href="/login" style={styles.footerLink}>
+                  Iniciar sesión
+                </Link>
+              </View>
+              <View style={{ gap: 10 }}>
+                <Text style={styles.footerHead}>Legal</Text>
+                <Text style={styles.footerText}>Términos y condiciones</Text>
+                <Text style={styles.footerText}>Privacidad</Text>
+              </View>
+            </View>
+          </View>
+          <Text style={styles.copyright}>© {new Date().getFullYear()} Flety</Text>
+        </View>
+      </View>
+    </ScrollView>
+  );
+}
+
+function SectionTitle({ eyebrow, title, size }: { eyebrow: string; title: string; size: number }) {
+  return (
+    <View style={{ gap: 12, maxWidth: 640 }}>
+      <Text style={styles.eyebrow}>{eyebrow}</Text>
+      <Text style={[styles.h2, { fontSize: size, lineHeight: size * 1.08 }]} accessibilityRole="header">
+        {title}
+      </Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  page: { flex: 1, backgroundColor: colors.white },
+  container: { width: '100%', maxWidth: 1200, alignSelf: 'center', paddingHorizontal: 24 },
+  dark: { backgroundColor: colors.ink },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 20, gap: 16 },
+  brand: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  brandMark: { width: 38, height: 38, borderRadius: 12, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
+  brandWord: { fontFamily: fonts.display, fontSize: 24, letterSpacing: -0.4, color: colors.white },
+  navLinks: { flexDirection: 'row', gap: 28 },
+  navLink: { fontFamily: fonts.medium, fontSize: 15, color: '#C5CBD3' },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  loginLink: { fontFamily: fonts.semibold, fontSize: 15, color: colors.white },
+  headerButton: { height: 44, borderRadius: 12, paddingHorizontal: 18 },
+  hero: { gap: 48, paddingTop: 32, alignItems: 'center' },
+  heroCopy: { gap: 24, width: '100%' },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: radius.pill,
+    backgroundColor: '#1E242C',
+    borderWidth: 1,
+    borderColor: '#2A313B',
+  },
+  badgeDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.accent },
+  badgeText: { fontFamily: fonts.semibold, fontSize: 13, color: '#D5DBE3' },
+  h1: { fontFamily: fonts.display, letterSpacing: -1.5, color: colors.white },
+  heroText: { fontFamily: fonts.regular, fontSize: 18, lineHeight: 27, color: colors.mutedOnInk, maxWidth: 520 },
+  heroButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  heroButton: { paddingHorizontal: 28 },
+  ghostButton: { height: 56, borderRadius: radius.lg, borderWidth: 1, borderColor: '#3A424D', paddingHorizontal: 24, justifyContent: 'center' },
+  ghostButtonText: { fontFamily: fonts.semibold, fontSize: 16, color: colors.white },
+  eyebrow: { fontFamily: fonts.extrabold, fontSize: 13, letterSpacing: 1, textTransform: 'uppercase', color: '#7A4F00' },
+  h2: { fontFamily: fonts.display, letterSpacing: -0.8, color: colors.ink },
+  lead: { fontFamily: fonts.regular, fontSize: 17, lineHeight: 26, color: colors.muted },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 20 },
+  card: { flexGrow: 1, flexBasis: 260, gap: 14, padding: 28, borderRadius: 24 },
+  cardGray: { backgroundColor: '#F4F5F7' },
+  cardWhite: { backgroundColor: colors.white, borderWidth: 1, borderColor: '#E3E6EA' },
+  stepNumber: { width: 44, height: 44, borderRadius: 14, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  stepNumberText: { fontFamily: fonts.display, fontSize: 20, color: colors.accent },
+  cardTitle: { fontFamily: fonts.bold, fontSize: 20, color: colors.ink },
+  cardText: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 24, color: colors.muted },
+  cardLink: { fontFamily: fonts.bold, fontSize: 15, color: colors.ink, textDecorationLine: 'underline', marginTop: 'auto' },
+  iconTile: { width: 56, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  grayBand: { backgroundColor: '#F4F5F7' },
+  motivo: { flexGrow: 1, flexBasis: 240, gap: 10 },
+  motivoIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  empresas: { gap: 40, borderRadius: 32, backgroundColor: colors.ink, alignItems: 'center' },
+  beneficio: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  beneficioText: { fontFamily: fonts.regular, fontSize: 16, color: '#E4E8ED' },
+  empresasButton: { alignSelf: 'flex-start', paddingHorizontal: 28 },
+  queueCard: { width: '100%', gap: 12, padding: 20, borderRadius: 24, backgroundColor: colors.white },
+  queueHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  queueTitle: { fontFamily: fonts.bold, fontSize: 16, color: colors.ink },
+  liveChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, backgroundColor: colors.successBg },
+  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#22A06B' },
+  liveText: { fontFamily: fonts.bold, fontSize: 12, color: colors.success },
+  queueRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderTopWidth: 1, borderTopColor: colors.lineSoft },
+  queueRowTitle: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
+  queueRowDetail: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted },
+  queueAccept: {
+    fontFamily: fonts.bold,
+    fontSize: 14,
+    color: colors.ink,
+    backgroundColor: colors.accent,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  cta: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 24, paddingVertical: 64 },
+  ctaButton: { paddingHorizontal: 28 },
+  footer: { paddingTop: 56, paddingBottom: 32, gap: 40 },
+  footerTop: { justifyContent: 'space-between', gap: 32 },
+  footerBrand: { fontFamily: fonts.display, fontSize: 24, color: colors.white },
+  footerText: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 22, color: colors.mutedOnInk },
+  footerCols: { flexDirection: 'row', gap: 56 },
+  footerHead: { fontFamily: fonts.bold, fontSize: 15, color: colors.white },
+  footerLink: { fontFamily: fonts.regular, fontSize: 15, color: colors.mutedOnInk },
+  copyright: { fontFamily: fonts.regular, fontSize: 13, color: colors.faintOnInk, paddingTop: 24, borderTopWidth: 1, borderTopColor: '#232A34' },
+});
