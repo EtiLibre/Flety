@@ -113,7 +113,7 @@ begin
       returning * into invite;
       return invite;
     exception when unique_violation then
-      -- muy improbable: se genera otro
+      null; -- muy improbable: se genera otro
     end;
   end loop;
 end;
