@@ -19,9 +19,7 @@ const stylePromises: Partial<Record<'light' | 'dark', Promise<StyleSpecification
 function loadStyle(tone: 'light' | 'dark') {
   stylePromises[tone] ??= fetch(OPENFREEMAP_STYLE_URL)
     .then((res) => res.json())
-    .then(
-      (style) => applyFletyPalette(style, tone === 'dark' ? MAP_PALETTE_DARK : MAP_PALETTE) as StyleSpecification
-    );
+    .then((style) => applyFletyPalette(style, tone === 'dark' ? MAP_PALETTE_DARK : MAP_PALETTE) as StyleSpecification);
   return stylePromises[tone];
 }
 
@@ -64,7 +62,18 @@ function animateTo(entry: MarkerEntry, target: LatLng) {
   entry.frame = requestAnimationFrame(step);
 }
 
-export function AppMap({ center, markers = [], line, fitToMarkers, padding, tone = 'light', style }: AppMapProps) {
+export function AppMap({
+  center,
+  markers = [],
+  line,
+  fitToMarkers,
+  padding,
+  tone = 'light',
+  initialZoom = 14,
+  onMoveStart,
+  onCenterChange,
+  style,
+}: AppMapProps) {
   const containerRef = useRef<View>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRefs = useRef(new Map<string, MarkerEntry>());
@@ -72,6 +81,14 @@ export function AppMap({ center, markers = [], line, fitToMarkers, padding, tone
   const initialCenter = useRef(center);
   // El tono se fija al crear el mapa.
   const initialTone = useRef(tone);
+  const initialZoomRef = useRef(initialZoom);
+  // Callbacks en refs: el mapa se crea una sola vez y siempre llama a la versión actual.
+  const moveStartRef = useRef(onMoveStart);
+  const centerChangeRef = useRef(onCenterChange);
+  useEffect(() => {
+    moveStartRef.current = onMoveStart;
+    centerChangeRef.current = onCenterChange;
+  });
 
   // Crear el mapa una sola vez.
   useEffect(() => {
@@ -86,11 +103,16 @@ export function AppMap({ center, markers = [], line, fitToMarkers, padding, tone
         container,
         style: mapStyle,
         center: [initialCenter.current.lng, initialCenter.current.lat],
-        zoom: 14,
+        zoom: initialZoomRef.current,
         attributionControl: { compact: true },
         dragRotate: false,
       });
       map.touchZoomRotate.disableRotation();
+      map.on('movestart', () => moveStartRef.current?.());
+      map.on('moveend', () => {
+        const c = map.getCenter();
+        centerChangeRef.current?.({ lat: c.lat, lng: c.lng });
+      });
       map.on('load', () => {
         map.addSource(ROUTE_SOURCE, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
         map.addLayer({
@@ -127,7 +149,9 @@ export function AppMap({ center, markers = [], line, fitToMarkers, padding, tone
   }, []);
 
   // Marcadores: crear, mover (el chofer se desliza y gira hacia donde va) o sacar.
-  const markersKey = markers.map((m) => `${m.id}:${m.kind}:${m.position.lat},${m.position.lng}:${m.heading ?? ''}`).join('|');
+  const markersKey = markers
+    .map((m) => `${m.id}:${m.kind}:${m.position.lat},${m.position.lng}:${m.heading ?? ''}`)
+    .join('|');
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
@@ -184,7 +208,13 @@ export function AppMap({ center, markers = [], line, fitToMarkers, padding, tone
       type: 'FeatureCollection',
       features:
         line && line.length > 1
-          ? [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: line.map((pt) => [pt.lng, pt.lat]) } }]
+          ? [
+              {
+                type: 'Feature',
+                properties: {},
+                geometry: { type: 'LineString', coordinates: line.map((pt) => [pt.lng, pt.lat]) },
+              },
+            ]
           : [],
     });
     // lineKey resume el recorrido.

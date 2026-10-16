@@ -24,6 +24,11 @@ export type AppMapProps = {
   padding?: { top: number; right: number; bottom: number; left: number };
   // Oscuro: app del chofer.
   tone?: 'light' | 'dark';
+  // Zoom inicial (14 por defecto; más alto = más cerca).
+  initialZoom?: number;
+  // Selector de punto: el usuario empieza a mover el mapa / dónde quedó el centro al soltarlo.
+  onMoveStart?: () => void;
+  onCenterChange?: (center: LatLng) => void;
   style?: StyleProp<ViewStyle>;
 };
 

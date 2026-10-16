@@ -30,7 +30,7 @@ export default function Pedir() {
 
   const map = (
     <AppMap
-      center={draft.origen ?? MENDOZA}
+      center={draft.origen ?? draft.destino ?? MENDOZA}
       markers={markers}
       line={ruta?.coords}
       fitToMarkers={markers.length > 0}

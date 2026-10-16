@@ -11,7 +11,20 @@ import type { AppMapProps, LatLng, MapMarker } from './types';
 
 const DELTA = 0.012;
 
-export function AppMap({ center, markers = [], line, fitToMarkers, padding, tone = 'light', style }: AppMapProps) {
+export function AppMap({
+  center,
+  markers = [],
+  line,
+  fitToMarkers,
+  padding,
+  tone = 'light',
+  initialZoom = 14,
+  onMoveStart,
+  onCenterChange,
+  style,
+}: AppMapProps) {
+  // Mismo encuadre que el zoom de MapLibre en web (cada nivel duplica la escala).
+  const delta = DELTA * Math.pow(2, 14 - initialZoom);
   const mapRef = useRef<MapView>(null);
 
   // Última posición/rumbo del chofer, para girar el camión hacia donde va
@@ -25,12 +38,15 @@ export function AppMap({ center, markers = [], line, fitToMarkers, padding, tone
   });
   if (chofer && truck.key !== choferKey) {
     const moved = truck.position ? metrosEntre(truck.position, chofer.position) > 3 : false;
-    const heading = chofer.heading ?? (moved && truck.position ? rumbo(truck.position, chofer.position) : truck.heading);
+    const heading =
+      chofer.heading ?? (moved && truck.position ? rumbo(truck.position, chofer.position) : truck.heading);
     setTruck({ key: choferKey, position: chofer.position, heading });
   }
   const truckHeading = chofer?.heading ?? truck.heading;
 
-  const fitKey = markers.map((m) => (m.kind === 'chofer' ? 'chofer' : `${m.id}:${m.position.lat},${m.position.lng}`)).join('|');
+  const fitKey = markers
+    .map((m) => (m.kind === 'chofer' ? 'chofer' : `${m.id}:${m.position.lat},${m.position.lng}`))
+    .join('|');
 
   useEffect(() => {
     const map = mapRef.current;
@@ -42,7 +58,7 @@ export function AppMap({ center, markers = [], line, fitToMarkers, padding, tone
       );
     } else {
       map.animateToRegion(
-        { latitude: center.lat, longitude: center.lng, latitudeDelta: DELTA, longitudeDelta: DELTA },
+        { latitude: center.lat, longitude: center.lng, latitudeDelta: delta, longitudeDelta: delta },
         400
       );
     }
@@ -54,7 +70,9 @@ export function AppMap({ center, markers = [], line, fitToMarkers, padding, tone
     <MapView
       ref={mapRef}
       style={style}
-      initialRegion={{ latitude: center.lat, longitude: center.lng, latitudeDelta: DELTA, longitudeDelta: DELTA }}
+      initialRegion={{ latitude: center.lat, longitude: center.lng, latitudeDelta: delta, longitudeDelta: delta }}
+      onRegionChange={onMoveStart ? () => onMoveStart() : undefined}
+      onRegionChangeComplete={(r) => onCenterChange?.({ lat: r.latitude, lng: r.longitude })}
       // Paleta Flety en Google Maps (Android); en iPhone (Apple Maps) se usa la variante atenuada.
       customMapStyle={tone === 'dark' ? GOOGLE_MAP_STYLE_DARK : GOOGLE_MAP_STYLE}
       userInterfaceStyle={tone}
@@ -111,7 +129,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dot: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.ink, borderWidth: 4, borderColor: colors.white },
-  origen: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.white, borderWidth: 5, borderColor: colors.ink },
-  destino: { width: 22, height: 22, borderRadius: 6, backgroundColor: colors.accent, borderWidth: 4, borderColor: colors.ink },
+  dot: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.ink,
+    borderWidth: 4,
+    borderColor: colors.white,
+  },
+  origen: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.white,
+    borderWidth: 5,
+    borderColor: colors.ink,
+  },
+  destino: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    backgroundColor: colors.accent,
+    borderWidth: 4,
+    borderColor: colors.ink,
+  },
 });

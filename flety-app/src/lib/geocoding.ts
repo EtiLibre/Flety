@@ -49,15 +49,22 @@ export async function buscarDirecciones(query: string, signal?: AbortSignal): Pr
     .slice(0, 5);
 }
 
-export async function direccionDeCoordenadas(lat: number, lng: number): Promise<GeoPoint> {
+export async function direccionDeCoordenadas(
+  lat: number,
+  lng: number,
+  // Texto si el geocodificador no responde o no encuentra nada.
+  fallback = 'Mi ubicación actual',
+  signal?: AbortSignal
+): Promise<GeoPoint> {
   try {
-    const res = await fetch(`${PHOTON}/reverse?lat=${lat}&lon=${lng}`);
+    const res = await fetch(`${PHOTON}/reverse?lat=${lat}&lon=${lng}`, { signal });
     if (res.ok) {
       const json = (await res.json()) as { features: PhotonFeature[] };
       if (json.features[0]) return { ...toGeoPoint(json.features[0]), lat, lng };
     }
-  } catch {
+  } catch (e) {
+    if ((e as Error).name === 'AbortError') throw e;
     // Sin conexión con el geocodificador: usamos un texto genérico.
   }
-  return { lat, lng, direccion: 'Mi ubicación actual' };
+  return { lat, lng, direccion: fallback };
 }

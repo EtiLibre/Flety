@@ -64,6 +64,7 @@ export function PedidoForm({ onContinue }: { onContinue: () => void }) {
             value={draft.origen}
             onChange={(origen) => update({ origen })}
             allowCurrentLocation
+            tipo="origen"
           />
           <View style={styles.divider} />
           <AddressField
