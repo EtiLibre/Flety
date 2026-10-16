@@ -10,6 +10,7 @@ export const MAP_PALETTE = {
   water: '#CFE1EF',
   waterway: '#B8D3E8',
   road: '#FFFFFF',
+  path: '#F7F8F9',
   roadCasing: '#DDE1E6',
   avenue: '#F7D98F',
   avenueCasing: '#EBC56E',
@@ -18,7 +19,32 @@ export const MAP_PALETTE = {
   placeLabel: '#3A3F45',
   waterLabel: '#4A6A85',
   halo: '#FFFFFF',
-} as const;
+};
+
+export type MapPalette = typeof MAP_PALETTE;
+
+// Variante oscura (app del chofer, como en el canvas): fondo tinta, calles
+// gris oscuro y avenidas en ámbar apagado para que resalte la ruta amarilla.
+export const MAP_PALETTE_DARK: MapPalette = {
+  land: '#141920',
+  landuse: '#171C23',
+  building: '#1C222A',
+  buildingOutline: '#20262F',
+  park: '#16241D',
+  wood: '#17251E',
+  water: '#0E1E2B',
+  waterway: '#12293A',
+  road: '#262D37',
+  path: '#1E242C',
+  roadCasing: '#1B2129',
+  avenue: '#5C4A1F',
+  avenueCasing: '#3D3217',
+  rail: '#232A33',
+  label: '#8B95A1',
+  placeLabel: '#C5CBD3',
+  waterLabel: '#4E6E8A',
+  halo: '#0F1318',
+};
 
 // Estilo base de OpenFreeMap (gratis, sin API key, uso comercial permitido).
 export const OPENFREEMAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/positron';
@@ -27,10 +53,8 @@ type Paint = Record<string, unknown>;
 type Layer = { id: string; type: string; paint?: Paint };
 type Style = { layers: Layer[] };
 
-const p = MAP_PALETTE;
-
 // Colores por capa del estilo "positron". Las capas que no aparecen quedan como vienen.
-const OVERRIDES: Record<string, Paint> = {
+const overrides = (p: MapPalette): Record<string, Paint> => ({
   background: { 'background-color': p.land },
   park: { 'fill-color': p.park },
   water: { 'fill-color': p.water },
@@ -42,7 +66,7 @@ const OVERRIDES: Record<string, Paint> = {
   building: { 'fill-color': p.building, 'fill-outline-color': p.building, 'fill-opacity': 0.45 },
   road_area_pier: { 'fill-color': p.land },
   road_pier: { 'line-color': p.land },
-  highway_path: { 'line-color': '#F7F8F9' },
+  highway_path: { 'line-color': p.path },
   highway_minor: { 'line-color': p.road, 'line-opacity': 1 },
   // Avenidas principales (primary/trunk) en ámbar suave, como en el canvas.
   highway_major_casing: { 'line-color': ['match', ['get', 'class'], ['primary', 'trunk'], p.avenueCasing, p.roadCasing] },
@@ -58,17 +82,29 @@ const OVERRIDES: Record<string, Paint> = {
   railway: { 'line-color': p.rail },
   railway_transit: { 'line-color': p.rail },
   railway_service: { 'line-color': p.rail },
+  // Los guiones de las vías van con el color del fondo.
+  railway_dashline: { 'line-color': p.land },
+  railway_transit_dashline: { 'line-color': p.land },
+  railway_service_dashline: { 'line-color': p.land },
+  'aeroway-area': { 'fill-color': p.landuse },
+  'aeroway-runway': { 'line-color': p.road },
+  'aeroway-runway-casing': { 'line-color': p.roadCasing },
+  'aeroway-taxiway': { 'line-color': p.road },
+  boundary_2: { 'line-color': p.label },
+  boundary_3: { 'line-color': p.rail },
+  airport: { 'text-color': p.label, 'text-halo-color': p.halo },
   'highway-name-path': { 'text-color': p.label, 'text-halo-color': p.halo },
   'highway-name-minor': { 'text-color': p.label, 'text-halo-color': p.halo },
   'highway-name-major': { 'text-color': p.label, 'text-halo-color': p.halo },
   water_name_point_label: { 'text-color': p.waterLabel },
   water_name_line_label: { 'text-color': p.waterLabel },
   waterway_line_label: { 'text-color': p.waterLabel },
-};
+});
 
 const PLACE_LABEL = /^label_/;
 
-export function applyFletyPalette<T extends Style>(style: T): T {
+export function applyFletyPalette<T extends Style>(style: T, p: MapPalette = MAP_PALETTE): T {
+  const OVERRIDES = overrides(p);
   for (const layer of style.layers) {
     const override = OVERRIDES[layer.id];
     if (override) layer.paint = { ...layer.paint, ...override };
@@ -80,7 +116,7 @@ export function applyFletyPalette<T extends Style>(style: T): T {
 }
 
 // Estilo para Google Maps (Android, y iOS si se usa el proveedor de Google).
-export const GOOGLE_MAP_STYLE = [
+export const googleMapStyle = (p: MapPalette) => [
   { elementType: 'geometry', stylers: [{ color: p.land }] },
   { elementType: 'labels.text.fill', stylers: [{ color: p.label }] },
   { elementType: 'labels.text.stroke', stylers: [{ color: p.halo }] },
@@ -94,3 +130,6 @@ export const GOOGLE_MAP_STYLE = [
   { featureType: 'water', elementType: 'geometry', stylers: [{ color: p.water }] },
   { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: p.waterLabel }] },
 ];
+
+export const GOOGLE_MAP_STYLE = googleMapStyle(MAP_PALETTE);
+export const GOOGLE_MAP_STYLE_DARK = googleMapStyle(MAP_PALETTE_DARK);

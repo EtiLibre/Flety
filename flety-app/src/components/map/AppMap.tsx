@@ -5,13 +5,13 @@ import MapView, { Marker, Polyline } from 'react-native-maps';
 import { metrosEntre, rumbo } from '@/lib/geo';
 import { colors } from '@/theme';
 
-import { GOOGLE_MAP_STYLE } from './flety-style';
+import { GOOGLE_MAP_STYLE, GOOGLE_MAP_STYLE_DARK } from './flety-style';
 import { TruckSprite } from './TruckSprite';
 import type { AppMapProps, LatLng, MapMarker } from './types';
 
 const DELTA = 0.012;
 
-export function AppMap({ center, markers = [], line, fitToMarkers, padding, style }: AppMapProps) {
+export function AppMap({ center, markers = [], line, fitToMarkers, padding, tone = 'light', style }: AppMapProps) {
   const mapRef = useRef<MapView>(null);
 
   // Última posición/rumbo del chofer, para girar el camión hacia donde va
@@ -56,14 +56,15 @@ export function AppMap({ center, markers = [], line, fitToMarkers, padding, styl
       style={style}
       initialRegion={{ latitude: center.lat, longitude: center.lng, latitudeDelta: DELTA, longitudeDelta: DELTA }}
       // Paleta Flety en Google Maps (Android); en iPhone (Apple Maps) se usa la variante atenuada.
-      customMapStyle={GOOGLE_MAP_STYLE}
+      customMapStyle={tone === 'dark' ? GOOGLE_MAP_STYLE_DARK : GOOGLE_MAP_STYLE}
+      userInterfaceStyle={tone}
       mapType={Platform.OS === 'ios' ? 'mutedStandard' : 'standard'}
       showsPointsOfInterests={false}
       toolbarEnabled={false}>
       {line && line.length > 1 ? (
         <Polyline
           coordinates={line.map((p) => ({ latitude: p.lat, longitude: p.lng }))}
-          strokeColor={colors.ink}
+          strokeColor={tone === 'dark' ? colors.accent : colors.ink}
           strokeWidth={5}
         />
       ) : null}

@@ -120,6 +120,16 @@ function InicioMovil() {
               </Pressable>
               <Pressable
                 accessibilityRole="button"
+                onPress={() => {
+                  setMenuOpen(false);
+                  router.push('/unirse');
+                }}
+                style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.7 }]}>
+                <Truck size={18} color={colors.ink} strokeWidth={2} />
+                <Text style={styles.menuItemText}>Soy chofer · tengo un código</Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
                 onPress={() => supabase.auth.signOut()}
                 style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.7 }]}>
                 <LogOut size={18} color={colors.danger} strokeWidth={2} />

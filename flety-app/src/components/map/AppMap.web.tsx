@@ -8,19 +8,21 @@ import { View } from 'react-native';
 import { metrosEntre, rumbo } from '@/lib/geo';
 import { colors } from '@/theme';
 
-import { applyFletyPalette, OPENFREEMAP_STYLE_URL } from './flety-style';
+import { applyFletyPalette, MAP_PALETTE, MAP_PALETTE_DARK, OPENFREEMAP_STYLE_URL } from './flety-style';
 import { TRUCK_3D_SVG } from './truck-sprite';
 import type { AppMapProps, LatLng, MapMarker } from './types';
 
 // En web: MapLibre + teselas vectoriales de OpenFreeMap (gratis, sin API key),
 // recoloreadas con la paleta de Flety. En iOS/Android se usa AppMap.tsx.
 
-let stylePromise: Promise<StyleSpecification> | null = null;
-function loadStyle() {
-  stylePromise ??= fetch(OPENFREEMAP_STYLE_URL)
+const stylePromises: Partial<Record<'light' | 'dark', Promise<StyleSpecification>>> = {};
+function loadStyle(tone: 'light' | 'dark') {
+  stylePromises[tone] ??= fetch(OPENFREEMAP_STYLE_URL)
     .then((res) => res.json())
-    .then((style) => applyFletyPalette(style) as StyleSpecification);
-  return stylePromise;
+    .then(
+      (style) => applyFletyPalette(style, tone === 'dark' ? MAP_PALETTE_DARK : MAP_PALETTE) as StyleSpecification
+    );
+  return stylePromises[tone];
 }
 
 const MARKER_HTML: Record<MapMarker['kind'], string> = {
@@ -62,12 +64,14 @@ function animateTo(entry: MarkerEntry, target: LatLng) {
   entry.frame = requestAnimationFrame(step);
 }
 
-export function AppMap({ center, markers = [], line, fitToMarkers, padding, style }: AppMapProps) {
+export function AppMap({ center, markers = [], line, fitToMarkers, padding, tone = 'light', style }: AppMapProps) {
   const containerRef = useRef<View>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRefs = useRef(new Map<string, MarkerEntry>());
   const [ready, setReady] = useState(false);
   const initialCenter = useRef(center);
+  // El tono se fija al crear el mapa.
+  const initialTone = useRef(tone);
 
   // Crear el mapa una sola vez.
   useEffect(() => {
@@ -75,7 +79,8 @@ export function AppMap({ center, markers = [], line, fitToMarkers, padding, styl
     const container = containerRef.current as unknown as HTMLElement | null;
     if (!container) return;
 
-    loadStyle().then((mapStyle) => {
+    const dark = initialTone.current === 'dark';
+    loadStyle(initialTone.current).then((mapStyle) => {
       if (cancelled) return;
       const map = new MapLibreMap({
         container,
@@ -93,14 +98,15 @@ export function AppMap({ center, markers = [], line, fitToMarkers, padding, styl
           type: 'line',
           source: ROUTE_SOURCE,
           layout: { 'line-cap': 'round', 'line-join': 'round' },
-          paint: { 'line-color': colors.white, 'line-width': 9 },
+          // En oscuro la ruta va en amarillo (como en el canvas del chofer).
+          paint: { 'line-color': dark ? colors.ink : colors.white, 'line-width': 9 },
         });
         map.addLayer({
           id: 'flety-ruta',
           type: 'line',
           source: ROUTE_SOURCE,
           layout: { 'line-cap': 'round', 'line-join': 'round' },
-          paint: { 'line-color': colors.ink, 'line-width': 5 },
+          paint: { 'line-color': dark ? colors.accent : colors.ink, 'line-width': 5 },
         });
         if (!cancelled) setReady(true);
       });

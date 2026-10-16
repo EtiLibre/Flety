@@ -124,3 +124,28 @@ export async function nombresDeClientes(userIds: string[]): Promise<Record<strin
   for (const u of data ?? []) nombres[u.id as string] = (u.nombre as string) || (u.email as string);
   return nombres;
 }
+
+// ── Invitaciones de choferes (migración 0009) ──────────────────────────────
+export type Invitacion = { code: string; created_at: string; expires_at: string; used_at: string | null };
+
+export async function crearInvitacion(): Promise<Invitacion> {
+  const { data, error } = await supabase.rpc('crear_invitacion');
+  if (error || !data) throw new Error(error?.message?.startsWith('Solo ') ? error.message : 'No pudimos crear el código.');
+  return data as Invitacion;
+}
+
+// Códigos sin usar y vigentes de la empresa.
+export async function invitacionesVigentes(): Promise<Invitacion[]> {
+  const { data } = await supabase
+    .from('company_invites')
+    .select('code, created_at, expires_at, used_at')
+    .is('used_at', null)
+    .gt('expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false });
+  return (data as Invitacion[] | null) ?? [];
+}
+
+export async function borrarInvitacion(code: string) {
+  const { error } = await supabase.from('company_invites').delete().eq('code', code);
+  if (error) throw new Error('No pudimos borrar el código.');
+}

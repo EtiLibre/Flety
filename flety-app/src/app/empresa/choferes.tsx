@@ -1,10 +1,11 @@
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import { InvitarChofer } from '@/components/empresa/InvitarChofer';
 import { Card, ChoferFila, Vacio } from '@/components/empresa/ui';
 import { EmpresaShell } from '@/components/web/EmpresaShell';
 import { useEmpresa } from '@/hooks/use-empresa';
 import { estadoDelChofer, type EstadoChofer } from '@/lib/empresa';
-import { colors, fonts } from '@/theme';
+import { colors } from '@/theme';
 
 const ORDEN: EstadoChofer[] = ['disponible', 'en_viaje', 'no_disponible'];
 const TITULOS: Record<EstadoChofer, string> = {
@@ -14,7 +15,7 @@ const TITULOS: Record<EstadoChofer, string> = {
 };
 
 export default function ChoferesEmpresa() {
-  const { empresa, choferes, pedidos, loading, esAdmin } = useEmpresa();
+  const { empresa, choferes, pedidos, loading, esAdmin, recargar } = useEmpresa();
   const estados = choferes.map((c) => ({ chofer: c, estado: estadoDelChofer(c, pedidos) }));
 
   return (
@@ -41,14 +42,8 @@ export default function ChoferesEmpresa() {
           })}
         </View>
       )}
-      {!esAdmin ? (
-        <View style={styles.aviso}>
-          <Text style={styles.avisoTitulo}>¿Cómo sumo un chofer?</Text>
-          <Text style={styles.avisoTexto}>
-            Por ahora, pedile al equipo de Flety que lo asocie a tu empresa. En la próxima etapa vas a poder invitarlo con un
-            código desde acá, y él se suma desde su app.
-          </Text>
-        </View>
+      {!esAdmin && empresa?.estado_aprobacion === 'aprobada' ? (
+        <InvitarChofer empresa={empresa.nombre} onCambio={recargar} />
       ) : null}
     </EmpresaShell>
   );
@@ -57,7 +52,4 @@ export default function ChoferesEmpresa() {
 const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 20, alignItems: 'flex-start' },
   col: { flexGrow: 1, flexBasis: 300 },
-  aviso: { gap: 4, padding: 16, borderRadius: 16, backgroundColor: '#FFF3D6' },
-  avisoTitulo: { fontFamily: fonts.bold, fontSize: 15, color: '#7A4F00' },
-  avisoTexto: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 20, color: '#7A4F00' },
 });

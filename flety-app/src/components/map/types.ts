@@ -22,6 +22,8 @@ export type AppMapProps = {
   fitToMarkers?: boolean;
   // Margen extra (px) para no tapar marcadores con paneles superpuestos.
   padding?: { top: number; right: number; bottom: number; left: number };
+  // Oscuro: app del chofer.
+  tone?: 'light' | 'dark';
   style?: StyleProp<ViewStyle>;
 };
 

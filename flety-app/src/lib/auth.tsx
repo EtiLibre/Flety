@@ -14,6 +14,8 @@ type AuthState = {
   initializing: boolean;
   // true si hay sesión pero todavía no llegó el rol desde public.users.
   loadingProfile: boolean;
+  // Vuelve a leer rol/empresa (p. ej. después de canjear una invitación de chofer).
+  recargarPerfil: () => void;
 };
 
 const AuthContext = createContext<AuthState>({
@@ -23,6 +25,7 @@ const AuthContext = createContext<AuthState>({
   companyId: null,
   initializing: true,
   loadingProfile: false,
+  recargarPerfil: () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -48,6 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const userId = session?.user.id ?? null;
+  const [perfilVersion, setPerfilVersion] = useState(0);
 
   // El rol vive en public.users (fila creada por el trigger on_auth_user_created).
   useEffect(() => {
@@ -71,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, perfilVersion]);
 
   const currentProfile = profile && profile.userId === userId ? profile : null;
 
@@ -84,6 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         companyId: currentProfile?.companyId ?? null,
         initializing: !sessionLoaded,
         loadingProfile: !!userId && !currentProfile,
+        recargarPerfil: () => setPerfilVersion((v) => v + 1),
       }}>
       {children}
     </AuthContext.Provider>
@@ -95,7 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function AuthPreview({ value, children }: { value: Partial<AuthState>; children: React.ReactNode }) {
   return (
     <AuthContext.Provider
-      value={{ session: null, role: null, nombre: null, companyId: null, initializing: false, loadingProfile: false, ...value }}>
+      value={{ session: null, role: null, nombre: null, companyId: null, initializing: false, loadingProfile: false, recargarPerfil: () => {}, ...value }}>
       {children}
     </AuthContext.Provider>
   );
