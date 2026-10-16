@@ -15,10 +15,12 @@ import {
 } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { DotCanvas } from '@/components/DotCanvas';
 import { PublicOnly } from '@/components/Guards';
 import { FleterosSection } from '@/components/landing/FleterosSection';
 import { FloatingNav } from '@/components/landing/FloatingNav';
-import { HeroPreview } from '@/components/landing/HeroPreview';
+import { HeroMap } from '@/components/landing/HeroMap';
+import { HeroQuickStart } from '@/components/landing/HeroQuickStart';
 import { Reveal } from '@/components/landing/Reveal';
 import { ScrollFab } from '@/components/landing/ScrollFab';
 import { usePedidoDraft } from '@/lib/pedido-draft';
@@ -127,7 +129,7 @@ function LandingPage() {
 
   function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
     const y = e.nativeEvent.contentOffset.y;
-    const next = { scrolled: y > 24, abajo: y > 500 };
+    const next = { scrolled: y > 24, abajo: y > 320 };
     if (next.scrolled !== scroll.scrolled || next.abajo !== scroll.abajo) setScroll(next);
   }
 
@@ -155,39 +157,57 @@ function LandingPage() {
       <StatusBar style={scroll.scrolled ? 'dark' : 'light'} />
       <ScrollView ref={scrollRef} style={styles.page} onScroll={onScroll} scrollEventThrottle={32}>
         {/* Hero */}
-        <View style={styles.dark}>
+        <View style={[styles.dark, styles.heroBand]}>
+          <DotCanvas id="hero-dots" color="#232A34" gap={26} />
+          <View style={styles.glow} pointerEvents="none" />
           <View
             style={[
               styles.container,
               styles.hero,
               {
                 flexDirection: isWide ? 'row' : 'column',
-                paddingBottom: isWide ? 80 : 48,
+                paddingBottom: isWide ? 88 : 48,
                 paddingTop: isWide ? 128 : 104,
               },
             ]}>
-            <View style={[styles.heroCopy, isWide && { flex: 1 }]}>
-              <View style={styles.badge}>
-                <View style={styles.badgeDot} />
-                <Text style={styles.badgeText}>Mendoza · empresas verificadas</Text>
-              </View>
-              <Text style={[styles.h1, { fontSize: h1Size, lineHeight: h1Size * 1.02 }]} accessibilityRole="header">
-                Mové lo que necesites, <Text style={{ color: colors.accent }}>cuando lo necesites.</Text>
-              </Text>
-              <Text style={styles.heroText}>
-                Pedí un flete o una mudanza en minutos. Empresas verificadas, precio estimado antes de confirmar y tu
-                carga en el mapa hasta que llega.
-              </Text>
-              <View style={styles.heroButtons}>
-                <Button title="Pedir un flete" onPress={() => pedir()} style={styles.heroButton} />
-                <Pressable accessibilityRole="button" onPress={() => goTo('empresas')} style={styles.ghostButton}>
-                  <Text style={styles.ghostButtonText}>Soy empresa de mudanzas</Text>
-                </Pressable>
-              </View>
+            <View style={[styles.heroCopy, isWide && { flex: 1.05 }]}>
+              <Reveal>
+                <View style={styles.badge}>
+                  <View style={styles.heroLiveDot} />
+                  <Text style={styles.badgeText}>Fleteros disponibles ahora en Mendoza</Text>
+                </View>
+              </Reveal>
+              <Reveal delay={80}>
+                <Text style={[styles.h1, { fontSize: h1Size, lineHeight: h1Size * 1.02 }]} accessibilityRole="header">
+                  Mové lo que necesites, <Text style={{ color: colors.accent }}>cuando lo necesites.</Text>
+                </Text>
+              </Reveal>
+              <Reveal delay={160}>
+                <Text style={styles.heroText}>
+                  Elegí al fletero que quieras o dejá que te lo asignemos. Empresas verificadas, precio antes de
+                  confirmar y tu carga en el mapa hasta que llega.
+                </Text>
+              </Reveal>
+              <Reveal delay={240} style={{ zIndex: 5 }}>
+                <HeroQuickStart />
+              </Reveal>
+              <Reveal delay={320}>
+                <View style={styles.trustRow}>
+                  {['Empresas verificadas', 'Precio antes de confirmar', 'Seguimiento en vivo'].map((t) => (
+                    <View key={t} style={styles.trust}>
+                      <Check size={16} color={colors.accent} strokeWidth={2.6} />
+                      <Text style={styles.trustText}>{t}</Text>
+                    </View>
+                  ))}
+                  <Pressable accessibilityRole="link" onPress={() => goTo('empresas')}>
+                    <Text style={styles.trustLink}>Soy empresa de mudanzas →</Text>
+                  </Pressable>
+                </View>
+              </Reveal>
             </View>
-            <View style={isWide ? { flex: 1 } : { width: '100%' }}>
-              <HeroPreview height={isWide ? 460 : 380} />
-            </View>
+            <Reveal delay={200} style={isWide ? { flex: 1 } : { width: '100%' }}>
+              <HeroMap height={isWide ? 540 : 400} />
+            </Reveal>
           </View>
         </View>
 
@@ -364,7 +384,7 @@ function LandingPage() {
         scrolled={scroll.scrolled}
         isWide={isWide}
       />
-      <ScrollFab arriba={scroll.abajo} onPress={() => goTo(scroll.abajo ? 'top' : 'como')} />
+      <ScrollFab visible={scroll.abajo} onPress={() => goTo('top')} />
     </View>
   );
 }
@@ -406,7 +426,7 @@ const styles = StyleSheet.create({
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   loginLink: { fontFamily: fonts.semibold, fontSize: 15, color: colors.white },
   headerButton: { height: 44, borderRadius: 12, paddingHorizontal: 18 },
-  hero: { gap: 48, paddingTop: 32, alignItems: 'center' },
+  hero: { gap: 48, paddingTop: 32, alignItems: 'center', zIndex: 1 },
   heroCopy: { gap: 24, width: '100%' },
   badge: {
     flexDirection: 'row',
@@ -420,12 +440,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#2A313B',
   },
-  badgeDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.accent },
+  heroLiveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#22C55E',
+    boxShadow: '0 0 0 4px rgba(34, 197, 94, 0.18)',
+  },
+  heroBand: { overflow: 'hidden' },
+  glow: {
+    position: 'absolute',
+    top: -160,
+    right: -120,
+    width: 620,
+    height: 620,
+    borderRadius: 310,
+    backgroundColor: 'rgba(255, 194, 51, 0.16)',
+    filter: 'blur(90px)',
+  } as object,
+  trustRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 16 },
+  trust: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  trustText: { fontFamily: fonts.medium, fontSize: 14, color: '#C5CBD3' },
+  trustLink: { fontFamily: fonts.semibold, fontSize: 14, color: colors.white, textDecorationLine: 'underline' },
   badgeText: { fontFamily: fonts.semibold, fontSize: 13, color: '#D5DBE3' },
   h1: { fontFamily: fonts.display, letterSpacing: -1.5, color: colors.white },
   heroText: { fontFamily: fonts.regular, fontSize: 18, lineHeight: 27, color: colors.mutedOnInk, maxWidth: 520 },
-  heroButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  heroButton: { paddingHorizontal: 28 },
   ghostButton: {
     height: 56,
     borderRadius: radius.lg,
