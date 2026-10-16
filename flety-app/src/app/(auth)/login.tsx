@@ -35,7 +35,7 @@ export default function Login() {
   return (
     <FormScreen
       title="Iniciar sesión"
-      subtitle={next === '/cliente/opciones' ? 'Entrá y seguimos con tu pedido.' : 'Qué bueno verte de nuevo.'}
+      subtitle="Qué bueno verte de nuevo."
       footer={<Button title="Ingresar" onPress={handleLogin} loading={loading} />}>
       <TextField
         label="Email"

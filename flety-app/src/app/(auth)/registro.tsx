@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { colors, fonts } from '@/theme';
 
 export default function Registro() {
-  // ?next=/cliente/opciones (pedido empezado sin cuenta) o /unirse ("Quiero ser fletero").
+  // ?next=/unirse: viene de "Quiero ser fletero".
   const { next } = useLocalSearchParams<{ next?: string }>();
   const fletero = next === '/unirse';
   const conNext = next ? { next } : undefined;
@@ -53,7 +53,13 @@ export default function Registro() {
     return (
       <FormScreen
         title="Revisá tu email"
-        footer={<Button title="Ir a iniciar sesión" variant="dark" onPress={() => router.replace({ pathname: '/login', params: conNext })} />}>
+        footer={
+          <Button
+            title="Ir a iniciar sesión"
+            variant="dark"
+            onPress={() => router.replace({ pathname: '/login', params: conNext })}
+          />
+        }>
         <View style={styles.sentCard}>
           <MailCheck size={32} color={colors.ink} strokeWidth={1.8} />
           <Text style={styles.sentText}>
@@ -71,9 +77,7 @@ export default function Registro() {
       subtitle={
         fletero
           ? 'Creá tu cuenta y después escribí el código que te dio tu empresa.'
-          : next
-            ? 'Tu pedido queda guardado: creá tu cuenta y te mostramos vehículos y precios.'
-            : 'En un minuto estás pidiendo tu primer flete.'
+          : 'En un minuto estás pidiendo tu primer flete.'
       }
       footer={<Button title="Crear cuenta" onPress={handleRegistro} loading={loading} />}>
       <TextField

@@ -20,7 +20,6 @@ import { PublicOnly } from '@/components/Guards';
 import { FleterosSection } from '@/components/landing/FleterosSection';
 import { FloatingNav } from '@/components/landing/FloatingNav';
 import { HeroMap } from '@/components/landing/HeroMap';
-import { HeroQuickStart } from '@/components/landing/HeroQuickStart';
 import { Reveal } from '@/components/landing/Reveal';
 import { ScrollFab } from '@/components/landing/ScrollFab';
 import { usePedidoDraft } from '@/lib/pedido-draft';
@@ -133,9 +132,11 @@ function LandingPage() {
     if (next.scrolled !== scroll.scrolled || next.abajo !== scroll.abajo) setScroll(next);
   }
 
+  // Para pedir hay que tener cuenta: se registra (o entra) y sigue en su inicio.
+  // El tipo elegido queda preseleccionado en el formulario.
   function pedir(tipo?: TipoServicio) {
     if (tipo) update({ tipo });
-    router.push('/pedir');
+    router.push('/registro');
   }
 
   function remember(key: SectionKey, e: LayoutChangeEvent) {
@@ -188,8 +189,29 @@ function LandingPage() {
                   confirmar y tu carga en el mapa hasta que llega.
                 </Text>
               </Reveal>
-              <Reveal delay={240} style={{ zIndex: 5 }}>
-                <HeroQuickStart />
+              <Reveal delay={240}>
+                <View style={styles.pasosHero}>
+                  {['Creá tu cuenta', 'Cargá retiro y entrega', 'Elegí tu fletero'].map((paso, i) => (
+                    <View key={paso} style={styles.pasoHero}>
+                      <Text style={styles.pasoHeroNum}>{i + 1}</Text>
+                      <Text style={styles.pasoHeroText}>{paso}</Text>
+                    </View>
+                  ))}
+                </View>
+              </Reveal>
+              <Reveal delay={300}>
+                <View style={styles.heroButtons}>
+                  <Button title="Crear cuenta y pedir un flete" onPress={() => pedir()} style={styles.heroButton} />
+                  <Pressable
+                    accessibilityRole="link"
+                    onPress={() => router.push('/login')}
+                    style={({ hovered }: { hovered?: boolean }) => [
+                      styles.ghostButton,
+                      hovered && { backgroundColor: 'rgba(255,255,255,0.06)' },
+                    ]}>
+                    <Text style={styles.ghostButtonText}>Ya tengo cuenta</Text>
+                  </Pressable>
+                </View>
               </Reveal>
               <Reveal delay={320}>
                 <View style={styles.trustRow}>
@@ -357,7 +379,7 @@ function LandingPage() {
               <View style={styles.footerCols}>
                 <View style={{ gap: 10 }}>
                   <Text style={styles.footerHead}>Plataforma</Text>
-                  <Link href="/pedir" style={styles.footerLink}>
+                  <Link href="/registro" style={styles.footerLink}>
                     Pedir un flete
                   </Link>
                   <Link href={{ pathname: '/registro', params: { next: '/unirse' } }} style={styles.footerLink}>
@@ -458,6 +480,34 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 194, 51, 0.16)',
     filter: 'blur(90px)',
   } as object,
+  heroButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  heroButton: { paddingHorizontal: 28 },
+  pasosHero: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  pasoHero: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 7,
+    paddingLeft: 7,
+    paddingRight: 14,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: '#2A313B',
+  },
+  pasoHeroNum: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    overflow: 'hidden',
+    textAlign: 'center',
+    lineHeight: 22,
+    fontFamily: fonts.display,
+    fontSize: 12,
+    color: colors.ink,
+    backgroundColor: colors.accent,
+  },
+  pasoHeroText: { fontFamily: fonts.semibold, fontSize: 14, color: '#E4E8ED' },
   trustRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 16 },
   trust: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   trustText: { fontFamily: fonts.medium, fontSize: 14, color: '#C5CBD3' },

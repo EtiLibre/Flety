@@ -70,7 +70,7 @@ export function FloatingNav({
           ) : null}
           <Pressable
             accessibilityRole="link"
-            onPress={() => router.push('/pedir')}
+            onPress={() => router.push('/registro')}
             style={({ pressed }) => [styles.cta, pressed && { transform: [{ scale: 0.97 }] }]}>
             <Text style={styles.ctaText}>Pedir un flete</Text>
           </Pressable>

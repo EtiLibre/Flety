@@ -43,7 +43,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        {/* El borrador del pedido vive arriba de todo: se arranca en /pedir sin cuenta y se termina en /cliente. */}
+        {/* El borrador del pedido vive arriba de todo (la landing puede preelegir el tipo de servicio). */}
         <PedidoDraftProvider>
           <RootStack />
         </PedidoDraftProvider>

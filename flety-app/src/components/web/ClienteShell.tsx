@@ -45,7 +45,7 @@ export function ClienteShell({
           ) : null}
         </View>
         {!session ? (
-          <Link href={{ pathname: '/login', params: { next: '/cliente/opciones' } }} style={styles.loginLink}>
+          <Link href="/login" style={styles.loginLink}>
             Iniciar sesión
           </Link>
         ) : (
