@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // App Expo: tiene su propio tsconfig/eslint y se despliega aparte.
+    "flety-app/**",
   ]),
 ]);
 
