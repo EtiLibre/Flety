@@ -1,4 +1,4 @@
-import { Redirect } from 'expo-router';
+import { Redirect, useGlobalSearchParams, type Href } from 'expo-router';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { useAuth } from '@/lib/auth';
@@ -17,9 +17,18 @@ function Loader({ dark }: { dark?: boolean }) {
 // sesión, manda al inicio que corresponde a su rol.
 export function PublicOnly({ children, dark }: { children: React.ReactNode; dark?: boolean }) {
   const { session, role, loadingProfile } = useAuth();
+  const { next } = useGlobalSearchParams<{ next?: string }>();
   if (session && loadingProfile) return <Loader dark={dark} />;
-  if (session && role) return <Redirect href={ROLE_HOME[role]} />;
+  if (session && role) return <Redirect href={destinoDespuesDeEntrar(role, next)} />;
   return <>{children}</>;
+}
+
+// ?next= solo acepta destinos propios conocidos (no URLs externas): seguir el
+// pedido empezado sin cuenta (cliente) o sumarse como chofer con un código.
+function destinoDespuesDeEntrar(role: UserRole, next: string | undefined): Href {
+  if (next === '/unirse' && (role === 'cliente' || role === 'chofer')) return '/unirse';
+  if (role === 'cliente' && (next === '/cliente/opciones' || next === '/cliente/inicio')) return next;
+  return ROLE_HOME[role];
 }
 
 // Secciones por rol. Esto es solo navegación: la seguridad real la ponen las

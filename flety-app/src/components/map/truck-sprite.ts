@@ -1,8 +1,24 @@
-// Camioncito de Flety visto desde arriba (estilo apps de viaje): cabina
-// amarilla de marca, caja blanca con la "F" en el techo, sombreado lateral y
-// sombra suave. Frente hacia arriba (norte); el mapa lo rota según el rumbo.
-// Misma figura que TruckSprite.tsx (nativo).
+// Camioneta de flete vista desde arriba: cabina amarilla de Flety y caja
+// abierta con cajas de cartón (se lee "mudanza" de un vistazo). Frente hacia
+// arriba (norte); el mapa la rota según el rumbo. Misma figura que TruckSprite.tsx.
 export const TRUCK_SIZE = { width: 40, height: 72 };
+
+// Cajas de cartón dentro de la caja: [x, y, ancho, alto].
+export const CAJAS: [number, number, number, number][] = [
+  [10, 30.5, 13, 12],
+  [24.5, 31.5, 9.5, 10],
+  [10.5, 45, 10, 12.5],
+  [22.5, 44, 11.5, 14],
+  [10, 60, 24, 12],
+];
+
+function cajasSvg() {
+  return CAJAS.map(
+    ([x, y, w, h]) =>
+      `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1.4" fill="url(#fl-carton)" stroke="#8C5E2E" stroke-width="0.7"/>` +
+      `<path d="M${x + w / 2} ${y + 0.6}v${h - 1.2}" stroke="#E9C48F" stroke-width="1.6"/>`
+  ).join('');
+}
 
 export const TRUCK_3D_SVG = `
 <svg width="${TRUCK_SIZE.width}" height="${TRUCK_SIZE.height}" viewBox="0 0 44 80" xmlns="http://www.w3.org/2000/svg">
@@ -11,9 +27,8 @@ export const TRUCK_3D_SVG = `
       <stop offset="0" stop-color="#D99B00"/><stop offset="0.22" stop-color="#FFC233"/>
       <stop offset="0.5" stop-color="#FFD873"/><stop offset="0.78" stop-color="#FFC233"/><stop offset="1" stop-color="#D99B00"/>
     </linearGradient>
-    <linearGradient id="fl-box" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#CDD3DB"/><stop offset="0.15" stop-color="#F4F6F8"/>
-      <stop offset="0.5" stop-color="#FFFFFF"/><stop offset="0.85" stop-color="#F4F6F8"/><stop offset="1" stop-color="#CDD3DB"/>
+    <linearGradient id="fl-carton" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#D9A86C"/><stop offset="1" stop-color="#B9844B"/>
     </linearGradient>
     <linearGradient id="fl-glass" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#3A4450"/><stop offset="1" stop-color="#12161C"/>
@@ -27,11 +42,9 @@ export const TRUCK_3D_SVG = `
   <rect x="33.5" y="13" width="4" height="9" rx="1.6" fill="#232A33"/>
   <rect x="5" y="55" width="4" height="11" rx="1.6" fill="#232A33"/>
   <rect x="35" y="55" width="4" height="11" rx="1.6" fill="#232A33"/>
-  <rect x="7" y="27" width="30" height="49" rx="4" fill="url(#fl-box)" stroke="rgba(18,22,28,0.22)" stroke-width="0.8"/>
-  <rect x="10" y="30" width="24" height="43" rx="2.5" fill="none" stroke="rgba(18,22,28,0.08)" stroke-width="1"/>
-  <path d="M13 34.5h18M13 69h18" stroke="rgba(18,22,28,0.07)" stroke-width="1"/>
-  <rect x="15" y="44.5" width="14" height="14" rx="4" fill="#FFC233"/>
-  <path d="M19.4 48h6v2.3h-3.4v1.5h2.9v2.2h-2.9v3h-2.6z" fill="#12161C"/>
+  <rect x="7" y="27" width="30" height="49" rx="3.5" fill="#4A535F"/>
+  <rect x="8.6" y="28.6" width="26.8" height="45.8" rx="2.4" fill="#2E353F"/>
+  ${cajasSvg()}
   <rect x="9" y="75" width="4.5" height="1.6" rx="0.8" fill="#E5484D"/>
   <rect x="30.5" y="75" width="4.5" height="1.6" rx="0.8" fill="#E5484D"/>
   <rect x="13" y="23" width="18" height="5" fill="#2A313B"/>

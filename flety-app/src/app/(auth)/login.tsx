@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { Link, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { colors, fonts } from '@/theme';
 
 export default function Login() {
+  const { next } = useLocalSearchParams<{ next?: string }>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +35,7 @@ export default function Login() {
   return (
     <FormScreen
       title="Iniciar sesión"
-      subtitle="Qué bueno verte de nuevo."
+      subtitle={next === '/cliente/opciones' ? 'Entrá y seguimos con tu pedido.' : 'Qué bueno verte de nuevo.'}
       footer={<Button title="Ingresar" onPress={handleLogin} loading={loading} />}>
       <TextField
         label="Email"
@@ -65,7 +66,7 @@ export default function Login() {
         <Link href="/recuperar" style={styles.link}>
           Olvidé mi contraseña
         </Link>
-        <Link href="/registro" style={styles.link}>
+        <Link href={{ pathname: '/registro', params: next ? { next } : undefined }} style={styles.link}>
           Crear cuenta
         </Link>
       </View>

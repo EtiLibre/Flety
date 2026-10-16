@@ -13,6 +13,7 @@ import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider, useAuth } from '@/lib/auth';
+import { PedidoDraftProvider } from '@/lib/pedido-draft';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -42,7 +43,10 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <RootStack />
+        {/* El borrador del pedido vive arriba de todo: se arranca en /pedir sin cuenta y se termina en /cliente. */}
+        <PedidoDraftProvider>
+          <RootStack />
+        </PedidoDraftProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );

@@ -59,6 +59,7 @@ export default function MisPedidos() {
 
   return (
     <FormScreen
+      illustration={false}
       title="Mis pedidos"
       footer={<Button title="Pedir un servicio" onPress={() => router.push('/cliente/nuevo-pedido')} />}>
       {contenido}

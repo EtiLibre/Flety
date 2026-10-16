@@ -9,7 +9,12 @@ import { colors, fonts } from '@/theme';
 export function HeroPreview({ height }: { height: number }) {
   return (
     <View style={[styles.card, { height }]}>
-      <Svg width="100%" height="100%" viewBox="0 0 560 460" preserveAspectRatio="xMidYMid slice" style={StyleSheet.absoluteFill}>
+      <Svg
+        width="100%"
+        height="100%"
+        viewBox="0 0 560 460"
+        preserveAspectRatio="xMidYMid slice"
+        style={StyleSheet.absoluteFill}>
         <Rect width={560} height={460} fill="#161B22" />
         <Rect x={350} y={40} width={150} height={110} rx={16} fill="#18251E" />
         <Rect x={40} y={300} width={130} height={100} rx={16} fill="#18251E" />
@@ -21,7 +26,14 @@ export function HeroPreview({ height }: { height: number }) {
           <Path d="M250 -10 L276 470" strokeWidth={16} />
           <Path d="M420 -10 L436 470" strokeWidth={9} />
         </G>
-        <Path d="M112 340 L118 226 L262 214 L256 104 L420 92" stroke={colors.accent} strokeWidth={5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <Path
+          d="M112 340 L118 226 L262 214 L256 104 L420 92"
+          stroke={colors.accent}
+          strokeWidth={5}
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
         <Circle cx={112} cy={340} r={11} fill="#F2F4F7" stroke="#161B22" strokeWidth={4} />
         <Rect x={408} y={80} width={24} height={24} rx={6} fill={colors.accent} stroke="#161B22" strokeWidth={3} />
         <Circle cx={262} cy={214} r={30} fill={colors.accent} fillOpacity={0.22} />
@@ -60,7 +72,14 @@ export function HeroPreview({ height }: { height: number }) {
 }
 
 const styles = StyleSheet.create({
-  card: { width: '100%', borderRadius: 28, overflow: 'hidden', backgroundColor: '#161B22', borderWidth: 1, borderColor: '#232A34' },
+  card: {
+    width: '100%',
+    borderRadius: 28,
+    overflow: 'hidden',
+    backgroundColor: '#161B22',
+    borderWidth: 1,
+    borderColor: '#232A34',
+  },
   verified: {
     position: 'absolute',
     top: 20,
@@ -87,7 +106,16 @@ const styles = StyleSheet.create({
   },
   statusHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   statusTitle: { flex: 1, fontFamily: fonts.display, fontSize: 18, color: colors.ink },
-  eta: { fontFamily: fonts.display, fontSize: 14, color: colors.ink, backgroundColor: colors.accent, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, overflow: 'hidden' },
+  eta: {
+    fontFamily: fonts.display,
+    fontSize: 14,
+    color: colors.ink,
+    backgroundColor: colors.accent,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
   progress: { flexDirection: 'row', gap: 5 },
   bar: { flex: 1, height: 4, borderRadius: 2, backgroundColor: colors.line, overflow: 'hidden' },
   barHalf: { backgroundColor: colors.line },

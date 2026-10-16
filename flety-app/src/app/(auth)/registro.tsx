@@ -1,4 +1,4 @@
-import { Link, router } from 'expo-router';
+import { Link, router, useLocalSearchParams } from 'expo-router';
 import { MailCheck } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -11,6 +11,10 @@ import { supabase } from '@/lib/supabase';
 import { colors, fonts } from '@/theme';
 
 export default function Registro() {
+  // ?next=/cliente/opciones (pedido empezado sin cuenta) o /unirse ("Quiero ser fletero").
+  const { next } = useLocalSearchParams<{ next?: string }>();
+  const fletero = next === '/unirse';
+  const conNext = next ? { next } : undefined;
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -49,7 +53,7 @@ export default function Registro() {
     return (
       <FormScreen
         title="Revisá tu email"
-        footer={<Button title="Ir a iniciar sesión" variant="dark" onPress={() => router.replace('/login')} />}>
+        footer={<Button title="Ir a iniciar sesión" variant="dark" onPress={() => router.replace({ pathname: '/login', params: conNext })} />}>
         <View style={styles.sentCard}>
           <MailCheck size={32} color={colors.ink} strokeWidth={1.8} />
           <Text style={styles.sentText}>
@@ -63,8 +67,14 @@ export default function Registro() {
 
   return (
     <FormScreen
-      title="Crear cuenta"
-      subtitle="En un minuto estás pidiendo tu primer flete."
+      title={fletero ? 'Sumate como fletero' : 'Crear cuenta'}
+      subtitle={
+        fletero
+          ? 'Creá tu cuenta y después escribí el código que te dio tu empresa.'
+          : next
+            ? 'Tu pedido queda guardado: creá tu cuenta y te mostramos vehículos y precios.'
+            : 'En un minuto estás pidiendo tu primer flete.'
+      }
       footer={<Button title="Crear cuenta" onPress={handleRegistro} loading={loading} />}>
       <TextField
         label="Nombre"
@@ -101,7 +111,7 @@ export default function Registro() {
       ) : null}
       <Text style={styles.footnote}>
         ¿Ya tenés cuenta?{' '}
-        <Link href="/login" style={styles.link}>
+        <Link href={{ pathname: '/login', params: conNext }} style={styles.link}>
           Iniciar sesión
         </Link>
       </Text>

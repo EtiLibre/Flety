@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 
 import type { GeoPoint, Tamano, TipoServicio, Vehiculo } from './types';
 
@@ -89,7 +89,36 @@ type DraftContext = {
 
 const Ctx = createContext<DraftContext | null>(null);
 
-// Borrador del pedido compartido entre "nuevo pedido" y "elegir vehículo".
+// El borrador se guarda en el dispositivo para que sobreviva al registro
+// (incluso si hay que confirmar el email en otra pestaña). Las fotos no: son
+// archivos locales y se vuelven a elegir.
+const STORAGE_KEY = 'flety:pedido-draft';
+
+function leerGuardado(): Partial<PedidoDraft> {
+  try {
+    const raw = globalThis.localStorage?.getItem(STORAGE_KEY);
+    if (!raw) return {};
+    const saved = JSON.parse(raw) as Partial<PedidoDraft>;
+    // Un programado que ya pasó vuelve a "ahora".
+    if (saved.cuando?.modo === 'programado' && !horarioDisponible(saved.cuando.fecha, saved.cuando.hora)) {
+      saved.cuando = { modo: 'ahora' };
+    }
+    return saved;
+  } catch {
+    return {};
+  }
+}
+
+function guardar(draft: PedidoDraft) {
+  try {
+    const { fotos: _fotos, ...resto } = draft;
+    globalThis.localStorage?.setItem(STORAGE_KEY, JSON.stringify(resto));
+  } catch {
+    // sin almacenamiento disponible: el borrador vive solo en memoria
+  }
+}
+
+// Borrador del pedido compartido entre la landing, "nuevo pedido" y "elegir vehículo".
 export function PedidoDraftProvider({
   children,
   initial,
@@ -97,7 +126,12 @@ export function PedidoDraftProvider({
   children: React.ReactNode;
   initial?: Partial<PedidoDraft>;
 }) {
-  const [draft, setDraft] = useState<PedidoDraft>(() => ({ ...INITIAL, ...initial }));
+  // Con `initial` (vistas previas) no se lee ni se guarda nada.
+  const [draft, setDraft] = useState<PedidoDraft>(() => ({ ...INITIAL, ...(initial ?? leerGuardado()) }));
+  const persistir = !initial;
+  useEffect(() => {
+    if (persistir) guardar(draft);
+  }, [draft, persistir]);
   return (
     <Ctx.Provider
       value={{

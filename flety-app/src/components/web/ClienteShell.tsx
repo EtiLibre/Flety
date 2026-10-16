@@ -19,7 +19,7 @@ export function ClienteShell({
   panel: React.ReactNode;
   map: React.ReactNode;
 }) {
-  const { nombre } = useAuth();
+  const { nombre, session } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -33,41 +33,52 @@ export function ClienteShell({
             </View>
             <Text style={styles.brandWord}>flety</Text>
           </Link>
-          <View style={styles.nav} accessibilityRole="menubar">
-            <Link href="/cliente/inicio" style={[styles.navLink, active === 'pedir' && styles.navLinkActive]}>
-              Pedir
-            </Link>
-            <Link href="/cliente/pedidos" style={[styles.navLink, active === 'pedidos' && styles.navLinkActive]}>
-              Mis pedidos
-            </Link>
-          </View>
-        </View>
-        <View style={styles.profileArea}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Perfil"
-            onPress={() => setMenuOpen((open) => !open)}
-            style={styles.profileButton}>
-            <User size={20} color={colors.ink} strokeWidth={2} />
-          </Pressable>
-          {menuOpen ? (
-            <View style={styles.menu}>
-              {nombre ? <Text style={styles.menuName}>{nombre}</Text> : null}
-              <Link href="/unirse" style={styles.menuItem}>
-                <Truck size={18} color={colors.ink} strokeWidth={2} />
-                <Text style={[styles.menuItemText, { color: colors.ink }]}>Soy chofer · tengo un código</Text>
+          {session ? (
+            <View style={styles.nav} accessibilityRole="menubar">
+              <Link href="/cliente/inicio" style={[styles.navLink, active === 'pedir' && styles.navLinkActive]}>
+                Pedir
               </Link>
-              <Pressable accessibilityRole="button" onPress={() => supabase.auth.signOut()} style={styles.menuItem}>
-                <LogOut size={18} color={colors.danger} strokeWidth={2} />
-                <Text style={styles.menuItemText}>Cerrar sesión</Text>
-              </Pressable>
+              <Link href="/cliente/pedidos" style={[styles.navLink, active === 'pedidos' && styles.navLinkActive]}>
+                Mis pedidos
+              </Link>
             </View>
           ) : null}
         </View>
+        {!session ? (
+          <Link href={{ pathname: '/login', params: { next: '/cliente/opciones' } }} style={styles.loginLink}>
+            Iniciar sesión
+          </Link>
+        ) : (
+          <View style={styles.profileArea}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Perfil"
+              onPress={() => setMenuOpen((open) => !open)}
+              style={styles.profileButton}>
+              <User size={20} color={colors.ink} strokeWidth={2} />
+            </Pressable>
+            {menuOpen ? (
+              <View style={styles.menu}>
+                {nombre ? <Text style={styles.menuName}>{nombre}</Text> : null}
+                <Link href="/unirse" style={styles.menuItem}>
+                  <Truck size={18} color={colors.ink} strokeWidth={2} />
+                  <Text style={[styles.menuItemText, { color: colors.ink }]}>Soy chofer · tengo un código</Text>
+                </Link>
+                <Pressable accessibilityRole="button" onPress={() => supabase.auth.signOut()} style={styles.menuItem}>
+                  <LogOut size={18} color={colors.danger} strokeWidth={2} />
+                  <Text style={styles.menuItemText}>Cerrar sesión</Text>
+                </Pressable>
+              </View>
+            ) : null}
+          </View>
+        )}
       </View>
 
       <View style={styles.body}>
-        <ScrollView style={styles.panel} contentContainerStyle={styles.panelContent} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          style={styles.panel}
+          contentContainerStyle={styles.panelContent}
+          keyboardShouldPersistTaps="handled">
           {panel}
         </ScrollView>
         <View style={styles.mapArea}>{map}</View>
@@ -90,7 +101,14 @@ const styles = StyleSheet.create({
   },
   topLeft: { flexDirection: 'row', alignItems: 'center', gap: 28 },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  brandMark: { width: 34, height: 34, borderRadius: 10, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
+  brandMark: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   brandWord: { fontFamily: fonts.display, fontSize: 22, letterSpacing: -0.4, color: colors.ink },
   nav: { flexDirection: 'row', gap: 22 },
   navLink: {
@@ -103,7 +121,23 @@ const styles = StyleSheet.create({
   },
   navLinkActive: { fontFamily: fonts.bold, color: colors.ink, borderBottomColor: colors.ink },
   profileArea: { alignItems: 'flex-end' },
-  profileButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
+  loginLink: {
+    fontFamily: fonts.semibold,
+    fontSize: 15,
+    color: colors.ink,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+  },
+  profileButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   menu: {
     position: 'absolute',
     top: 52,
@@ -114,7 +148,13 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     ...shadow.floating,
   },
-  menuName: { fontFamily: fonts.semibold, fontSize: 14, color: colors.muted, paddingHorizontal: 16, paddingVertical: 10 },
+  menuName: {
+    fontFamily: fonts.semibold,
+    fontSize: 14,
+    color: colors.muted,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
   menuItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, height: 44 },
   menuItemText: { fontFamily: fonts.semibold, fontSize: 15, color: colors.danger },
   body: { flex: 1, flexDirection: 'row' },
