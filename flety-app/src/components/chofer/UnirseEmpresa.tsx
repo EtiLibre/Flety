@@ -35,7 +35,9 @@ export function UnirseEmpresa() {
     return (
       <View style={styles.card}>
         <Text style={styles.title}>¡Listo! Ya sos parte de {empresa}</Text>
-        <Text style={styles.text}>Desde ahora tu empresa te puede asignar viajes. Marcate disponible cuando quieras trabajar.</Text>
+        <Text style={styles.text}>
+          Desde ahora tu empresa te puede asignar viajes. Marcate disponible cuando quieras trabajar.
+        </Text>
         <Button title="Ir a mi panel de chofer" onPress={() => router.replace('/chofer/panel')} />
       </View>
     );
@@ -55,7 +57,14 @@ export function UnirseEmpresa() {
       </Text>
       <TextInput
         value={codigo}
-        onChangeText={(t) => setCodigo(t.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))}
+        onChangeText={(t) =>
+          setCodigo(
+            t
+              .toUpperCase()
+              .replace(/[^A-Z0-9]/g, '')
+              .slice(0, 6)
+          )
+        }
         placeholder="ABC123"
         placeholderTextColor="#5B6470"
         autoCapitalize="characters"
@@ -76,7 +85,14 @@ export function UnirseEmpresa() {
 
 const styles = StyleSheet.create({
   card: { gap: 14, padding: 22, borderRadius: 24, backgroundColor: d.surface, borderWidth: 1, borderColor: d.line },
-  icon: { width: 48, height: 48, borderRadius: 16, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
+  icon: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   title: { fontFamily: fonts.display, fontSize: 26, letterSpacing: -0.5, color: d.text },
   text: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 21, color: d.muted },
   input: {

@@ -2,6 +2,7 @@ import { Link, router } from 'expo-router';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { AccionCola } from '@/components/empresa/AccionCola';
+import { ColaExtra } from '@/components/empresa/ColaExtra';
 import {
   Badge,
   BotonChico,
@@ -19,7 +20,6 @@ import { useAccion } from '@/hooks/use-accion';
 import { useEmpresa } from '@/hooks/use-empresa';
 import { useIsWide } from '@/hooks/use-is-wide';
 import { estadoDelChofer, nombreChofer } from '@/lib/empresa';
-import { formatARS } from '@/lib/pricing';
 import { EN_VIAJE } from '@/lib/seguimiento';
 import { colors, fonts } from '@/theme';
 
@@ -67,7 +67,11 @@ export default function PanelEmpresa() {
               <Card title="Cola de pedidos" right={<EnVivo />}>
                 {cola.length ? (
                   <>
-                    {isWide ? <TablaHeader columnas={COLUMNAS_PEDIDO.map((c, i) => (i === 4 ? { ...c, titulo: 'Precio est.' } : c))} /> : null}
+                    {isWide ? (
+                      <TablaHeader
+                        columnas={COLUMNAS_PEDIDO.map((c, i) => (i === 4 ? { ...c, titulo: 'Precio est.' } : c))}
+                      />
+                    ) : null}
                     <View style={!isWide && styles.cards}>
                       {cola.slice(0, MAX_FILAS).map((p) => (
                         <PedidoFila
@@ -75,7 +79,7 @@ export default function PanelEmpresa() {
                           pedido={p}
                           fotos={fotos[p.id] ?? 0}
                           wide={isWide}
-                          extra={<Precio valor={p.precio_estimado} />}
+                          extra={<ColaExtra pedido={p} empresa={empresa} />}
                           accion={<AccionCola pedido={p} empresa={empresa} pendiente={pendiente} ejecutar={ejecutar} />}
                         />
                       ))}
@@ -98,7 +102,9 @@ export default function PanelEmpresa() {
               </Card>
 
               {sinChofer.length ? (
-                <Card title="Aceptados, esperando chofer" right={<Badge label={String(sinChofer.length)} tone="warn" />}>
+                <Card
+                  title="Aceptados, esperando chofer"
+                  right={<Badge label={String(sinChofer.length)} tone="warn" />}>
                   <View style={!isWide && styles.cards}>
                     {sinChofer.slice(0, MAX_FILAS).map((p) => (
                       <PedidoFila
@@ -144,19 +150,8 @@ export default function PanelEmpresa() {
   );
 }
 
-function Precio({ valor }: { valor: number | null }) {
-  if (valor == null) return null;
-  return (
-    <Text style={styles.precio}>
-      {formatARS(Number(valor))}
-    </Text>
-  );
-}
-
 function AbrirDetalle({ id }: { id: string }) {
-  return (
-    <BotonChico title="Asignar" variant="dark" onPress={() => router.push(`/empresa/pedidos/${id}`)} />
-  );
+  return <BotonChico title="Asignar" variant="dark" onPress={() => router.push(`/empresa/pedidos/${id}`)} />;
 }
 
 const styles = StyleSheet.create({

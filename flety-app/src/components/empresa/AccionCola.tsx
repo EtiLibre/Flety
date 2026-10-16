@@ -1,5 +1,6 @@
 import { useAuth } from '@/lib/auth';
 import { aceptarPedido, simularPago, type Empresa } from '@/lib/empresa';
+import { liberarSolicitud } from '@/lib/marketplace';
 import type { Pedido } from '@/lib/orders';
 
 import { Badge, BotonChico } from './ui';
@@ -30,12 +31,24 @@ export function AccionCola({
     );
   }
   if (role === 'empresa' && empresa?.estado_aprobacion === 'aprobada' && pedido.estado === 'buscando_asignacion') {
+    // Si el cliente eligió a esta empresa (o a uno de sus choferes), también puede liberarlo a la cola abierta.
+    const elegida = pedido.company_solicitada === empresa.id;
     return (
-      <BotonChico
-        title="Aceptar"
-        loading={pendiente === `aceptar-${pedido.id}`}
-        onPress={() => ejecutar(`aceptar-${pedido.id}`, () => aceptarPedido(pedido.id, empresa.id))}
-      />
+      <>
+        {elegida ? (
+          <BotonChico
+            title="Liberar"
+            variant="outline"
+            loading={pendiente === `liberar-${pedido.id}`}
+            onPress={() => ejecutar(`liberar-${pedido.id}`, () => liberarSolicitud(pedido.id))}
+          />
+        ) : null}
+        <BotonChico
+          title="Aceptar"
+          loading={pendiente === `aceptar-${pedido.id}`}
+          onPress={() => ejecutar(`aceptar-${pedido.id}`, () => aceptarPedido(pedido.id, empresa.id))}
+        />
+      </>
     );
   }
   return <Badge label={pedido.estado === 'pendiente' ? 'Sin pagar' : 'En cola'} tone="neutral" />;

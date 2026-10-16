@@ -24,6 +24,9 @@ const base = {
   nota: null,
   vehiculo: 'camioneta' as const,
   created_at: new Date().toISOString(),
+  company_solicitada: null,
+  driver_solicitado: null,
+  solicitado_hasta: null,
 };
 
 const SAN_MARTIN = { lat: -32.8893605, lng: -68.8391999, direccion: 'Avenida General San Martín 1200, Mendoza' };

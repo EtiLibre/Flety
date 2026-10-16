@@ -10,12 +10,14 @@ export type DatosChofer = {
   chofer: MiChofer | null;
   // Asignados y en curso, el más avanzado primero.
   pedidos: Pedido[];
+  // Pedidos donde un cliente lo eligió en el marketplace y esperan su respuesta.
+  solicitudes: Pedido[];
   // Entregados hoy.
   hechosHoy: number;
   clientes: Record<string, string>;
 };
 
-const VACIO: DatosChofer = { chofer: null, pedidos: [], hechosHoy: 0, clientes: {} };
+const VACIO: DatosChofer = { chofer: null, pedidos: [], solicitudes: [], hechosHoy: 0, clientes: {} };
 
 // SOLO DESARROLLO: datos de ejemplo para /preview-chofer (sin Supabase).
 export const ChoferPreviewContext = createContext<DatosChofer | null>(null);
@@ -51,7 +53,7 @@ export function useChofer() {
       }
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
-      const [activosRes, hechosRes] = await Promise.all([
+      const [activosRes, hechosRes, solicitudesRes] = await Promise.all([
         supabase.from('orders').select(PEDIDO_COLUMNS).eq('driver_id', chofer.id).in('estado', ESTADOS_ACTIVOS_CHOFER),
         supabase
           .from('orders')
@@ -59,11 +61,18 @@ export function useChofer() {
           .eq('driver_id', chofer.id)
           .in('estado', ['entregado', 'confirmado', 'liquidado'])
           .gte('created_at', hoy.toISOString()),
+        supabase
+          .from('orders')
+          .select(PEDIDO_COLUMNS)
+          .eq('driver_solicitado', chofer.id)
+          .eq('estado', 'buscando_asignacion')
+          .order('created_at'),
       ]);
       const pedidos = ((activosRes.data as Pedido[] | null) ?? []).sort(ordenar);
+      const solicitudes = (solicitudesRes.data as Pedido[] | null) ?? [];
       const clientes = await nombresDeClientes(pedidos.map((p) => p.cliente_id));
       if (cancelled) return;
-      setDatos({ chofer, pedidos, hechosHoy: hechosRes.count ?? 0, clientes });
+      setDatos({ chofer, pedidos, solicitudes, hechosHoy: hechosRes.count ?? 0, clientes });
       setLoading(false);
     })();
     return () => {
@@ -77,7 +86,16 @@ export function useChofer() {
     if (!driverId || preview) return;
     const channel = supabase
       .channel(`chofer-app-${driverId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `driver_id=eq.${driverId}` }, recargar)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders', filter: `driver_id=eq.${driverId}` },
+        recargar
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders', filter: `driver_solicitado=eq.${driverId}` },
+        recargar
+      )
       .subscribe();
     // Respaldo: si le sacan un pedido, el UPDATE puede no llegar (deja de ser visible).
     const interval = setInterval(recargar, 30_000);

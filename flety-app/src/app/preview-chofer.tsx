@@ -11,10 +11,10 @@ import { colors, fonts } from '@/theme';
 import PanelChofer from './chofer/panel';
 
 // SOLO DESARROLLO: la app del chofer con datos de ejemplo, sin iniciar sesión
-// ni Supabase. ?estado=asignado|en_camino_origen|cargando|en_camino_destino|libre|sin-empresa
+// ni Supabase. ?estado=solicitud|asignado|en_camino_origen|cargando|en_camino_destino|libre|sin-empresa
 // (los botones que escriben en la base fallan acá, es esperado). En producción redirige al inicio.
 
-const ESTADOS = ['asignado', 'en_camino_origen', 'cargando', 'en_camino_destino', 'libre', 'sin-empresa'] as const;
+const ESTADOS = ['solicitud', 'asignado', 'en_camino_origen', 'cargando', 'en_camino_destino', 'libre', 'sin-empresa'] as const;
 
 const PEDIDO: Pedido = {
   id: 'p-chofer-1',
@@ -33,13 +33,20 @@ const PEDIDO: Pedido = {
   distancia_km: 2.1,
   precio_estimado: 39500,
   created_at: new Date().toISOString(),
+  company_solicitada: null,
+  driver_solicitado: null,
+  solicitado_hasta: null,
 };
+
+// Reserva de ejemplo: ~4,5 minutos desde que se abre la vista previa.
+const RESERVA_HASTA = new Date(Date.now() + 4 * 60_000 + 32_000).toISOString();
 
 const CHOFER = {
   id: 'drv-1',
   company_id: 'emp-1',
   disponibilidad: true,
   ubicacion_actual: { lat: -32.8788, lng: -68.8303 },
+  vehiculo: { tipo: 'camioneta' as const, patente: 'AE 123 FT' },
   empresa: 'Fletes Cuyo',
 };
 
@@ -48,10 +55,26 @@ export default function PreviewChofer() {
   if (!__DEV__) return <Redirect href="/" />;
   const estado = ESTADOS.find((e) => e === params.estado) ?? 'asignado';
 
-  const pedido = estado === 'libre' || estado === 'sin-empresa' ? null : { ...PEDIDO, estado };
+  const pedido =
+    estado === 'libre' || estado === 'sin-empresa' || estado === 'solicitud' ? null : { ...PEDIDO, estado };
+  // Un cliente lo eligió en el marketplace: reserva de 5 minutos.
+  const solicitud: Pedido | null =
+    estado === 'solicitud'
+      ? {
+          ...PEDIDO,
+          id: 'p-solicitud',
+          estado: 'buscando_asignacion',
+          company_id: null,
+          driver_id: null,
+          company_solicitada: 'emp-1',
+          driver_solicitado: 'drv-1',
+          solicitado_hasta: RESERVA_HASTA,
+        }
+      : null;
   const datos: DatosChofer = {
     chofer: estado === 'sin-empresa' ? null : CHOFER,
     pedidos: pedido ? [pedido] : [],
+    solicitudes: solicitud ? [solicitud] : [],
     hechosHoy: 2,
     clientes: { 'cli-1': 'Ana Pérez' },
   };

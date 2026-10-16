@@ -2,12 +2,14 @@ import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Camera, LogOut, MapPin, Navigation, User } from 'lucide-react-native';
+import { Camera, LogOut, MapPin, Navigation, Truck, User } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { MiVehiculo } from '@/components/chofer/MiVehiculo';
+import { SolicitudCard } from '@/components/chofer/SolicitudCard';
 import { UnirseEmpresa } from '@/components/chofer/UnirseEmpresa';
 import { AppMap } from '@/components/map/AppMap';
 import { MENDOZA, type MapMarker } from '@/components/map/types';
@@ -20,6 +22,7 @@ import { useRuta } from '@/hooks/use-ruta';
 import { avanzarViaje, cambiarDisponibilidad, ETAPAS, PASOS_VIAJE, urlNavegacion } from '@/lib/chofer';
 import { confirmar } from '@/lib/confirm';
 import { describirCuando, plural } from '@/lib/format';
+import { aceptarComoChofer, liberarSolicitud } from '@/lib/marketplace';
 import type { Pedido } from '@/lib/orders';
 import { formatARS } from '@/lib/pricing';
 import { supabase } from '@/lib/supabase';
@@ -34,7 +37,8 @@ function servicio(p: Pedido) {
 
 export default function PanelChofer() {
   const isWide = useIsWide();
-  const { chofer, pedidos, hechosHoy, clientes, loading, recargar } = useChofer();
+  const { chofer, pedidos, solicitudes, hechosHoy, clientes, loading, recargar } = useChofer();
+  const [editVehiculo, setEditVehiculo] = useState(false);
   const accion = useAccion(recargar);
   const [disponibleLocal, setDisponibleLocal] = useState<boolean | null>(null);
   const disponible = disponibleLocal ?? chofer?.disponibilidad ?? false;
@@ -49,9 +53,7 @@ export default function PanelChofer() {
   const paso = actual ? PASOS_VIAJE.find((p) => p.desde === actual.estado) : undefined;
   const objetivo = actual && paso ? (paso.destino === 'origen' ? actual.origen : actual.destino) : null;
   // Ruta: de donde estoy al objetivo; mientras carga, la ruta de la entrega.
-  const { ruta } = useRuta(
-    actual?.estado === 'cargando' ? [actual.origen, actual.destino] : [yo, objetivo ?? null]
-  );
+  const { ruta } = useRuta(actual?.estado === 'cargando' ? [actual.origen, actual.destino] : [yo, objetivo ?? null]);
 
   const { fotos: fotosActual } = usePedidoEnVivo(actual?.id);
 
@@ -116,7 +118,7 @@ export default function PanelChofer() {
   const barra = (
     <View style={styles.topBlock}>
       <View style={styles.topRow}>
-        <Menu empresa={chofer.empresa} />
+        <Menu empresa={chofer.empresa} onVehiculo={() => setEditVehiculo(true)} />
         <Pressable
           accessibilityRole="switch"
           accessibilityState={{ checked: disponible }}
@@ -140,6 +142,38 @@ export default function PanelChofer() {
       <EstadoGps estado={gps.estado} />
     </View>
   );
+
+  // Solicitudes del marketplace (un cliente lo eligió): van primero.
+  const solicitud = solicitudes[0] ?? null;
+  const tarjetaSolicitud = solicitud ? (
+    <SolicitudCard
+      pedido={solicitud}
+      cargando={
+        accion.pendiente === `aceptar-${solicitud.id}`
+          ? 'aceptar'
+          : accion.pendiente === `rechazar-${solicitud.id}`
+            ? 'rechazar'
+            : null
+      }
+      onAceptar={() =>
+        accion.ejecutar(`aceptar-${solicitud.id}`, () => aceptarComoChofer(solicitud.id, chofer.id, chofer.company_id))
+      }
+      onRechazar={() => accion.ejecutar(`rechazar-${solicitud.id}`, () => liberarSolicitud(solicitud.id))}
+    />
+  ) : null;
+
+  // Sin vehículo cargado no aparece en el marketplace: se lo pedimos.
+  const tarjetaVehiculo =
+    editVehiculo || !chofer.vehiculo?.tipo ? (
+      <MiVehiculo
+        driverId={chofer.id}
+        inicial={chofer.vehiculo}
+        onGuardado={() => {
+          setEditVehiculo(false);
+          recargar();
+        }}
+      />
+    ) : null;
 
   const tarjeta = actual ? (
     actual.estado === 'asignado' ? (
@@ -165,8 +199,8 @@ export default function PanelChofer() {
       <Text style={styles.cardTitle}>{disponible ? 'Esperando viajes' : 'Estás fuera de servicio'}</Text>
       <Text style={styles.muted}>
         {disponible
-          ? `Cuando ${chofer.empresa ?? 'tu empresa'} te asigne un pedido, aparece acá.`
-          : 'Marcate disponible para que tu empresa te pueda asignar viajes.'}
+          ? `Los clientes cercanos te pueden elegir, y ${chofer.empresa ?? 'tu empresa'} te puede asignar pedidos.`
+          : 'Marcate disponible para aparecer en el marketplace y recibir viajes.'}
       </Text>
     </View>
   );
@@ -196,6 +230,8 @@ export default function PanelChofer() {
         <StatusBar style="light" />
         <ScrollView style={styles.widePanel} contentContainerStyle={styles.widePanelContent}>
           {barra}
+          {tarjetaSolicitud}
+          {tarjetaVehiculo}
           {tarjeta}
           {extra}
         </ScrollView>
@@ -213,6 +249,8 @@ export default function PanelChofer() {
       </SafeAreaView>
       <View style={styles.overlayBottom} pointerEvents="box-none">
         <ScrollView style={styles.sheetScroll} contentContainerStyle={styles.sheetContent} bounces={false}>
+          {tarjetaSolicitud}
+          {tarjetaVehiculo}
           {tarjeta}
           {extra}
         </ScrollView>
@@ -221,7 +259,15 @@ export default function PanelChofer() {
   );
 }
 
-function Indicacion({ pedido, paso, minutos }: { pedido: Pedido; paso: (typeof PASOS_VIAJE)[number]; minutos: number | null }) {
+function Indicacion({
+  pedido,
+  paso,
+  minutos,
+}: {
+  pedido: Pedido;
+  paso: (typeof PASOS_VIAJE)[number];
+  minutos: number | null;
+}) {
   const lugar = paso.destino === 'origen' ? pedido.origen : pedido.destino;
   const tiempo = pedido.estado === 'cargando' || minutos == null ? '' : ` · ${minutos} min`;
   return (
@@ -286,7 +332,9 @@ function Asignado({
         </View>
       ) : null}
       <Button title="Salir hacia el retiro" loading={cargando} onPress={onEmpezar} style={styles.mainBtn} />
-      <Text style={[styles.muted, { textAlign: 'center' }]}>¿No podés hacerlo? Avisale a tu empresa para que lo reasigne.</Text>
+      <Text style={[styles.muted, { textAlign: 'center' }]}>
+        ¿No podés hacerlo? Avisale a tu empresa para que lo reasigne.
+      </Text>
     </View>
   );
 }
@@ -308,7 +356,9 @@ function EnViaje({
 }) {
   return (
     <View style={styles.card}>
-      <View style={styles.etapas} accessibilityLabel={`Etapa: ${ETAPAS.find((e) => e.estados.includes(pedido.estado))?.label ?? ''}`}>
+      <View
+        style={styles.etapas}
+        accessibilityLabel={`Etapa: ${ETAPAS.find((e) => e.estados.includes(pedido.estado))?.label ?? ''}`}>
         {ETAPAS.map((etapa, i) => {
           const actualIdx = ETAPAS.findIndex((e) => e.estados.includes(pedido.estado));
           const hecho = i <= actualIdx;
@@ -327,7 +377,8 @@ function EnViaje({
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={styles.clienteNombre}>{cliente ?? 'Cliente'}</Text>
           <Text style={styles.muted}>
-            {servicio(pedido)} · {pedido.ayudantes ? plural(pedido.ayudantes, 'ayudante', 'ayudantes') : 'sin ayudantes'}
+            {servicio(pedido)} ·{' '}
+            {pedido.ayudantes ? plural(pedido.ayudantes, 'ayudante', 'ayudantes') : 'sin ayudantes'}
           </Text>
         </View>
       </View>
@@ -418,16 +469,30 @@ function EstadoGps({ estado }: { estado: ReturnType<typeof useCompartirUbicacion
   return <Text style={[styles.gps, estado !== 'pidiendo' && styles.gpsWarn]}>{texto}</Text>;
 }
 
-function Menu({ empresa }: { empresa: string | null }) {
+function Menu({ empresa, onVehiculo }: { empresa: string | null; onVehiculo: () => void }) {
   const [open, setOpen] = useState(false);
   return (
     <View style={{ zIndex: 10 }}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Menú" onPress={() => setOpen((o) => !o)} style={styles.menuBtn}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Menú"
+        onPress={() => setOpen((o) => !o)}
+        style={styles.menuBtn}>
         <User size={22} color={d.text} strokeWidth={2} />
       </Pressable>
       {open ? (
         <View style={styles.menu}>
           {empresa ? <Text style={styles.menuEmpresa}>Chofer de {empresa}</Text> : null}
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              setOpen(false);
+              onVehiculo();
+            }}
+            style={styles.salir}>
+            <Truck size={18} color={d.text} strokeWidth={2} />
+            <Text style={[styles.salirText, { color: d.text }]}>Mi vehículo</Text>
+          </Pressable>
           <Salir />
         </View>
       ) : null}
@@ -447,7 +512,15 @@ function Salir() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: d.bg },
   center: { alignItems: 'center', justifyContent: 'center' },
-  joinContent: { padding: 20, gap: 16, width: '100%', maxWidth: 480, alignSelf: 'center', flexGrow: 1, justifyContent: 'center' },
+  joinContent: {
+    padding: 20,
+    gap: 16,
+    width: '100%',
+    maxWidth: 480,
+    alignSelf: 'center',
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
   wide: { flexDirection: 'row' },
   widePanel: { width: 440, flexGrow: 0, borderRightWidth: 1, borderRightColor: d.line },
   widePanelContent: { padding: 20, gap: 14 },
@@ -480,7 +553,14 @@ const styles = StyleSheet.create({
     borderColor: d.line,
   },
   menuEmpresa: { fontFamily: fonts.semibold, fontSize: 13, color: d.muted, paddingHorizontal: 12, paddingVertical: 10 },
-  salir: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, height: 44, alignSelf: 'stretch' },
+  salir: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 12,
+    height: 44,
+    alignSelf: 'stretch',
+  },
   salirText: { fontFamily: fonts.semibold, fontSize: 15, color: '#FF8A80' },
   toggle: {
     flex: 1,
@@ -501,7 +581,16 @@ const styles = StyleSheet.create({
   switchOn: { backgroundColor: '#22A06B', alignItems: 'flex-end' },
   knob: { width: 26, height: 26, borderRadius: 13, backgroundColor: colors.white },
   stats: { flexDirection: 'row', gap: 10 },
-  stat: { flex: 1, gap: 2, paddingVertical: 12, paddingHorizontal: 16, borderRadius: 18, backgroundColor: d.surface, borderWidth: 1, borderColor: d.line },
+  stat: {
+    flex: 1,
+    gap: 2,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 18,
+    backgroundColor: d.surface,
+    borderWidth: 1,
+    borderColor: d.line,
+  },
   statValor: { fontFamily: fonts.display, fontSize: 22, color: d.text },
   gps: {
     fontFamily: fonts.medium,
@@ -524,9 +613,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: d.line,
   },
-  indicacionIcon: { width: 52, height: 52, borderRadius: 16, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
+  indicacionIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   indicacionDir: { fontFamily: fonts.bold, fontSize: 17, color: d.text },
-  navBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: d.chip, alignItems: 'center', justifyContent: 'center' },
+  navBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: d.chip,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   card: { gap: 14, padding: 18, borderRadius: 26, backgroundColor: d.surface, borderWidth: 1, borderColor: d.line },
   cardTitle: { fontFamily: fonts.display, fontSize: 22, letterSpacing: -0.3, color: d.text },
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
@@ -562,11 +665,26 @@ const styles = StyleSheet.create({
   dir: { fontFamily: fonts.semibold, fontSize: 15, color: d.text },
   muted: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 20, color: d.muted },
   label: { fontFamily: fonts.semibold, fontSize: 13, color: d.muted },
-  precio: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingTop: 14, borderTopWidth: 1, borderTopColor: d.line },
+  precio: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: d.line,
+  },
   precioValor: { fontFamily: fonts.display, fontSize: 28, color: colors.accent },
   mainBtn: { height: 60, borderRadius: 18 },
   fotosRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  fotoThumb: { width: 60, height: 60, borderRadius: 14, overflow: 'hidden', backgroundColor: d.chip, borderWidth: 1, borderColor: '#333B46' },
+  fotoThumb: {
+    width: 60,
+    height: 60,
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: d.chip,
+    borderWidth: 1,
+    borderColor: '#333B46',
+  },
   fotosLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   fotosTitle: { fontFamily: fonts.bold, fontSize: 14, color: d.text },
   nota: { gap: 4, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 16, backgroundColor: '#222831' },
@@ -578,7 +696,14 @@ const styles = StyleSheet.create({
   etapaText: { fontFamily: fonts.medium, fontSize: 11, color: d.muted },
   etapaTextOn: { fontFamily: fonts.bold, color: d.text },
   cliente: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  clienteAvatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: d.chip, alignItems: 'center', justifyContent: 'center' },
+  clienteAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: d.chip,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   clienteNombre: { fontFamily: fonts.bold, fontSize: 16, color: d.text },
   proximo: { gap: 2, paddingTop: 10, borderTopWidth: 1, borderTopColor: d.line },
   proximoTitle: { fontFamily: fonts.semibold, fontSize: 15, color: d.text },

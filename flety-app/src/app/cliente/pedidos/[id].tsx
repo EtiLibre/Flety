@@ -1,6 +1,6 @@
 import * as Linking from 'expo-linking';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
@@ -9,12 +9,14 @@ import type { MapMarker } from '@/components/map/types';
 import { MobileMapLayout } from '@/components/MobileMapLayout';
 import { Timeline } from '@/components/pedido/Timeline';
 import { ClienteShell } from '@/components/web/ClienteShell';
+import { useAhora } from '@/hooks/use-ahora';
 import { useIsWide } from '@/hooks/use-is-wide';
 import { usePedidoEnVivo } from '@/hooks/use-pedido-en-vivo';
 import { useRuta } from '@/hooks/use-ruta';
 import { confirmar } from '@/lib/confirm';
 import { describirCuando, plural } from '@/lib/format';
 import { PEDIDO_COLUMNS, type Pedido } from '@/lib/orders';
+import { formatoCuenta, reservaVigente, segundosRestantes } from '@/lib/marketplace';
 import { formatARS } from '@/lib/pricing';
 import { EN_VIAJE, tramoSeguimiento } from '@/lib/seguimiento';
 import { getAvailableActions, TERMINAL_ESTADOS, type OrderAction, type OrderEstado } from '@/lib/state-machine';
@@ -114,6 +116,10 @@ function Contenido({
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const activo = !TERMINAL_ESTADOS.includes(pedido.estado);
+  const fletero = useFleteroElegido(pedido.driver_solicitado);
+  const esperandoElegido = pedido.estado === 'buscando_asignacion' && !!pedido.company_solicitada;
+  const ahora = useAhora(esperandoElegido);
+  const reservado = reservaVigente(pedido, ahora);
   const actions = getAvailableActions(pedido.estado, {
     role: 'cliente',
     isCliente: true,
@@ -146,10 +152,27 @@ function Contenido({
           </View>
         ) : null}
         <Text style={styles.title} accessibilityRole="header">
-          {TITULOS[pedido.estado]}
+          {reservado ? `Esperando que ${fletero ?? 'tu fletero'} acepte` : TITULOS[pedido.estado]}
         </Text>
         {eta ? <Text style={styles.eta}>{eta}</Text> : null}
-        {SUBTITULOS[pedido.estado] ? <Text style={styles.subtitle}>{SUBTITULOS[pedido.estado]}</Text> : null}
+        {reservado ? (
+          <>
+            <Text style={styles.eta}>Quedan {formatoCuenta(segundosRestantes(pedido.solicitado_hasta, ahora))}</Text>
+            <Text style={styles.subtitle}>
+              Si no responde a tiempo, cualquier empresa verificada puede tomar tu pedido.
+            </Text>
+          </>
+        ) : esperandoElegido && pedido.solicitado_hasta ? (
+          <Text style={styles.subtitle}>
+            {fletero ?? 'El fletero'} no respondió a tiempo: ahora cualquier empresa verificada puede tomarlo.
+          </Text>
+        ) : pedido.estado === 'pendiente' && pedido.driver_solicitado ? (
+          <Text style={styles.subtitle}>
+            Se lo pedimos a {fletero ?? 'tu fletero'} apenas se confirme el pago. Va a tener 5 minutos para aceptarlo.
+          </Text>
+        ) : SUBTITULOS[pedido.estado] ? (
+          <Text style={styles.subtitle}>{SUBTITULOS[pedido.estado]}</Text>
+        ) : null}
       </View>
 
       {activo ? <Timeline estado={pedido.estado} /> : null}
@@ -169,7 +192,9 @@ function Contenido({
         />
         <Detail label="Cuándo" value={describirCuando(pedido.programado_para)} />
         {pedido.vehiculo ? <Detail label="Vehículo" value={VEHICULO_LABEL[pedido.vehiculo].titulo} /> : null}
-        {pedido.precio_estimado != null ? <Detail label="Precio estimado" value={formatARS(Number(pedido.precio_estimado))} /> : null}
+        {pedido.precio_estimado != null ? (
+          <Detail label="Precio estimado" value={formatARS(Number(pedido.precio_estimado))} />
+        ) : null}
       </View>
 
       {pedido.nota ? (
@@ -215,6 +240,30 @@ function Contenido({
   );
 }
 
+// Nombre de pila del fletero que eligió el cliente (policy de la migración 0010).
+function useFleteroElegido(driverId: string | null) {
+  const [fletero, setFletero] = useState<{ id: string; nombre: string | null } | null>(null);
+  useEffect(() => {
+    if (!driverId) return;
+    let cancelled = false;
+    supabase
+      .from('drivers')
+      .select('user:users(nombre)')
+      .eq('id', driverId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        const user = Array.isArray(data?.user) ? data?.user[0] : data?.user;
+        const nombre = (user as { nombre?: string | null } | undefined)?.nombre?.trim().split(' ')[0] || null;
+        setFletero({ id: driverId, nombre });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [driverId]);
+  return fletero?.id === driverId ? fletero.nombre : null;
+}
+
 function Detail({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.detail}>
@@ -225,9 +274,25 @@ function Detail({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24, backgroundColor: colors.white },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+    padding: 24,
+    backgroundColor: colors.white,
+  },
   header: { gap: 8 },
-  live: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', backgroundColor: colors.successBg, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
+  live: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    backgroundColor: colors.successBg,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+  },
   liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#22A06B' },
   liveText: { fontFamily: fonts.bold, fontSize: 12, color: colors.success },
   title: { fontFamily: fonts.display, fontSize: 28, letterSpacing: -0.5, color: colors.ink },

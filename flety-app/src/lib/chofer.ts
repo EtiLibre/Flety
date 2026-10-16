@@ -2,6 +2,7 @@ import type { LatLng } from '@/components/map/types';
 
 import type { OrderEstado } from './state-machine';
 import { supabase } from './supabase';
+import type { Vehiculo } from './types';
 
 // App del chofer. Qué transición puede hacer lo decide el trigger
 // validate_order_transition (migración 0004): solo el chofer asignado avanza
@@ -19,7 +20,13 @@ export type PasoViaje = {
 };
 
 export const PASOS_VIAJE: PasoViaje[] = [
-  { desde: 'asignado', hacia: 'en_camino_origen', boton: 'Salir hacia el retiro', indicacion: 'Retiro', destino: 'origen' },
+  {
+    desde: 'asignado',
+    hacia: 'en_camino_origen',
+    boton: 'Salir hacia el retiro',
+    indicacion: 'Retiro',
+    destino: 'origen',
+  },
   {
     desde: 'en_camino_origen',
     hacia: 'cargando',
@@ -27,7 +34,13 @@ export const PASOS_VIAJE: PasoViaje[] = [
     indicacion: 'Dirigite al retiro',
     destino: 'origen',
   },
-  { desde: 'cargando', hacia: 'en_camino_destino', boton: 'Ya cargué, salir a la entrega', indicacion: 'Cargando en', destino: 'origen' },
+  {
+    desde: 'cargando',
+    hacia: 'en_camino_destino',
+    boton: 'Ya cargué, salir a la entrega',
+    indicacion: 'Cargando en',
+    destino: 'origen',
+  },
   {
     desde: 'en_camino_destino',
     hacia: 'entregado',
@@ -53,13 +66,14 @@ export type MiChofer = {
   company_id: string;
   disponibilidad: boolean;
   ubicacion_actual: LatLng | null;
+  vehiculo: { tipo?: Vehiculo; patente?: string } | null;
   empresa: string | null;
 };
 
 export async function miChofer(userId: string): Promise<MiChofer | null> {
   const { data } = await supabase
     .from('drivers')
-    .select('id, company_id, disponibilidad, ubicacion_actual, company:companies(nombre)')
+    .select('id, company_id, disponibilidad, ubicacion_actual, vehiculo, company:companies(nombre)')
     .eq('user_id', userId)
     .maybeSingle();
   if (!data) return null;
@@ -69,8 +83,19 @@ export async function miChofer(userId: string): Promise<MiChofer | null> {
     company_id: data.company_id,
     disponibilidad: data.disponibilidad,
     ubicacion_actual: data.ubicacion_actual,
+    vehiculo: data.vehiculo,
     empresa: (company as { nombre?: string } | null)?.nombre ?? null,
   };
+}
+
+// El vehículo con el que aparece en el marketplace.
+export async function guardarVehiculo(driverId: string, vehiculo: { tipo: Vehiculo; patente: string }) {
+  const patente = vehiculo.patente.trim().toUpperCase();
+  const { error } = await supabase
+    .from('drivers')
+    .update({ vehiculo: patente ? { tipo: vehiculo.tipo, patente } : { tipo: vehiculo.tipo } })
+    .eq('id', driverId);
+  if (error) throw new Error('No pudimos guardar tu vehículo. Probá de nuevo.');
 }
 
 export async function cambiarDisponibilidad(driverId: string, disponible: boolean) {
@@ -81,7 +106,9 @@ export async function cambiarDisponibilidad(driverId: string, disponible: boolea
 export async function avanzarViaje(orderId: string, hacia: OrderEstado) {
   const { error } = await supabase.from('orders').update({ estado: hacia }).eq('id', orderId);
   if (error) {
-    throw new Error(error.message?.startsWith('Solo ') ? error.message : 'No pudimos actualizar el viaje. Probá de nuevo.');
+    throw new Error(
+      error.message?.startsWith('Solo ') ? error.message : 'No pudimos actualizar el viaje. Probá de nuevo.'
+    );
   }
 }
 

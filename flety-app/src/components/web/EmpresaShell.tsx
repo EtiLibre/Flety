@@ -1,6 +1,6 @@
 import { Link, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Clock, LayoutGrid, LogOut, Package, ShieldCheck, Truck, Users } from 'lucide-react-native';
+import { Clock, LayoutGrid, LogOut, Package, ShieldCheck, Tag, Truck, Users } from 'lucide-react-native';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -10,12 +10,18 @@ import type { Empresa } from '@/lib/empresa';
 import { supabase } from '@/lib/supabase';
 import { colors, fonts } from '@/theme';
 
-export type SeccionEmpresa = 'panel' | 'pedidos' | 'choferes';
+export type SeccionEmpresa = 'panel' | 'pedidos' | 'choferes' | 'tarifas';
 
-const SECCIONES: { id: SeccionEmpresa; label: string; href: '/empresa/panel' | '/empresa/pedidos' | '/empresa/choferes'; Icon: typeof Package }[] = [
+const SECCIONES: {
+  id: SeccionEmpresa;
+  label: string;
+  href: '/empresa/panel' | '/empresa/pedidos' | '/empresa/choferes' | '/empresa/tarifas';
+  Icon: typeof Package;
+}[] = [
   { id: 'panel', label: 'Panel', href: '/empresa/panel', Icon: LayoutGrid },
   { id: 'pedidos', label: 'Pedidos', href: '/empresa/pedidos', Icon: Package },
   { id: 'choferes', label: 'Choferes', href: '/empresa/choferes', Icon: Users },
+  { id: 'tarifas', label: 'Tarifas', href: '/empresa/tarifas', Icon: Tag },
 ];
 
 export const PANEL_BG = '#F4F5F7';
@@ -68,12 +74,12 @@ export function EmpresaShell({
                   aria-current={current ? 'page' : undefined}
                   onPress={() => router.navigate(href)}
                   style={({ hovered }: { hovered?: boolean }) => [
-                      styles.navItem,
-                      (current || hovered) && styles.navItemActive,
-                    ]}>
-                    <Icon size={20} color={current ? colors.white : '#C5CBD3'} strokeWidth={2} />
-                    <Text style={[styles.navText, current && styles.navTextActive]}>{label}</Text>
-                  </Pressable>
+                    styles.navItem,
+                    (current || hovered) && styles.navItemActive,
+                  ]}>
+                  <Icon size={20} color={current ? colors.white : '#C5CBD3'} strokeWidth={2} />
+                  <Text style={[styles.navText, current && styles.navTextActive]}>{label}</Text>
+                </Pressable>
               );
             })}
           </View>
@@ -101,7 +107,11 @@ export function EmpresaShell({
         {SECCIONES.map(({ id, label, href }) => {
           const current = id === active;
           return (
-            <Link key={id} href={href} style={[styles.tab, current && styles.tabActive]} aria-current={current ? 'page' : undefined}>
+            <Link
+              key={id}
+              href={href}
+              style={[styles.tab, current && styles.tabActive]}
+              aria-current={current ? 'page' : undefined}>
               {label}
             </Link>
           );
@@ -136,7 +146,9 @@ function EmpresaCard({ empresa, light }: { empresa: Empresa | null; light?: bool
         <Text style={[styles.empresaEstado, { color: light ? colors.ink : '#FFC233' }]}>
           {role === 'superadmin' ? 'Administración Flety' : 'Contabilidad Flety'}
         </Text>
-        <Text style={[styles.empresaNombre, light && { color: colors.ink }]}>Ves los pedidos de todas las empresas</Text>
+        <Text style={[styles.empresaNombre, light && { color: colors.ink }]}>
+          Ves los pedidos de todas las empresas
+        </Text>
       </View>
     );
   }
@@ -154,9 +166,17 @@ function EmpresaCard({ empresa, light }: { empresa: Empresa | null; light?: bool
   return (
     <View style={[styles.empresaCard, light && styles.empresaCardWarn]}>
       <View style={styles.empresaEstadoRow}>
-        {aprobada ? <ShieldCheck size={14} color={color} strokeWidth={2.2} /> : <Clock size={14} color={color} strokeWidth={2.2} />}
+        {aprobada ? (
+          <ShieldCheck size={14} color={color} strokeWidth={2.2} />
+        ) : (
+          <Clock size={14} color={color} strokeWidth={2.2} />
+        )}
         <Text style={[styles.empresaEstado, { color }]}>
-          {aprobada ? 'Empresa verificada' : empresa.estado_aprobacion === 'rechazada' ? 'Empresa no aprobada' : 'Esperando aprobación'}
+          {aprobada
+            ? 'Empresa verificada'
+            : empresa.estado_aprobacion === 'rechazada'
+              ? 'Empresa no aprobada'
+              : 'Esperando aprobación'}
         </Text>
       </View>
       <Text style={[styles.empresaNombre, light && { color: colors.ink }]}>{empresa.nombre}</Text>
@@ -187,7 +207,14 @@ const styles = StyleSheet.create({
   screenNarrow: { flex: 1, backgroundColor: colors.ink },
   sidebar: { width: 248, backgroundColor: colors.ink, paddingVertical: 24, paddingHorizontal: 16, gap: 24 },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 8 },
-  brandMark: { width: 36, height: 36, borderRadius: 11, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
+  brandMark: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   brandWord: { fontFamily: fonts.display, fontSize: 22, letterSpacing: -0.4, color: colors.white },
   brandBadge: {
     fontFamily: fonts.semibold,
@@ -205,7 +232,14 @@ const styles = StyleSheet.create({
   navText: { fontFamily: fonts.medium, fontSize: 15, color: '#C5CBD3' },
   navTextActive: { fontFamily: fonts.semibold, color: colors.white },
   sidebarFooter: { marginTop: 'auto', gap: 12 },
-  empresaCard: { gap: 6, padding: 14, borderRadius: 16, backgroundColor: '#1B2129', borderWidth: 1, borderColor: '#2A313B' },
+  empresaCard: {
+    gap: 6,
+    padding: 14,
+    borderRadius: 16,
+    backgroundColor: '#1B2129',
+    borderWidth: 1,
+    borderColor: '#2A313B',
+  },
   empresaCardLight: { backgroundColor: colors.white, borderColor: CARD_BORDER },
   empresaCardWarn: { backgroundColor: '#FFF3D6', borderColor: '#FFE3A3' },
   empresaEstadoRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
@@ -218,7 +252,13 @@ const styles = StyleSheet.create({
   main: { flex: 1, backgroundColor: PANEL_BG },
   mainContent: { padding: 32, gap: 24, maxWidth: 1280, width: '100%' },
   mainContentNarrow: { padding: 16, gap: 18, paddingBottom: 40 },
-  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 10 },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
   tabs: { flexDirection: 'row', backgroundColor: colors.ink, paddingHorizontal: 16, gap: 22 },
   tab: {
     fontFamily: fonts.medium,

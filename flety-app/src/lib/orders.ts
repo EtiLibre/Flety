@@ -23,10 +23,14 @@ export type Pedido = {
   distancia_km: number | null;
   precio_estimado: number | null;
   created_at: string;
+  // Marketplace (migración 0010): fletero elegido por el cliente y hasta cuándo lo tiene reservado.
+  company_solicitada: string | null;
+  driver_solicitado: string | null;
+  solicitado_hasta: string | null;
 };
 
 export const PEDIDO_COLUMNS =
-  'id, cliente_id, company_id, driver_id, tipo, origen, destino, estado, tamano, ayudantes, programado_para, nota, vehiculo, distancia_km, precio_estimado, created_at';
+  'id, cliente_id, company_id, driver_id, tipo, origen, destino, estado, tamano, ayudantes, programado_para, nota, vehiculo, distancia_km, precio_estimado, created_at, company_solicitada, driver_solicitado, solicitado_hasta';
 
 // Crea el pedido (queda en "pendiente") y sube las fotos. Si alguna foto falla,
 // el pedido igual queda creado: se informa cuántas no se pudieron subir.
@@ -35,7 +39,9 @@ export async function crearPedido(
   vehiculo: Vehiculo,
   clienteId: string,
   // Distancia por calles (ruteo). Si no está disponible, se estima en línea recta.
-  distanciaKm?: number
+  distanciaKm?: number,
+  // Fletero elegido en el marketplace (si no, va a la cola abierta).
+  driverSolicitado?: string | null
 ): Promise<{ id: string; fotosFallidas: number }> {
   if (!draft.origen || !draft.destino) throw new Error('Falta origen o destino');
 
@@ -52,11 +58,16 @@ export async function crearPedido(
       nota: draft.nota.trim() || null,
       vehiculo,
       distancia_km: distanciaKm ?? distanciaEstimadaKm(draft.origen, draft.destino),
+      driver_solicitado: driverSolicitado ?? null,
     })
     .select('id')
     .single();
 
-  if (error || !data) throw error ?? new Error('No se pudo crear el pedido');
+  if (error || !data) {
+    // Mensajes del trigger (p. ej. el fletero dejó de estar disponible) se muestran tal cual.
+    const msg = error?.message ?? '';
+    throw new Error(msg.startsWith('Ese ') ? msg : 'No pudimos crear el pedido. Revisá tu conexión y probá de nuevo.');
+  }
 
   let fotosFallidas = 0;
   for (const [index, foto] of draft.fotos.entries()) {

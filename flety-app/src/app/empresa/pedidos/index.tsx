@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AccionCola } from '@/components/empresa/AccionCola';
+import { ColaExtra } from '@/components/empresa/ColaExtra';
 import {
   Badge,
   BotonChico,
@@ -20,7 +21,6 @@ import { useIsWide } from '@/hooks/use-is-wide';
 import { confirmar } from '@/lib/confirm';
 import { estadoDelChofer, grupoDelEstado, nombreChofer, rechazarPedido, type GrupoPedidos } from '@/lib/empresa';
 import type { Pedido } from '@/lib/orders';
-import { formatARS } from '@/lib/pricing';
 import { ESTADO_LABELS } from '@/lib/state-machine';
 import { colors, fonts } from '@/theme';
 
@@ -33,7 +33,12 @@ const TABS: { id: GrupoPedidos; label: string; titulo: string; vacio: string }[]
     vacio: 'No tenés pedidos aceptados sin arrancar.',
   },
   { id: 'en_curso', label: 'En curso', titulo: 'Viajes en curso', vacio: 'No hay viajes en curso.' },
-  { id: 'historial', label: 'Historial', titulo: 'Terminados y cancelados', vacio: 'Todavía no hay pedidos terminados.' },
+  {
+    id: 'historial',
+    label: 'Historial',
+    titulo: 'Terminados y cancelados',
+    vacio: 'Todavía no hay pedidos terminados.',
+  },
 ];
 
 const ESTADO_TONE: Partial<Record<Pedido['estado'], 'success' | 'warn' | 'neutral' | 'danger'>> = {
@@ -67,10 +72,14 @@ export default function PedidosEmpresa() {
   }
 
   function columnaExtra(p: Pedido) {
-    if (tab === 'cola') return p.precio_estimado != null ? <Text style={styles.strong}>{formatARS(Number(p.precio_estimado))}</Text> : null;
+    if (tab === 'cola') return <ColaExtra pedido={p} empresa={empresa} />;
     if (tab === 'asignados') {
       const chofer = choferes.find((c) => c.id === p.driver_id);
-      return chofer ? <Text style={styles.strong}>{nombreChofer(chofer)}</Text> : <Badge label="Sin chofer" tone="warn" />;
+      return chofer ? (
+        <Text style={styles.strong}>{nombreChofer(chofer)}</Text>
+      ) : (
+        <Badge label="Sin chofer" tone="warn" />
+      );
     }
     const sub = clientes[p.cliente_id];
     return (
@@ -91,7 +100,12 @@ export default function PedidosEmpresa() {
             variant="dark"
             onPress={() => router.push(`/empresa/pedidos/${p.id}`)}
           />
-          <BotonChico title="Rechazar" variant="danger" loading={pendiente === `rechazar-${p.id}`} onPress={() => rechazar(p)} />
+          <BotonChico
+            title="Rechazar"
+            variant="danger"
+            loading={pendiente === `rechazar-${p.id}`}
+            onPress={() => rechazar(p)}
+          />
         </>
       );
     }
@@ -107,7 +121,9 @@ export default function PedidosEmpresa() {
       active="pedidos"
       empresa={empresa}
       title="Pedidos"
-      subtitle={esAdmin ? 'Todos los pedidos de Flety.' : 'Aceptá pedidos de la cola y asignales un chofer de tu flota.'}>
+      subtitle={
+        esAdmin ? 'Todos los pedidos de Flety.' : 'Aceptá pedidos de la cola y asignales un chofer de tu flota.'
+      }>
       <View style={styles.tabs} role="tablist" aria-label="Estado de los pedidos">
         {TABS.map((t) => {
           const selected = t.id === tab;
@@ -134,7 +150,10 @@ export default function PedidosEmpresa() {
         <ActivityIndicator color={colors.ink} style={{ marginTop: 40 }} />
       ) : (
         <View style={[styles.columns, !isWide && styles.columnsNarrow]}>
-          <Card title={actual.titulo} right={tab === 'cola' ? <EnVivo /> : undefined} style={isWide && { flex: 2, minWidth: 0 }}>
+          <Card
+            title={actual.titulo}
+            right={tab === 'cola' ? <EnVivo /> : undefined}
+            style={isWide && { flex: 2, minWidth: 0 }}>
             {lista.length ? (
               <>
                 {isWide ? <TablaHeader columnas={columnas} /> : null}
@@ -163,7 +182,9 @@ export default function PedidosEmpresa() {
               ) : (
                 <Vacio texto="Ningún chofer de tu flota está disponible ahora." />
               )}
-              <Text style={styles.muted}>Solo aparecen los choferes de tu flota que marcaron “Disponible” en su app.</Text>
+              <Text style={styles.muted}>
+                Solo aparecen los choferes de tu flota que marcaron “Disponible” en su app.
+              </Text>
             </Card>
           ) : null}
         </View>
