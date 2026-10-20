@@ -1,12 +1,13 @@
 // Espejo de public.user_role (supabase/migrations/0001_init_schema.sql en la raíz del repo).
-export type UserRole = 'superadmin' | 'empresa' | 'chofer' | 'cliente' | 'contabilidad';
+export type UserRole = 'superadmin' | 'empresa' | 'chofer' | 'cliente' | 'contabilidad' | 'marketing';
 
 export const ROLE_HOME = {
   cliente: '/cliente/inicio',
   chofer: '/chofer/panel',
   empresa: '/empresa/panel',
   superadmin: '/empresa/panel',
-  contabilidad: '/empresa/panel',
+  contabilidad: '/empresa/contabilidad',
+  marketing: '/empresa/marketing',
 } as const satisfies Record<UserRole, string>;
 
 // Espejo de las columnas de orders (migraciones 0001 y 0007).

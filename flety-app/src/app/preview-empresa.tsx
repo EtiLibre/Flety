@@ -6,18 +6,19 @@ import { PedidoPreviewContext } from '@/hooks/use-pedido-en-vivo';
 import { AuthPreview } from '@/lib/auth';
 import type { Chofer } from '@/lib/empresa';
 import type { Pedido } from '@/lib/orders';
+import { MarketingPreviewContext, type Estadisticas } from '@/lib/marketing';
 import type { UserRole } from '@/lib/types';
 import { FOTOS_EJEMPLO as FOTOS } from '@/dev/datos-ejemplo';
 import { colors, fonts } from '@/theme';
 
 import DetallePedidoEmpresa from './empresa/pedidos/[id]';
 import PedidosEmpresa from './empresa/pedidos/index';
+import Marketing from './empresa/marketing';
 import PanelEmpresa from './empresa/panel';
 
 // SOLO DESARROLLO: el panel de empresas con datos de ejemplo, sin iniciar
 // sesión ni Supabase. ?vista=panel|pedidos|detalle y ?rol=empresa|superadmin.
 // En producción redirige al inicio.
-
 
 const base = {
   cliente_id: 'cli-1',
@@ -169,13 +170,61 @@ const DATOS: DatosEmpresa = {
   clientes: { 'cli-1': 'Ana Pérez' },
 };
 
-const VISTAS = ['panel', 'pedidos', 'detalle', 'en-viaje'] as const;
+const VISTAS = ['panel', 'pedidos', 'detalle', 'en-viaje', 'marketing'] as const;
+
+// Estadísticas de ejemplo (30 días) para ver el panel de marketing.
+const ESTADISTICAS: Estadisticas = {
+  visitas: 4820,
+  sesiones: 1960,
+  registros: 212,
+  pedidos: 138,
+  completados: 117,
+  por_dia: Array.from({ length: 30 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (29 - i));
+    const dia = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const finde = d.getDay() === 0 || d.getDay() === 6;
+    return {
+      dia,
+      sesiones: Math.round(45 + i * 1.6 + (finde ? 22 : 0) + ((i * 37) % 13)),
+      pedidos: Math.round(3 + i / 6),
+    };
+  }),
+  dispositivos: { mobile: 1310, desktop: 560, tablet: 90 },
+  sistemas: { Android: 980, iOS: 360, Windows: 420, macOS: 150, Linux: 50 },
+  navegadores: { Chrome: 1240, Safari: 410, Samsung: 160, Edge: 90, Firefox: 60 },
+  roles: { visitante: 1380, cliente: 450, chofer: 90, empresa: 40 },
+  pantallas: [
+    { pantalla: '/', n: 2100 },
+    { pantalla: '/registro', n: 640 },
+    { pantalla: '/cliente/inicio', n: 590 },
+    { pantalla: '/cliente/opciones', n: 300 },
+    { pantalla: '/cliente/pedidos/:id', n: 280 },
+  ],
+  zonas: [
+    { zona: 'Mendoza', n: 52 },
+    { zona: 'Godoy Cruz', n: 31 },
+    { zona: 'Guaymallén', n: 24 },
+    { zona: 'Luján de Cuyo', n: 15 },
+    { zona: 'Maipú', n: 11 },
+    { zona: 'Las Heras', n: 5 },
+  ],
+  tipos: { flete: 81, mudanza: 46, larga_distancia: 11 },
+  horas: [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21].map((hora) => ({
+    hora,
+    n: Math.round(14 - Math.abs(hora - 11) * 1.4 + (hora === 18 ? 6 : 0)),
+  })),
+  anuncios: [
+    { id: 'a1', titulo: '20% off en tu primera mudanza', activo: true, vistas: 920, clicks: 74 },
+    { id: 'a2', titulo: 'Sumate como fletero', activo: false, vistas: 310, clicks: 18 },
+  ],
+};
 
 export default function PreviewEmpresa() {
   const params = useLocalSearchParams<{ vista?: string; rol?: string }>();
   if (!__DEV__) return <Redirect href="/" />;
   const vista = VISTAS.find((v) => v === params.vista) ?? 'panel';
-  const rol: UserRole = params.rol === 'superadmin' ? 'superadmin' : 'empresa';
+  const rol: UserRole = vista === 'marketing' ? 'marketing' : params.rol === 'superadmin' ? 'superadmin' : 'empresa';
   const detalle = vista === 'en-viaje' ? PEDIDOS[3] : PEDIDOS[2];
 
   return (
@@ -189,6 +238,11 @@ export default function PreviewEmpresa() {
           }}>
           <View style={{ flex: 1 }}>
             {vista === 'panel' ? <PanelEmpresa /> : null}
+            {vista === 'marketing' ? (
+              <MarketingPreviewContext.Provider value={ESTADISTICAS}>
+                <Marketing />
+              </MarketingPreviewContext.Provider>
+            ) : null}
             {vista === 'pedidos' ? <PedidosEmpresa /> : null}
             {vista === 'detalle' || vista === 'en-viaje' ? <DetallePedidoEmpresa /> : null}
             <View style={styles.switcher}>

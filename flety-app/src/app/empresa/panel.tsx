@@ -1,6 +1,7 @@
 import { Link, router } from 'expo-router';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
+import { AnuncioPopup } from '@/components/AnuncioPopup';
 import { AccionCola } from '@/components/empresa/AccionCola';
 import { ColaExtra } from '@/components/empresa/ColaExtra';
 import {
@@ -19,6 +20,7 @@ import { EmpresaShell } from '@/components/web/EmpresaShell';
 import { useAccion } from '@/hooks/use-accion';
 import { useEmpresa } from '@/hooks/use-empresa';
 import { useIsWide } from '@/hooks/use-is-wide';
+import { useAuth } from '@/lib/auth';
 import { estadoDelChofer, nombreChofer } from '@/lib/empresa';
 import { EN_VIAJE } from '@/lib/seguimiento';
 import { colors, fonts } from '@/theme';
@@ -27,6 +29,7 @@ const MAX_FILAS = 6;
 
 export default function PanelEmpresa() {
   const isWide = useIsWide();
+  const { role } = useAuth();
   const { empresa, cola, pedidos, choferes, fotos, loading, recargar } = useEmpresa();
   const { pendiente, error, ejecutar } = useAccion(recargar);
 
@@ -146,6 +149,7 @@ export default function PanelEmpresa() {
           </View>
         </>
       )}
+      {role === 'empresa' ? <AnuncioPopup audiencia="empresa" /> : null}
     </EmpresaShell>
   );
 }

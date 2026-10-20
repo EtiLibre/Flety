@@ -102,7 +102,7 @@ export default function TarifasEmpresa() {
               };
               const ref = flety.find((x) => x.vehiculo === v);
               return (
-                <Card key={v} title={VEHICULO_LABEL[v].titulo} style={styles.col}>
+                <Card key={v} title={VEHICULO_LABEL[v].titulo} style={isWide ? styles.col : undefined}>
                   <Text style={styles.muted}>{VEHICULO_LABEL[v].detalle}</Text>
                   {CAMPOS.map(({ key, label }) => (
                     <View key={key} style={styles.campo}>

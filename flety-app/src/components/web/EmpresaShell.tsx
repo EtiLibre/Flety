@@ -1,6 +1,19 @@
 import { Link, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Building2, Clock, LayoutGrid, LogOut, Package, ShieldCheck, Tag, Truck, Users } from 'lucide-react-native';
+import {
+  Building2,
+  ChartBar,
+  Clock,
+  LayoutGrid,
+  Megaphone,
+  Wallet,
+  LogOut,
+  Package,
+  ShieldCheck,
+  Tag,
+  Truck,
+  Users,
+} from 'lucide-react-native';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -10,21 +23,51 @@ import type { Empresa } from '@/lib/empresa';
 import { supabase } from '@/lib/supabase';
 import { colors, fonts } from '@/theme';
 
-export type SeccionEmpresa = 'panel' | 'pedidos' | 'choferes' | 'tarifas' | 'empresas';
+export type SeccionEmpresa =
+  'panel' | 'pedidos' | 'choferes' | 'tarifas' | 'empresas' | 'contabilidad' | 'marketing' | 'anuncios';
 
 const SECCIONES: {
   id: SeccionEmpresa;
   label: string;
-  href: '/empresa/panel' | '/empresa/pedidos' | '/empresa/choferes' | '/empresa/tarifas' | '/empresa/empresas';
+  href:
+    | '/empresa/panel'
+    | '/empresa/pedidos'
+    | '/empresa/choferes'
+    | '/empresa/tarifas'
+    | '/empresa/empresas'
+    | '/empresa/contabilidad'
+    | '/empresa/marketing'
+    | '/empresa/anuncios';
   Icon: typeof Package;
   // Solo para estos roles (si no se indica, para todos los del panel).
   roles?: string[];
 }[] = [
-  { id: 'panel', label: 'Panel', href: '/empresa/panel', Icon: LayoutGrid },
-  { id: 'pedidos', label: 'Pedidos', href: '/empresa/pedidos', Icon: Package },
-  { id: 'choferes', label: 'Choferes', href: '/empresa/choferes', Icon: Users },
+  { id: 'panel', label: 'Panel', href: '/empresa/panel', Icon: LayoutGrid, roles: ['empresa', 'superadmin'] },
+  {
+    id: 'pedidos',
+    label: 'Pedidos',
+    href: '/empresa/pedidos',
+    Icon: Package,
+    roles: ['empresa', 'superadmin', 'contabilidad'],
+  },
+  { id: 'choferes', label: 'Choferes', href: '/empresa/choferes', Icon: Users, roles: ['empresa', 'superadmin'] },
   { id: 'tarifas', label: 'Tarifas', href: '/empresa/tarifas', Icon: Tag, roles: ['empresa'] },
   { id: 'empresas', label: 'Empresas', href: '/empresa/empresas', Icon: Building2, roles: ['superadmin'] },
+  {
+    id: 'contabilidad',
+    label: 'Contabilidad',
+    href: '/empresa/contabilidad',
+    Icon: Wallet,
+    roles: ['contabilidad', 'superadmin'],
+  },
+  {
+    id: 'marketing',
+    label: 'Marketing',
+    href: '/empresa/marketing',
+    Icon: ChartBar,
+    roles: ['marketing', 'superadmin'],
+  },
+  { id: 'anuncios', label: 'Anuncios', href: '/empresa/anuncios', Icon: Megaphone, roles: ['marketing', 'superadmin'] },
 ];
 
 export const PANEL_BG = '#F4F5F7';
@@ -145,15 +188,21 @@ function Marca() {
 
 function EmpresaCard({ empresa, light }: { empresa: Empresa | null; light?: boolean }) {
   const { role } = useAuth();
-  if (role === 'superadmin' || role === 'contabilidad') {
+  if (role === 'superadmin' || role === 'contabilidad' || role === 'marketing') {
+    const equipo = {
+      superadmin: 'Administración Flety',
+      contabilidad: 'Contabilidad Flety',
+      marketing: 'Marketing Flety',
+    }[role];
+    const detalle = {
+      superadmin: 'Ves todas las empresas, pedidos y estadísticas',
+      contabilidad: 'Comisiones y liquidaciones de todas las empresas',
+      marketing: 'Estadísticas de uso y anuncios',
+    }[role];
     return (
       <View style={[styles.empresaCard, light && styles.empresaCardLight]}>
-        <Text style={[styles.empresaEstado, { color: light ? colors.ink : '#FFC233' }]}>
-          {role === 'superadmin' ? 'Administración Flety' : 'Contabilidad Flety'}
-        </Text>
-        <Text style={[styles.empresaNombre, light && { color: colors.ink }]}>
-          Ves los pedidos de todas las empresas
-        </Text>
+        <Text style={[styles.empresaEstado, { color: light ? colors.ink : '#FFC233' }]}>{equipo}</Text>
+        <Text style={[styles.empresaNombre, light && { color: colors.ink }]}>{detalle}</Text>
       </View>
     );
   }

@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { AnuncioPopup } from '@/components/AnuncioPopup';
 import { DotCanvas } from '@/components/DotCanvas';
 import { PublicOnly } from '@/components/Guards';
 import { FleterosSection } from '@/components/landing/FleterosSection';
@@ -410,6 +411,7 @@ function LandingPage() {
         isWide={isWide}
       />
       <ScrollFab visible={scroll.abajo} onPress={() => goTo('top')} />
+      <AnuncioPopup audiencia="visitante" demora={3000} />
     </View>
   );
 }

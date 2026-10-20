@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AnuncioPopup } from '@/components/AnuncioPopup';
 import { Button } from '@/components/Button';
 import { MiVehiculo } from '@/components/chofer/MiVehiculo';
 import { SolicitudCard } from '@/components/chofer/SolicitudCard';
@@ -230,6 +231,7 @@ export default function PanelChofer() {
     return (
       <View style={[styles.screen, styles.wide]}>
         <StatusBar style="light" />
+        <AnuncioPopup audiencia="chofer" />
         <ScrollView style={styles.widePanel} contentContainerStyle={styles.widePanelContent}>
           {barra}
           {tarjetaSolicitud}
@@ -245,6 +247,7 @@ export default function PanelChofer() {
   return (
     <View style={styles.screen}>
       <StatusBar style="light" />
+      <AnuncioPopup audiencia="chofer" />
       {mapa}
       <SafeAreaView edges={['top']} style={styles.overlayTop} pointerEvents="box-none">
         {barra}

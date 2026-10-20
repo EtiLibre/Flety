@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AnuncioPopup } from '@/components/AnuncioPopup';
 import { IconButton } from '@/components/IconButton';
 import { AppMap } from '@/components/map/AppMap';
 import type { MapMarker } from '@/components/map/types';
@@ -31,14 +32,20 @@ const SERVICIOS = [
 
 export default function InicioCliente() {
   const isWide = useIsWide();
-  return isWide ? <InicioDesktop /> : <InicioMovil />;
+  return (
+    <>
+      {isWide ? <InicioDesktop /> : <InicioMovil />}
+      <AnuncioPopup audiencia="cliente" />
+    </>
+  );
 }
 
 function useMapMarkers() {
   const location = useCurrentLocation();
   const { draft } = usePedidoDraft();
   const markers: MapMarker[] = [];
-  if (location.status === 'located') markers.push({ id: 'yo', kind: 'user', position: location.position, label: 'Tu ubicación' });
+  if (location.status === 'located')
+    markers.push({ id: 'yo', kind: 'user', position: location.position, label: 'Tu ubicación' });
   if (draft.origen) markers.push({ id: 'origen', kind: 'origen', position: draft.origen, label: 'Retiro' });
   if (draft.destino) markers.push({ id: 'destino', kind: 'destino', position: draft.destino, label: 'Entrega' });
   const { ruta } = useRuta([draft.origen, draft.destino]);
@@ -183,7 +190,9 @@ function InicioMovil() {
           </View>
 
           {location.status === 'denied' ? (
-            <Text style={styles.locationNote}>Activá la ubicación para ver dónde estás. Por ahora te mostramos Mendoza.</Text>
+            <Text style={styles.locationNote}>
+              Activá la ubicación para ver dónde estás. Por ahora te mostramos Mendoza.
+            </Text>
           ) : null}
         </Sheet>
       </View>
@@ -196,9 +205,22 @@ const styles = StyleSheet.create({
   activos: { gap: 10, paddingTop: 18, borderTopWidth: 1, borderTopColor: colors.lineSoft },
   activosTitle: { fontFamily: fonts.bold, fontSize: 14, color: colors.muted },
   screen: { flex: 1, backgroundColor: colors.mapLand },
-  topBar: { position: 'absolute', left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between', zIndex: 1000 },
+  topBar: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    zIndex: 1000,
+  },
   profileArea: { alignItems: 'flex-end', gap: 8 },
-  menu: { backgroundColor: colors.white, borderRadius: radius.lg, paddingVertical: 6, minWidth: 190, ...shadow.floating },
+  menu: {
+    backgroundColor: colors.white,
+    borderRadius: radius.lg,
+    paddingVertical: 6,
+    minWidth: 190,
+    ...shadow.floating,
+  },
   menuItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, height: 44 },
   menuItemText: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
   sheetArea: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center', zIndex: 1000 },
@@ -206,7 +228,15 @@ const styles = StyleSheet.create({
   titles: { gap: 2 },
   greeting: { fontFamily: fonts.semibold, fontSize: 15, color: colors.muted },
   title: { fontFamily: fonts.display, fontSize: 28, letterSpacing: -0.6, color: colors.ink },
-  search: { height: 56, borderRadius: radius.lg, backgroundColor: colors.surface, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
+  search: {
+    height: 56,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+  },
   searchText: { fontFamily: fonts.medium, fontSize: 17, color: colors.muted },
   services: { flexDirection: 'row', gap: 10 },
   service: { flex: 1, height: 104, borderRadius: radius.xl, padding: 14, justifyContent: 'space-between' },
