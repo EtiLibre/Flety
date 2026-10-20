@@ -130,7 +130,8 @@ export type Invitacion = { code: string; created_at: string; expires_at: string;
 
 export async function crearInvitacion(): Promise<Invitacion> {
   const { data, error } = await supabase.rpc('crear_invitacion');
-  if (error || !data) throw new Error(error?.message?.startsWith('Solo ') ? error.message : 'No pudimos crear el código.');
+  if (error || !data)
+    throw new Error(error?.message?.startsWith('Solo ') ? error.message : 'No pudimos crear el código.');
   return data as Invitacion;
 }
 
@@ -148,4 +149,33 @@ export async function invitacionesVigentes(): Promise<Invitacion[]> {
 export async function borrarInvitacion(code: string) {
   const { error } = await supabase.from('company_invites').delete().eq('code', code);
   if (error) throw new Error('No pudimos borrar el código.');
+}
+
+// ── Alta de empresa y aprobación (migración 0011) ───────────────────────────
+export async function registrarEmpresa(nombre: string, cuit: string): Promise<string> {
+  const { data, error } = await supabase.rpc('registrar_empresa', { p_nombre: nombre, p_cuit: cuit });
+  if (error) {
+    const msg = error.message ?? '';
+    throw new Error(
+      msg.startsWith('El ') || msg.startsWith('Esta ') || msg.startsWith('Tenés')
+        ? msg
+        : 'No pudimos registrar la empresa.'
+    );
+  }
+  return data as string;
+}
+
+export type EmpresaAdmin = Empresa & { cuit: string | null; created_at: string };
+
+export async function todasLasEmpresas(): Promise<EmpresaAdmin[]> {
+  const { data } = await supabase
+    .from('companies')
+    .select('id, nombre, cuit, estado_aprobacion, created_at')
+    .order('created_at', { ascending: false });
+  return (data as EmpresaAdmin[] | null) ?? [];
+}
+
+export async function cambiarAprobacion(companyId: string, estado: Empresa['estado_aprobacion']) {
+  const { error } = await supabase.from('companies').update({ estado_aprobacion: estado }).eq('id', companyId);
+  if (error) throw new Error('No pudimos actualizar la empresa.');
 }

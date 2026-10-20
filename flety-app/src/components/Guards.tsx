@@ -23,10 +23,11 @@ export function PublicOnly({ children, dark }: { children: React.ReactNode; dark
   return <>{children}</>;
 }
 
-// ?next= solo acepta destinos propios conocidos (no URLs externas): por ahora,
-// sumarse como chofer con un código ("Quiero ser fletero").
+// ?next= solo acepta destinos propios conocidos (no URLs externas): sumarse
+// como chofer con un código o registrar una empresa.
 function destinoDespuesDeEntrar(role: UserRole, next: string | undefined): Href {
   if (next === '/unirse' && (role === 'cliente' || role === 'chofer')) return '/unirse';
+  if (next === '/registrar-empresa' && role === 'cliente') return '/registrar-empresa';
   return ROLE_HOME[role];
 }
 

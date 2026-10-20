@@ -14,6 +14,7 @@ export default function Registro() {
   // ?next=/unirse: viene de "Quiero ser fletero".
   const { next } = useLocalSearchParams<{ next?: string }>();
   const fletero = next === '/unirse';
+  const empresa = next === '/registrar-empresa';
   const conNext = next ? { next } : undefined;
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
@@ -73,11 +74,13 @@ export default function Registro() {
 
   return (
     <FormScreen
-      title={fletero ? 'Sumate como fletero' : 'Crear cuenta'}
+      title={fletero ? 'Sumate como fletero' : empresa ? 'Registrá tu empresa' : 'Crear cuenta'}
       subtitle={
         fletero
           ? 'Creá tu cuenta y después escribí el código que te dio tu empresa.'
-          : 'En un minuto estás pidiendo tu primer flete.'
+          : empresa
+            ? 'Primero creá tu cuenta (la vas a usar para entrar al panel); después cargás los datos de la empresa.'
+            : 'En un minuto estás pidiendo tu primer flete.'
       }
       footer={<Button title="Crear cuenta" onPress={handleRegistro} loading={loading} />}>
       <TextField

@@ -1,6 +1,6 @@
 import { Link, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Clock, LayoutGrid, LogOut, Package, ShieldCheck, Tag, Truck, Users } from 'lucide-react-native';
+import { Building2, Clock, LayoutGrid, LogOut, Package, ShieldCheck, Tag, Truck, Users } from 'lucide-react-native';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -10,18 +10,21 @@ import type { Empresa } from '@/lib/empresa';
 import { supabase } from '@/lib/supabase';
 import { colors, fonts } from '@/theme';
 
-export type SeccionEmpresa = 'panel' | 'pedidos' | 'choferes' | 'tarifas';
+export type SeccionEmpresa = 'panel' | 'pedidos' | 'choferes' | 'tarifas' | 'empresas';
 
 const SECCIONES: {
   id: SeccionEmpresa;
   label: string;
-  href: '/empresa/panel' | '/empresa/pedidos' | '/empresa/choferes' | '/empresa/tarifas';
+  href: '/empresa/panel' | '/empresa/pedidos' | '/empresa/choferes' | '/empresa/tarifas' | '/empresa/empresas';
   Icon: typeof Package;
+  // Solo para estos roles (si no se indica, para todos los del panel).
+  roles?: string[];
 }[] = [
   { id: 'panel', label: 'Panel', href: '/empresa/panel', Icon: LayoutGrid },
   { id: 'pedidos', label: 'Pedidos', href: '/empresa/pedidos', Icon: Package },
   { id: 'choferes', label: 'Choferes', href: '/empresa/choferes', Icon: Users },
-  { id: 'tarifas', label: 'Tarifas', href: '/empresa/tarifas', Icon: Tag },
+  { id: 'tarifas', label: 'Tarifas', href: '/empresa/tarifas', Icon: Tag, roles: ['empresa'] },
+  { id: 'empresas', label: 'Empresas', href: '/empresa/empresas', Icon: Building2, roles: ['superadmin'] },
 ];
 
 export const PANEL_BG = '#F4F5F7';
@@ -45,6 +48,8 @@ export function EmpresaShell({
   children: React.ReactNode;
 }) {
   const isWide = useIsWide();
+  const { role } = useAuth();
+  const secciones = SECCIONES.filter((s) => !s.roles || (role && s.roles.includes(role)));
 
   const header = (
     <View style={styles.header}>
@@ -65,7 +70,7 @@ export function EmpresaShell({
         <View style={styles.sidebar} role="navigation" aria-label="Principal">
           <Marca />
           <View style={styles.nav}>
-            {SECCIONES.map(({ id, label, href, Icon }) => {
+            {secciones.map(({ id, label, href, Icon }) => {
               const current = id === active;
               return (
                 <Pressable
@@ -104,7 +109,7 @@ export function EmpresaShell({
         <Salir compact />
       </View>
       <View style={styles.tabs} accessibilityRole="tablist">
-        {SECCIONES.map(({ id, label, href }) => {
+        {secciones.map(({ id, label, href }) => {
           const current = id === active;
           return (
             <Link

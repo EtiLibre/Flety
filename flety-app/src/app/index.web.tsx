@@ -324,8 +324,8 @@ function LandingPage() {
                   ))}
                 </View>
                 <Button
-                  title="Postular mi empresa"
-                  onPress={() => router.push('/registro')}
+                  title="Registrar mi empresa"
+                  onPress={() => router.push({ pathname: '/registro', params: { next: '/registrar-empresa' } })}
                   style={styles.empresasButton}
                 />
               </View>
@@ -357,7 +357,10 @@ function LandingPage() {
 
         {/* Sumate como fletero */}
         <View onLayout={(e) => remember('fleteros', e)}>
-          <FleterosSection isWide={isWide} onEmpresas={() => goTo('empresas')} />
+          <FleterosSection
+            isWide={isWide}
+            onEmpresas={() => router.push({ pathname: '/registro', params: { next: '/registrar-empresa' } })}
+          />
         </View>
 
         {/* CTA */}
