@@ -7,6 +7,7 @@ import { Button } from '@/components/Button';
 import { AppMap } from '@/components/map/AppMap';
 import type { MapMarker } from '@/components/map/types';
 import { MobileMapLayout } from '@/components/MobileMapLayout';
+import { CalificarCard } from '@/components/pedido/CalificarCard';
 import { Timeline } from '@/components/pedido/Timeline';
 import { ClienteShell } from '@/components/web/ClienteShell';
 import { useAhora } from '@/hooks/use-ahora';
@@ -116,7 +117,8 @@ function Contenido({
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const activo = !TERMINAL_ESTADOS.includes(pedido.estado);
-  const fletero = useFleteroElegido(pedido.driver_solicitado);
+  // Nombre del fletero asignado (o del elegido en el marketplace mientras espera).
+  const fletero = useFleteroElegido(pedido.driver_id ?? pedido.driver_solicitado);
   const esperandoElegido = pedido.estado === 'buscando_asignacion' && !!pedido.company_solicitada;
   const ahora = useAhora(esperandoElegido);
   const reservado = reservaVigente(pedido, ahora);
@@ -176,6 +178,10 @@ function Contenido({
       </View>
 
       {activo ? <Timeline estado={pedido.estado} /> : null}
+
+      {pedido.estado === 'confirmado' || pedido.estado === 'liquidado' ? (
+        <CalificarCard orderId={pedido.id} quien={fletero ?? 'tu fletero'} />
+      ) : null}
 
       <View style={styles.details}>
         <Detail label="Retiro" value={pedido.origen?.direccion ?? '—'} />

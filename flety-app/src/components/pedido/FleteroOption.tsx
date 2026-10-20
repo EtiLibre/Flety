@@ -1,4 +1,4 @@
-import { Check } from 'lucide-react-native';
+import { Check, Star } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { iniciales } from '@/lib/empresa';
@@ -44,6 +44,18 @@ export function FleteroOption({
         <Text style={styles.detail} numberOfLines={1}>
           {VEHICULO_LABEL[fletero.vehiculo].titulo} · a {min} min del retiro
         </Text>
+        <View style={styles.rating}>
+          {fletero.calificaciones ? (
+            <>
+              <Star size={12} color="#E8A400" fill="#FFC233" strokeWidth={2} />
+              <Text style={styles.ratingText}>
+                {fletero.estrellas?.toFixed(1)} <Text style={styles.ratingMuted}>({fletero.calificaciones})</Text>
+              </Text>
+            </>
+          ) : (
+            <Text style={styles.nuevo}>Nuevo en Flety</Text>
+          )}
+        </View>
       </View>
       <View style={styles.right}>
         <Text style={styles.price}>{fletero.precio != null ? formatARS(fletero.precio) : '—'}</Text>
@@ -95,6 +107,19 @@ const styles = StyleSheet.create({
   empresa: { fontFamily: fonts.medium, color: colors.muted },
   detail: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted },
   right: { alignItems: 'flex-end', gap: 4 },
+  rating: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  ratingText: { fontFamily: fonts.bold, fontSize: 12, color: colors.ink },
+  ratingMuted: { fontFamily: fonts.regular, color: colors.muted },
+  nuevo: {
+    fontFamily: fonts.semibold,
+    fontSize: 11,
+    color: '#2F45B5',
+    backgroundColor: '#E8EEFF',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
   price: { fontFamily: fonts.display, fontSize: 17, color: colors.ink },
   check: {
     width: 18,

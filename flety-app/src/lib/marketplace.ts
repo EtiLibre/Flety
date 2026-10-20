@@ -18,6 +18,9 @@ export type Fletero = {
   // Aproximada (~100 m).
   posicion: LatLng;
   precio: number | null;
+  // Reputación (promedio de estrellas y cuántas calificaciones tiene).
+  estrellas: number | null;
+  calificaciones: number;
 };
 
 type FleteroRow = {
@@ -30,6 +33,8 @@ type FleteroRow = {
   lat: number;
   lng: number;
   precio: number | string | null;
+  estrellas: number | string | null;
+  calificaciones: number | null;
 };
 
 export async function fleterosDisponibles(
@@ -55,6 +60,8 @@ export async function fleterosDisponibles(
     distancia_km: Number(r.distancia_km),
     posicion: { lat: r.lat, lng: r.lng },
     precio: r.precio == null ? null : Number(r.precio),
+    estrellas: r.estrellas == null ? null : Number(r.estrellas),
+    calificaciones: r.calificaciones ?? 0,
   }));
 }
 
