@@ -8,6 +8,7 @@ import { AppMap } from '@/components/map/AppMap';
 import type { MapMarker } from '@/components/map/types';
 import { MobileMapLayout } from '@/components/MobileMapLayout';
 import { CalificarCard } from '@/components/pedido/CalificarCard';
+import { ChatPedido } from '@/components/pedido/ChatPedido';
 import { Timeline } from '@/components/pedido/Timeline';
 import { ClienteShell } from '@/components/web/ClienteShell';
 import { useAhora } from '@/hooks/use-ahora';
@@ -18,6 +19,7 @@ import { confirmar } from '@/lib/confirm';
 import { describirCuando, plural } from '@/lib/format';
 import { PEDIDO_COLUMNS, type Pedido } from '@/lib/orders';
 import { formatoCuenta, reservaVigente, segundosRestantes } from '@/lib/marketplace';
+import { ESTADOS_CHAT } from '@/lib/mensajes';
 import { formatARS } from '@/lib/pricing';
 import { EN_VIAJE, tramoSeguimiento } from '@/lib/seguimiento';
 import { getAvailableActions, TERMINAL_ESTADOS, type OrderAction, type OrderEstado } from '@/lib/state-machine';
@@ -178,6 +180,15 @@ function Contenido({
       </View>
 
       {activo ? <Timeline estado={pedido.estado} /> : null}
+
+      {ESTADOS_CHAT.includes(pedido.estado) ||
+      ((pedido.estado === 'confirmado' || pedido.estado === 'liquidado') && pedido.driver_id) ? (
+        <ChatPedido
+          orderId={pedido.id}
+          titulo={fletero ?? 'tu fletero'}
+          abierto={ESTADOS_CHAT.includes(pedido.estado)}
+        />
+      ) : null}
 
       {pedido.estado === 'confirmado' || pedido.estado === 'liquidado' ? (
         <CalificarCard orderId={pedido.id} quien={fletero ?? 'tu fletero'} />

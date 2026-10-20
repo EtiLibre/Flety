@@ -11,6 +11,7 @@ import { Button } from '@/components/Button';
 import { MiVehiculo } from '@/components/chofer/MiVehiculo';
 import { SolicitudCard } from '@/components/chofer/SolicitudCard';
 import { UnirseEmpresa } from '@/components/chofer/UnirseEmpresa';
+import { ChatPedido } from '@/components/pedido/ChatPedido';
 import { AppMap } from '@/components/map/AppMap';
 import { MENDOZA, type MapMarker } from '@/components/map/types';
 import { useAccion } from '@/hooks/use-accion';
@@ -179,6 +180,7 @@ export default function PanelChofer() {
     actual.estado === 'asignado' ? (
       <Asignado
         pedido={actual}
+        cliente={clientes[actual.cliente_id] ?? null}
         fotos={fotosActual}
         minutos={ruta?.duracionMin ?? null}
         cargando={accion.pendiente === 'avanzar'}
@@ -299,12 +301,14 @@ function Indicacion({
 
 function Asignado({
   pedido,
+  cliente,
   fotos,
   minutos,
   cargando,
   onEmpezar,
 }: {
   pedido: Pedido;
+  cliente: string | null;
   fotos: string[];
   minutos: number | null;
   cargando: boolean;
@@ -324,6 +328,7 @@ function Asignado({
       </View>
       <Fotos pedidoId={pedido.id} fotos={fotos} />
       <Recorrido pedido={pedido} minutos={minutos} />
+      <ChatPedido orderId={pedido.id} titulo={cliente?.split(' ')[0] ?? 'el cliente'} abierto tono="dark" />
       {pedido.nota ? <Nota texto={pedido.nota} /> : null}
       {pedido.precio_estimado != null ? (
         <View style={styles.precio}>
@@ -384,6 +389,7 @@ function EnViaje({
       </View>
       {pedido.nota ? <Nota texto={pedido.nota} /> : null}
       <Fotos pedidoId={pedido.id} fotos={fotos} />
+      <ChatPedido orderId={pedido.id} titulo={cliente?.split(' ')[0] ?? 'el cliente'} abierto tono="dark" />
       {boton ? <Button title={boton} loading={cargando} onPress={onAvanzar} style={styles.mainBtn} /> : null}
     </View>
   );

@@ -7,6 +7,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 
 import { Button } from '@/components/Button';
 import { AccionCola } from '@/components/empresa/AccionCola';
+import { ChatPedido } from '@/components/pedido/ChatPedido';
 import { Badge, Card, ChoferFila, describirServicio, EnVivo, Vacio } from '@/components/empresa/ui';
 import { AppMap } from '@/components/map/AppMap';
 import type { MapMarker } from '@/components/map/types';
@@ -18,8 +19,16 @@ import { usePedidoEnVivo } from '@/hooks/use-pedido-en-vivo';
 import { useRuta } from '@/hooks/use-ruta';
 import { useAuth } from '@/lib/auth';
 import { confirmar } from '@/lib/confirm';
-import { asignarChofer, estadoDelChofer, nombreChofer, nombresDeClientes, rechazarPedido, type Chofer } from '@/lib/empresa';
+import {
+  asignarChofer,
+  estadoDelChofer,
+  nombreChofer,
+  nombresDeClientes,
+  rechazarPedido,
+  type Chofer,
+} from '@/lib/empresa';
 import { describirCuando, plural } from '@/lib/format';
+import { ESTADOS_CHAT } from '@/lib/mensajes';
 import type { Pedido } from '@/lib/orders';
 import { formatARS } from '@/lib/pricing';
 import { EN_VIAJE, tramoSeguimiento } from '@/lib/seguimiento';
@@ -102,7 +111,9 @@ export default function DetallePedidoEmpresa() {
   );
 
   const accionCard = (
-    <Card title={pedido.estado === 'asignado' && esDuena ? 'Asignar chofer' : 'Estado'} right={activo ? <EnVivo /> : undefined}>
+    <Card
+      title={pedido.estado === 'asignado' && esDuena ? 'Asignar chofer' : 'Estado'}
+      right={activo ? <EnVivo /> : undefined}>
       {pedido.estado === 'asignado' && esDuena && role !== 'contabilidad' ? (
         <SelectorChofer
           pedido={pedido}
@@ -129,7 +140,9 @@ export default function DetallePedidoEmpresa() {
       ) : (
         <View style={styles.stack}>
           <Badge label={estadoParaEmpresa(pedido)} tone={activo ? 'warn' : 'neutral'} />
-          {choferAsignado ? <ChoferFila chofer={choferAsignado} estado={estadoDelChofer(choferAsignado, pedidos)} /> : null}
+          {choferAsignado ? (
+            <ChoferFila chofer={choferAsignado} estado={estadoDelChofer(choferAsignado, pedidos)} />
+          ) : null}
           {EN_VIAJE.includes(pedido.estado) ? (
             <Text style={styles.texto}>El chofer avanza el viaje desde su app; acá lo ves en vivo.</Text>
           ) : null}
@@ -140,6 +153,16 @@ export default function DetallePedidoEmpresa() {
   );
 
   const fotosCard = <FotosCard fotos={fotos} />;
+
+  // La empresa dueña chatea con el cliente; el superadmin puede leer el historial.
+  const chat =
+    pedido.company_id && esDuena ? (
+      <ChatPedido
+        orderId={pedido.id}
+        titulo={cliente?.split(' ')[0] ?? 'el cliente'}
+        abierto={role === 'empresa' && ESTADOS_CHAT.includes(pedido.estado)}
+      />
+    ) : null;
 
   const notaCard = pedido.nota ? (
     <Card title="Nota del cliente">
@@ -154,14 +177,22 @@ export default function DetallePedidoEmpresa() {
       <Dato label="Cuándo" valor={describirCuando(pedido.programado_para)} />
       <Dato label="Ayudantes" valor={pedido.ayudantes ? String(pedido.ayudantes) : 'Sin ayudantes'} />
       {pedido.vehiculo ? <Dato label="Vehículo pedido" valor={VEHICULO_LABEL[pedido.vehiculo].titulo} /> : null}
-      {pedido.distancia_km != null ? <Dato label="Distancia" valor={`${Number(pedido.distancia_km).toFixed(1)} km`} /> : null}
-      {pedido.precio_estimado != null ? <Dato label="Precio estimado" valor={formatARS(Number(pedido.precio_estimado))} /> : null}
+      {pedido.distancia_km != null ? (
+        <Dato label="Distancia" valor={`${Number(pedido.distancia_km).toFixed(1)} km`} />
+      ) : null}
+      {pedido.precio_estimado != null ? (
+        <Dato label="Precio estimado" valor={formatARS(Number(pedido.precio_estimado))} />
+      ) : null}
       {cliente ? <Dato label="Cliente" valor={cliente} /> : null}
     </Card>
   );
 
   return (
-    <EmpresaShell active="pedidos" empresa={empresa} title={describirServicio(pedido)} subtitle={estadoParaEmpresa(pedido)}>
+    <EmpresaShell
+      active="pedidos"
+      empresa={empresa}
+      title={describirServicio(pedido)}
+      subtitle={estadoParaEmpresa(pedido)}>
       {volver}
       {isWide ? (
         <View style={styles.columns}>
@@ -172,6 +203,8 @@ export default function DetallePedidoEmpresa() {
           </View>
           <View style={[styles.col, { flex: 1, minWidth: 320 }]}>
             {accionCard}
+            {chat}
+            {chat}
             {detalleCard}
           </View>
         </View>
@@ -241,8 +274,8 @@ function SelectorChofer({
       )}
       {pedido.driver_id && !cambio ? (
         <Text style={styles.texto}>
-          Asignado a {nombreChofer(choferes.find((c) => c.id === pedido.driver_id) ?? { nombre: null, email: null })}. Cuando
-          arranque, lo vas a ver moverse en el mapa.
+          Asignado a {nombreChofer(choferes.find((c) => c.id === pedido.driver_id) ?? { nombre: null, email: null })}.
+          Cuando arranque, lo vas a ver moverse en el mapa.
         </Text>
       ) : null}
       <Button
@@ -252,7 +285,12 @@ function SelectorChofer({
         loading={pendiente === 'asignar'}
         onPress={() => elegido && onAsignar(elegido)}
       />
-      <Button title="Rechazar pedido (vuelve a la cola)" variant="danger" loading={pendiente === 'rechazar'} onPress={onRechazar} />
+      <Button
+        title="Rechazar pedido (vuelve a la cola)"
+        variant="danger"
+        loading={pendiente === 'rechazar'}
+        onPress={onRechazar}
+      />
     </View>
   );
 }
@@ -263,7 +301,11 @@ function FotosCard({ fotos }: { fotos: string[] }) {
   return (
     <Card
       title="Fotos de la carga"
-      right={<Text style={styles.muted}>{fotos.length ? `${plural(fotos.length, 'foto', 'fotos')} · del cliente` : null}</Text>}>
+      right={
+        <Text style={styles.muted}>
+          {fotos.length ? `${plural(fotos.length, 'foto', 'fotos')} · del cliente` : null}
+        </Text>
+      }>
       {actual ? (
         <>
           <Pressable
@@ -313,7 +355,13 @@ const styles = StyleSheet.create({
   backText: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ink },
   columns: { flexDirection: 'row', gap: 24, alignItems: 'flex-start' },
   col: { gap: 20, minWidth: 0 },
-  mapa: { borderRadius: 18, overflow: 'hidden', backgroundColor: colors.mapLand, borderWidth: 1, borderColor: '#E3E6EA' },
+  mapa: {
+    borderRadius: 18,
+    overflow: 'hidden',
+    backgroundColor: colors.mapLand,
+    borderWidth: 1,
+    borderColor: '#E3E6EA',
+  },
   eta: {
     position: 'absolute',
     top: 14,
@@ -343,9 +391,23 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
   },
   opcionSelected: { borderWidth: 2, borderColor: colors.ink, padding: 11 },
-  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' },
+  radio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: colors.line,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   radioOn: { backgroundColor: colors.ink, borderColor: colors.ink },
-  fotoGrande: { width: '100%', aspectRatio: 16 / 10, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.surface },
+  fotoGrande: {
+    width: '100%',
+    aspectRatio: 16 / 10,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    backgroundColor: colors.surface,
+  },
   expand: {
     position: 'absolute',
     right: 10,
