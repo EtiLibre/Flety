@@ -49,8 +49,17 @@ export function VehiculoIlustracion({
       {tipo === 'utilitario' ? (
         <G>
           {/* Furgón chico tipo Kangoo/Partner, mirando a la derecha. */}
-          <Path d="M28 100 V58 Q28 40 46 38 L150 36 Q168 36 180 48 L202 70 Q226 72 234 84 Q238 90 238 100 Z" fill={pintura} />
-          <Path d="M28 100 V58 Q28 40 46 38 L150 36 Q168 36 180 48 L202 70 Q226 72 234 84 Q238 90 238 100 Z" fill={`url(#${id}-luz)`} />
+          <Path
+            d="M28 100 V58 Q28 40 46 38 L150 36 Q168 36 180 48 L202 70 Q226 72 234 84 Q238 90 238 100 Z"
+            fill={pintura}
+            stroke="#12161C"
+            strokeOpacity={0.18}
+            strokeWidth={1.5}
+          />
+          <Path
+            d="M28 100 V58 Q28 40 46 38 L150 36 Q168 36 180 48 L202 70 Q226 72 234 84 Q238 90 238 100 Z"
+            fill={`url(#${id}-luz)`}
+          />
           <Path d="M156 44 Q166 44 174 52 L192 70 H156 Z" fill={`url(#${id}-vidrio)`} />
           <Rect x={104} y={44} width={46} height={26} rx={4} fill={`url(#${id}-vidrio)`} />
           <Path d="M100 42 V96 M152 42 V96" stroke="#000" strokeOpacity={0.12} strokeWidth={1.5} />
@@ -62,12 +71,28 @@ export function VehiculoIlustracion({
       ) : tipo === 'camion' ? (
         <G>
           {/* Camión con caja (mudanzas grandes). */}
-          <Rect x={14} y={22} width={156} height={74} rx={6} fill="#F4F5F7" />
+          <Rect
+            x={14}
+            y={22}
+            width={156}
+            height={74}
+            rx={6}
+            fill="#F4F5F7"
+            stroke="#12161C"
+            strokeOpacity={0.15}
+            strokeWidth={1.5}
+          />
           <Rect x={14} y={22} width={156} height={74} rx={6} fill="#000" opacity={0.04} />
           <Path d="M22 34 H162" stroke="#D5DAE0" strokeWidth={2} />
           <Rect x={70} y={48} width={44} height={22} rx={4} fill="#FFC233" />
           <Path d="M84 54 h9 v3 h-5 v2 h4 v3 h-4 v5 h-4 z" fill="#12161C" />
-          <Path d="M174 44 H212 Q222 44 228 56 L240 74 Q246 78 246 88 V100 H174 Z" fill={pintura} />
+          <Path
+            d="M174 44 H212 Q222 44 228 56 L240 74 Q246 78 246 88 V100 H174 Z"
+            fill={pintura}
+            stroke="#12161C"
+            strokeOpacity={0.18}
+            strokeWidth={1.5}
+          />
           <Path d="M174 44 H212 Q222 44 228 56 L240 74 Q246 78 246 88 V100 H174 Z" fill={`url(#${id}-luz)`} />
           <Path d="M200 50 H211 Q217 50 221 58 L230 74 H200 Z" fill={`url(#${id}-vidrio)`} />
           <Rect x={236} y={82} width={9} height={6} rx={2} fill="#FFF3C4" />
@@ -79,12 +104,28 @@ export function VehiculoIlustracion({
       ) : (
         <G>
           {/* Camioneta con caja cerrada (el flete típico). */}
-          <Rect x={18} y={34} width={128} height={62} rx={6} fill="#F4F5F7" />
+          <Rect
+            x={18}
+            y={34}
+            width={128}
+            height={62}
+            rx={6}
+            fill="#F4F5F7"
+            stroke="#12161C"
+            strokeOpacity={0.15}
+            strokeWidth={1.5}
+          />
           <Rect x={18} y={34} width={128} height={62} rx={6} fill="#000" opacity={0.04} />
           <Path d="M26 46 H138" stroke="#D5DAE0" strokeWidth={2} />
           <Rect x={62} y={56} width={40} height={20} rx={4} fill="#FFC233" />
           <Path d="M75 61 h8 v3 h-4 v2 h3 v3 h-3 v5 h-4 z" fill="#12161C" />
-          <Path d="M150 48 H196 Q206 48 212 58 L226 78 Q240 80 242 90 V100 H150 Z" fill={pintura} />
+          <Path
+            d="M150 48 H196 Q206 48 212 58 L226 78 Q240 80 242 90 V100 H150 Z"
+            fill={pintura}
+            stroke="#12161C"
+            strokeOpacity={0.18}
+            strokeWidth={1.5}
+          />
           <Path d="M150 48 H196 Q206 48 212 58 L226 78 Q240 80 242 90 V100 H150 Z" fill={`url(#${id}-luz)`} />
           <Path d="M176 54 H195 Q201 54 205 61 L217 78 H176 Z" fill={`url(#${id}-vidrio)`} />
           <Rect x={233} y={84} width={9} height={6} rx={2} fill="#FFF3C4" />
@@ -100,7 +141,9 @@ export function VehiculoIlustracion({
 // Patente argentina (Mercosur): franja azul arriba y letras negras.
 export function PatenteChip({ patente, tapada }: { patente: string; tapada?: boolean }) {
   return (
-    <View style={styles.patente} accessibilityLabel={`Patente ${tapada ? 'parcial ' : ''}${patente.split('').join(' ')}`}>
+    <View
+      style={styles.patente}
+      accessibilityLabel={`Patente ${tapada ? 'parcial ' : ''}${patente.split('').join(' ')}`}>
       <View style={styles.franja}>
         <Text style={styles.franjaText}>REPÚBLICA ARGENTINA</Text>
       </View>

@@ -9,6 +9,7 @@ import { MobileMapLayout } from '@/components/MobileMapLayout';
 import type { MapMarker } from '@/components/map/types';
 import { Segmented } from '@/components/pedido/Choice';
 import { FleteroOption } from '@/components/pedido/FleteroOption';
+import { PerfilFleteroModal } from '@/components/pedido/PerfilFletero';
 import { RouteSummary } from '@/components/pedido/RouteSummary';
 import { VehicleOption } from '@/components/pedido/VehicleOption';
 import { ClienteShell } from '@/components/web/ClienteShell';
@@ -165,6 +166,7 @@ function OpcionesContenido({
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [perfil, setPerfil] = useState<Fletero | null>(null);
   const fletero = modo === 'elegir' ? (marketplace.fleteros.find((f) => f.driver_id === elegido) ?? null) : null;
 
   useEffect(() => {
@@ -284,6 +286,7 @@ function OpcionesContenido({
                   fletero={f}
                   selected={elegido === f.driver_id}
                   onPress={() => onElegir(f.driver_id)}
+                  onVerPerfil={() => setPerfil(f)}
                 />
               ))}
             </View>
@@ -308,6 +311,15 @@ function OpcionesContenido({
           <Text style={styles.errorText}>{error}</Text>
         </View>
       ) : null}
+
+      <PerfilFleteroModal
+        fletero={perfil}
+        onClose={() => setPerfil(null)}
+        onElegir={(f) => {
+          onElegir(f.driver_id);
+          setPerfil(null);
+        }}
+      />
 
       <Button
         title={

@@ -4,6 +4,7 @@ import type { Pedido } from './orders';
 import type { Tarifa } from './pricing';
 import { supabase } from './supabase';
 import type { Vehiculo } from './types';
+import type { DatosVehiculo } from './vehiculos';
 
 // Marketplace (migración 0010): fleteros disponibles cerca del retiro, con el
 // precio de las tarifas de su empresa.
@@ -23,6 +24,8 @@ export type Fletero = {
   calificaciones: number;
   // Fletero de ejemplo (solo lo ve el superadmin para previsualizar el marketplace).
   demo?: boolean;
+  // Marca, modelo, año y color (sin patente) para dibujar el vehículo.
+  auto: DatosVehiculo | null;
 };
 
 // SOLO SUPERADMIN: fleteros de ejemplo alrededor del retiro, con precios
@@ -37,6 +40,10 @@ const DEMO: {
   ajuste: number;
   estrellas: number | null;
   calificaciones: number;
+  auto: DatosVehiculo;
+  viajes: number;
+  meses: number;
+  resenas: { estrellas: number; comentario: string; dias: number }[];
 }[] = [
   {
     nombre: 'Martín',
@@ -47,6 +54,14 @@ const DEMO: {
     ajuste: 1,
     estrellas: 4.9,
     calificaciones: 38,
+    auto: { marca: 'Ford', modelo: 'F-100 con caja', anio: '2016', color: 'blanco', patente: 'AE 482 KD' },
+    viajes: 52,
+    meses: 14,
+    resenas: [
+      { estrellas: 5, comentario: 'Puntual y súper cuidadoso con la heladera. Lo recomiendo.', dias: 3 },
+      { estrellas: 5, comentario: 'Rápido y amable, ayudó a subir todo al tercer piso.', dias: 9 },
+      { estrellas: 4, comentario: 'Todo bien, llegó 10 minutos tarde pero avisó.', dias: 21 },
+    ],
   },
   {
     nombre: 'Lucía',
@@ -57,6 +72,13 @@ const DEMO: {
     ajuste: 1.08,
     estrellas: 4.8,
     calificaciones: 21,
+    auto: { marca: 'Mercedes-Benz', modelo: 'Accelo 815', anio: '2019', color: 'azul', patente: 'AC 915 LM' },
+    viajes: 31,
+    meses: 9,
+    resenas: [
+      { estrellas: 5, comentario: 'Mudanza completa en una mañana, impecable.', dias: 5 },
+      { estrellas: 5, comentario: 'Trajeron mantas para proteger los muebles. Muy profesionales.', dias: 16 },
+    ],
   },
   {
     nombre: 'Diego',
@@ -67,6 +89,10 @@ const DEMO: {
     ajuste: 1,
     estrellas: null,
     calificaciones: 0,
+    auto: { marca: 'Renault', modelo: 'Kangoo', anio: '2021', color: 'rojo', patente: 'AF 207 PR' },
+    viajes: 0,
+    meses: 0,
+    resenas: [],
   },
   {
     nombre: 'Paula',
@@ -77,6 +103,10 @@ const DEMO: {
     ajuste: 0.94,
     estrellas: 4.6,
     calificaciones: 12,
+    auto: { marca: 'Toyota', modelo: 'Hilux con caja', anio: '2014', color: 'gris', patente: 'OKL 538' },
+    viajes: 17,
+    meses: 6,
+    resenas: [{ estrellas: 4, comentario: 'Buen servicio, precio justo.', dias: 12 }],
   },
 ];
 
@@ -103,6 +133,7 @@ export function fleterosDeEjemplo(origen: LatLng, km: number, ayudantes: number,
       estrellas: d.estrellas,
       calificaciones: d.calificaciones,
       demo: true,
+      auto: { marca: d.auto.marca, modelo: d.auto.modelo, anio: d.auto.anio, color: d.auto.color },
     };
   });
 }
@@ -119,6 +150,7 @@ type FleteroRow = {
   precio: number | string | null;
   estrellas: number | string | null;
   calificaciones: number | null;
+  auto: DatosVehiculo | null;
 };
 
 export async function fleterosDisponibles(
@@ -146,6 +178,7 @@ export async function fleterosDisponibles(
     precio: r.precio == null ? null : Number(r.precio),
     estrellas: r.estrellas == null ? null : Number(r.estrellas),
     calificaciones: r.calificaciones ?? 0,
+    auto: r.auto ?? null,
   }));
 }
 
@@ -219,4 +252,53 @@ export async function guardarTarifas(companyId: string, tarifas: Tarifa[]) {
     .from('company_tarifas')
     .upsert(tarifas.map((t) => ({ ...t, company_id: companyId, updated_at: new Date().toISOString() })));
   if (error) throw new Error('No pudimos guardar las tarifas. Probá de nuevo.');
+}
+
+// ── Perfil del fletero ──────────────────────────────────────────────────
+export type PerfilFletero = {
+  driver_id: string;
+  nombre: string;
+  empresa: string;
+  empresa_verificada: boolean;
+  desde: string;
+  vehiculo: DatosVehiculo & { patente_completa?: boolean };
+  estrellas: number | null;
+  calificaciones: number;
+  viajes: number;
+  resenas: { estrellas: number; comentario: string; fecha: string }[];
+};
+
+export async function perfilFletero(driverId: string): Promise<PerfilFletero | null> {
+  const { data, error } = await supabase.rpc('perfil_fletero', { p_driver: driverId });
+  if (error || !data) return null;
+  const p = data as PerfilFletero & { estrellas: number | string | null };
+  return { ...p, estrellas: p.estrellas == null ? null : Number(p.estrellas) };
+}
+
+// Perfil de un fletero de ejemplo (patente tapada, como la ve el cliente antes de pedir).
+export function perfilDeEjemplo(f: Fletero): PerfilFletero | null {
+  const d = DEMO[Number(f.driver_id.replace('demo-', ''))];
+  if (!d) return null;
+  const hace = (dias: number) => new Date(Date.now() - dias * 86_400_000).toISOString();
+  const desde = new Date();
+  desde.setMonth(desde.getMonth() - d.meses);
+  return {
+    driver_id: f.driver_id,
+    nombre: `${d.nombre} ${d.nombre === 'Martín' ? 'G.' : d.nombre === 'Lucía' ? 'F.' : d.nombre === 'Diego' ? 'S.' : 'R.'}`,
+    empresa: d.empresa,
+    empresa_verificada: true,
+    desde: desde.toISOString(),
+    vehiculo: { tipo: d.vehiculo, ...d.auto, patente: patenteTapada(d.auto.patente ?? ''), patente_completa: false },
+    estrellas: d.estrellas,
+    calificaciones: d.calificaciones,
+    viajes: d.viajes,
+    resenas: d.resenas.map((r) => ({ estrellas: r.estrellas, comentario: r.comentario, fecha: hace(r.dias) })),
+  };
+}
+
+// Igual que public.patente_tapada (migración 0014).
+export function patenteTapada(p: string) {
+  if (!p || p.length < 5) return p;
+  if (p.length >= 8) return `${p.slice(0, 4)}${'•'.repeat(p.length - 7)}${p.slice(-3)}`;
+  return `${p.slice(0, 2)}${'•'.repeat(p.length - 4)}${p.slice(-2)}`;
 }

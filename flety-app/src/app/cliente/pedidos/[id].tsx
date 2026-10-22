@@ -9,6 +9,7 @@ import type { MapMarker } from '@/components/map/types';
 import { MobileMapLayout } from '@/components/MobileMapLayout';
 import { CalificarCard } from '@/components/pedido/CalificarCard';
 import { ChatPedido } from '@/components/pedido/ChatPedido';
+import { FleteroAsignado } from '@/components/pedido/FleteroAsignado';
 import { Timeline } from '@/components/pedido/Timeline';
 import { ClienteShell } from '@/components/web/ClienteShell';
 import { useAhora } from '@/hooks/use-ahora';
@@ -180,6 +181,10 @@ function Contenido({
       </View>
 
       {activo ? <Timeline estado={pedido.estado} /> : null}
+
+      {pedido.driver_id && ESTADOS_CHAT.includes(pedido.estado) ? (
+        <FleteroAsignado driverId={pedido.driver_id} />
+      ) : null}
 
       {ESTADOS_CHAT.includes(pedido.estado) ||
       ((pedido.estado === 'confirmado' || pedido.estado === 'liquidado') && pedido.driver_id) ? (

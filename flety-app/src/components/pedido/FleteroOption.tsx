@@ -1,6 +1,7 @@
 import { Check, Star } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { VehiculoIlustracion } from '@/components/VehiculoIlustracion';
 import { iniciales } from '@/lib/empresa';
 import { minutosHasta, type Fletero } from '@/lib/marketplace';
 import { formatARS } from '@/lib/pricing';
@@ -13,10 +14,12 @@ export function FleteroOption({
   fletero,
   selected,
   onPress,
+  onVerPerfil,
 }: {
   fletero: Fletero;
   selected: boolean;
   onPress: () => void;
+  onVerPerfil?: () => void;
 }) {
   const min = minutosHasta(fletero.distancia_km);
   return (
@@ -55,9 +58,15 @@ export function FleteroOption({
           ) : (
             <Text style={styles.nuevo}>Nuevo en Flety</Text>
           )}
+          {onVerPerfil ? (
+            <Pressable accessibilityRole="button" onPress={onVerPerfil} hitSlop={8}>
+              <Text style={styles.verPerfil}>Ver perfil</Text>
+            </Pressable>
+          ) : null}
         </View>
       </View>
       <View style={styles.right}>
+        <VehiculoIlustracion tipo={fletero.vehiculo} color={fletero.auto?.color ?? 'blanco'} ancho={66} />
         <Text style={styles.price}>{fletero.precio != null ? formatARS(fletero.precio) : '—'}</Text>
         {selected ? (
           <View style={styles.check}>
@@ -108,6 +117,13 @@ const styles = StyleSheet.create({
   detail: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted },
   right: { alignItems: 'flex-end', gap: 4 },
   rating: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  verPerfil: {
+    fontFamily: fonts.bold,
+    fontSize: 12,
+    color: colors.ink,
+    textDecorationLine: 'underline',
+    marginLeft: 8,
+  },
   ratingText: { fontFamily: fonts.bold, fontSize: 12, color: colors.ink },
   ratingMuted: { fontFamily: fonts.regular, color: colors.muted },
   nuevo: {
