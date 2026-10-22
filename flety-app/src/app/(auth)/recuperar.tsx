@@ -1,6 +1,7 @@
+import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { FormScreen } from '@/components/FormScreen';
@@ -9,10 +10,13 @@ import { authErrorMessage } from '@/lib/auth-errors';
 import { supabase } from '@/lib/supabase';
 import { colors, fonts } from '@/theme';
 
-// El cambio de contraseña en sí se completa en la web actual de Flety
-// (/reset-password), que ya maneja el link del email. En la app llegará con
-// deep links en un paso siguiente.
-const RESET_REDIRECT = 'https://flety-nine.vercel.app/auth/callback?next=/reset-password';
+// El link del email vuelve a /restablecer de esta misma app (en web, el mismo
+// dominio desde el que se pidió). Esa dirección tiene que estar en Supabase →
+// Authentication → URL Configuration → Redirect URLs.
+function destinoDelLink() {
+  if (Platform.OS === 'web' && globalThis.location?.origin) return `${globalThis.location.origin}/restablecer`;
+  return Linking.createURL('/restablecer');
+}
 
 export default function Recuperar() {
   const [email, setEmail] = useState('');
@@ -28,7 +32,7 @@ export default function Recuperar() {
     }
     setLoading(true);
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: RESET_REDIRECT,
+      redirectTo: destinoDelLink(),
     });
     setLoading(false);
     if (resetError) {
