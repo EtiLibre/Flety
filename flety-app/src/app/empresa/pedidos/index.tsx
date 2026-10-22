@@ -18,6 +18,7 @@ import { EmpresaShell } from '@/components/web/EmpresaShell';
 import { useAccion } from '@/hooks/use-accion';
 import { useEmpresa } from '@/hooks/use-empresa';
 import { useIsWide } from '@/hooks/use-is-wide';
+import { useNavEmpresa } from '@/hooks/use-nav-empresa';
 import { confirmar } from '@/lib/confirm';
 import { estadoDelChofer, grupoDelEstado, nombreChofer, rechazarPedido, type GrupoPedidos } from '@/lib/empresa';
 import type { Pedido } from '@/lib/orders';
@@ -52,6 +53,7 @@ const ESTADO_TONE: Partial<Record<Pedido['estado'], 'success' | 'warn' | 'neutra
 
 export default function PedidosEmpresa() {
   const isWide = useIsWide();
+  const nav = useNavEmpresa();
   const params = useLocalSearchParams<{ tab?: string }>();
   const tab: GrupoPedidos = TABS.some((t) => t.id === params.tab) ? (params.tab as GrupoPedidos) : 'cola';
   const {
@@ -109,7 +111,7 @@ export default function PedidosEmpresa() {
           <BotonChico
             title={p.driver_id ? 'Cambiar' : 'Asignar'}
             variant="dark"
-            onPress={() => router.push(`/empresa/pedidos/${p.id}`)}
+            onPress={() => nav.abrirPedido(p.id)}
           />
           <BotonChico
             title="Rechazar"
@@ -120,7 +122,7 @@ export default function PedidosEmpresa() {
         </>
       );
     }
-    return <BotonChico title="Ver" variant="outline" onPress={() => router.push(`/empresa/pedidos/${p.id}`)} />;
+    return <BotonChico title="Ver" variant="outline" onPress={() => nav.abrirPedido(p.id)} />;
   }
 
   const columnas = COLUMNAS_PEDIDO.map((c, i) =>

@@ -2,19 +2,24 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { EmpresaPreviewContext, type DatosEmpresa } from '@/hooks/use-empresa';
+import { NavEmpresaDemoContext, type NavEmpresa } from '@/hooks/use-nav-empresa';
 import { PedidoPreviewContext } from '@/hooks/use-pedido-en-vivo';
 import { AuthPreview, useAuth } from '@/lib/auth';
 import type { Chofer } from '@/lib/empresa';
 import type { Pedido } from '@/lib/orders';
+import { avisar } from '@/lib/confirm';
 import { MarketingPreviewContext, type Estadisticas } from '@/lib/marketing';
+import { EN_VIAJE } from '@/lib/seguimiento';
 import type { UserRole } from '@/lib/types';
 import { FOTOS_EJEMPLO as FOTOS } from '@/dev/datos-ejemplo';
 import { colors, fonts } from '@/theme';
 
 import DetallePedidoEmpresa from './empresa/pedidos/[id]';
 import PedidosEmpresa from './empresa/pedidos/index';
+import ChoferesEmpresa from './empresa/choferes';
 import Marketing from './empresa/marketing';
 import PanelEmpresa from './empresa/panel';
+import TarifasEmpresa from './empresa/tarifas';
 
 // SOLO DESARROLLO: el panel de empresas con datos de ejemplo, sin iniciar
 // sesión ni Supabase. ?vista=panel|pedidos|detalle y ?rol=empresa|superadmin.
@@ -170,7 +175,8 @@ const DATOS: DatosEmpresa = {
   clientes: { 'cli-1': 'Ana Pérez' },
 };
 
-const VISTAS = ['panel', 'pedidos', 'detalle', 'en-viaje', 'marketing'] as const;
+const VISTAS = ['panel', 'pedidos', 'choferes', 'tarifas', 'detalle', 'marketing'] as const;
+type Vista = (typeof VISTAS)[number];
 
 // Estadísticas de ejemplo (30 días) para ver el panel de marketing.
 const ESTADISTICAS: Estadisticas = {
@@ -221,45 +227,64 @@ const ESTADISTICAS: Estadisticas = {
 };
 
 export default function PreviewEmpresa() {
-  const params = useLocalSearchParams<{ vista?: string; rol?: string }>();
+  const params = useLocalSearchParams<{ vista?: string; rol?: string; pedido?: string }>();
   // En producción, solo el superadmin ("Ver la app como…" del panel).
   const { role } = useAuth();
   if (!__DEV__ && role !== 'superadmin') return <Redirect href="/" />;
-  const vista = VISTAS.find((v) => v === params.vista) ?? 'panel';
+  const vista: Vista = VISTAS.find((v) => v === params.vista) ?? 'panel';
   const rol: UserRole = vista === 'marketing' ? 'marketing' : params.rol === 'superadmin' ? 'superadmin' : 'empresa';
-  const detalle = vista === 'en-viaje' ? PEDIDOS[3] : PEDIDOS[2];
+  const detalle = PEDIDOS.find((p) => p.id === params.pedido) ?? PEDIDOS[2];
+  const enViaje = EN_VIAJE.includes(detalle.estado);
+  const choferDetalle = CHOFERES.find((c) => c.id === detalle.driver_id);
+
+  // El menú y los links del panel cambian de sección dentro de la demo (no a
+  // las pantallas reales, que sacarían al superadmin de la vista de usuario).
+  const nav: NavEmpresa = {
+    ir: (seccion) => {
+      if ((VISTAS as readonly string[]).includes(seccion)) router.setParams({ vista: seccion, pedido: undefined });
+      else avisar('Esa sección no está en la demo de empresa.');
+    },
+    abrirPedido: (id) => router.setParams({ vista: 'detalle', pedido: id }),
+  };
 
   return (
     <AuthPreview value={{ role: rol, nombre: 'Empresa de ejemplo', companyId: rol === 'empresa' ? 'emp-1' : null }}>
-      <EmpresaPreviewContext.Provider value={rol === 'empresa' ? DATOS : { ...DATOS, empresa: null }}>
-        <PedidoPreviewContext.Provider
-          value={{
-            pedido: detalle,
-            chofer: vista === 'en-viaje' ? CHOFERES[1].ubicacion_actual : null,
-            fotos: vista === 'en-viaje' ? [] : FOTOS,
-          }}>
-          <View style={{ flex: 1 }}>
-            {vista === 'panel' ? <PanelEmpresa /> : null}
-            {vista === 'marketing' ? (
-              <MarketingPreviewContext.Provider value={ESTADISTICAS}>
-                <Marketing />
-              </MarketingPreviewContext.Provider>
-            ) : null}
-            {vista === 'pedidos' ? <PedidosEmpresa /> : null}
-            {vista === 'detalle' || vista === 'en-viaje' ? <DetallePedidoEmpresa /> : null}
-            <View style={styles.switcher}>
-              {VISTAS.map((v) => (
-                <Pressable
-                  key={v}
-                  onPress={() => router.setParams({ vista: v })}
-                  style={[styles.chip, v === vista && styles.chipOn]}>
-                  <Text style={[styles.chipText, v === vista && { color: colors.ink }]}>{v}</Text>
-                </Pressable>
-              ))}
+      <NavEmpresaDemoContext.Provider value={nav}>
+        <EmpresaPreviewContext.Provider value={rol === 'empresa' ? DATOS : { ...DATOS, empresa: null }}>
+          <PedidoPreviewContext.Provider
+            value={{
+              pedido: detalle,
+              chofer: enViaje ? (choferDetalle?.ubicacion_actual ?? null) : null,
+              fotos: DATOS.fotos[detalle.id] ? FOTOS.slice(0, DATOS.fotos[detalle.id]) : [],
+            }}>
+            <View style={{ flex: 1 }}>
+              {vista === 'panel' ? <PanelEmpresa /> : null}
+              {vista === 'pedidos' ? <PedidosEmpresa /> : null}
+              {vista === 'choferes' ? <ChoferesEmpresa /> : null}
+              {vista === 'tarifas' ? <TarifasEmpresa /> : null}
+              {vista === 'detalle' ? <DetallePedidoEmpresa /> : null}
+              {vista === 'marketing' ? (
+                <MarketingPreviewContext.Provider value={ESTADISTICAS}>
+                  <Marketing />
+                </MarketingPreviewContext.Provider>
+              ) : null}
+              {/* Atajos solo en desarrollo: en producción se navega con el menú del panel. */}
+              {__DEV__ ? (
+                <View style={styles.switcher}>
+                  {VISTAS.map((v) => (
+                    <Pressable
+                      key={v}
+                      onPress={() => router.setParams({ vista: v })}
+                      style={[styles.chip, v === vista && styles.chipOn]}>
+                      <Text style={[styles.chipText, v === vista && { color: colors.ink }]}>{v}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
             </View>
-          </View>
-        </PedidoPreviewContext.Provider>
-      </EmpresaPreviewContext.Provider>
+          </PedidoPreviewContext.Provider>
+        </EmpresaPreviewContext.Provider>
+      </NavEmpresaDemoContext.Provider>
     </AuthPreview>
   );
 }

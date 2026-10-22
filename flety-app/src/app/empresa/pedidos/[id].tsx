@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
-import { Link, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Check, Expand } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -15,6 +15,7 @@ import { EmpresaShell } from '@/components/web/EmpresaShell';
 import { useAccion } from '@/hooks/use-accion';
 import { useEmpresa } from '@/hooks/use-empresa';
 import { useIsWide } from '@/hooks/use-is-wide';
+import { useNavEmpresa } from '@/hooks/use-nav-empresa';
 import { usePedidoEnVivo } from '@/hooks/use-pedido-en-vivo';
 import { useRuta } from '@/hooks/use-ruta';
 import { useAuth } from '@/lib/auth';
@@ -47,6 +48,7 @@ function estadoParaEmpresa(p: Pedido): string {
 export default function DetallePedidoEmpresa() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const isWide = useIsWide();
+  const nav = useNavEmpresa();
   const { role } = useAuth();
   const { empresa, choferes, pedidos, recargar } = useEmpresa();
   const { pedido, notFound, chofer: ubicacionChofer, fotos } = usePedidoEnVivo(id);
@@ -67,10 +69,10 @@ export default function DetallePedidoEmpresa() {
   const { ruta } = useRuta(tramo?.puntos ?? [null, null]);
 
   const volver = (
-    <Link href="/empresa/pedidos" style={styles.back}>
+    <Pressable accessibilityRole="link" onPress={() => nav.ir('pedidos')} style={styles.back}>
       <ArrowLeft size={16} color={colors.ink} strokeWidth={2.2} />
       <Text style={styles.backText}>Pedidos</Text>
-    </Link>
+    </Pressable>
   );
 
   if (notFound || !pedido) {

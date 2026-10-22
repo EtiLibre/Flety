@@ -1,4 +1,4 @@
-import { Link, router, type Href } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
   Building2,
@@ -19,6 +19,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useIsWide } from '@/hooks/use-is-wide';
+import { useNavEmpresa } from '@/hooks/use-nav-empresa';
 import { useAuth } from '@/lib/auth';
 import type { Empresa } from '@/lib/empresa';
 import { supabase } from '@/lib/supabase';
@@ -96,6 +97,7 @@ export function EmpresaShell({
 }) {
   const isWide = useIsWide();
   const { role } = useAuth();
+  const nav = useNavEmpresa();
   const secciones = SECCIONES.filter((s) => !s.roles || (role && s.roles.includes(role)));
 
   const header = (
@@ -117,14 +119,14 @@ export function EmpresaShell({
         <View style={styles.sidebar} role="navigation" aria-label="Principal">
           <Marca />
           <View style={styles.nav}>
-            {secciones.map(({ id, label, href, Icon }) => {
+            {secciones.map(({ id, label, Icon }) => {
               const current = id === active;
               return (
                 <Pressable
                   key={id}
                   accessibilityRole="link"
                   aria-current={current ? 'page' : undefined}
-                  onPress={() => router.navigate(href)}
+                  onPress={() => nav.ir(id)}
                   style={({ hovered }: { hovered?: boolean }) => [
                     styles.navItem,
                     (current || hovered) && styles.navItemActive,
@@ -164,16 +166,16 @@ export function EmpresaShell({
         style={styles.tabsScroll}
         contentContainerStyle={styles.tabs}
         accessibilityRole="tablist">
-        {secciones.map(({ id, label, href }) => {
+        {secciones.map(({ id, label }) => {
           const current = id === active;
           return (
-            <Link
+            <Pressable
               key={id}
-              href={href}
-              style={[styles.tab, current && styles.tabActive]}
-              aria-current={current ? 'page' : undefined}>
-              {label}
-            </Link>
+              accessibilityRole="link"
+              aria-current={current ? 'page' : undefined}
+              onPress={() => nav.ir(id)}>
+              <Text style={[styles.tab, current && styles.tabActive]}>{label}</Text>
+            </Pressable>
           );
         })}
       </ScrollView>

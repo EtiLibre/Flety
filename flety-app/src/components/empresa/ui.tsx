@@ -1,8 +1,8 @@
-import { router } from 'expo-router';
 import { Camera, ChevronRight } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { CARD_BORDER } from '@/components/web/EmpresaShell';
+import { useNavEmpresa } from '@/hooks/use-nav-empresa';
 import { iniciales, nombreChofer, type Chofer, type EstadoChofer } from '@/lib/empresa';
 import { describirCuando, plural } from '@/lib/format';
 import type { Pedido } from '@/lib/orders';
@@ -37,7 +37,17 @@ export function Card({
   );
 }
 
-export function StatCard({ label, value, suffix, dot }: { label: string; value: string; suffix?: string; dot?: boolean }) {
+export function StatCard({
+  label,
+  value,
+  suffix,
+  dot,
+}: {
+  label: string;
+  value: string;
+  suffix?: string;
+  dot?: boolean;
+}) {
   return (
     <View style={[styles.card, styles.stat]}>
       <View style={styles.statLabelRow}>
@@ -115,7 +125,9 @@ export function direccionCorta(direccion: string | undefined | null): string {
 }
 
 export function describirServicio(pedido: Pedido): string {
-  return [TIPO_LABEL[pedido.tipo], pedido.tamano ? TAMANO_LABEL[pedido.tamano].titulo : null].filter(Boolean).join(' · ');
+  return [TIPO_LABEL[pedido.tipo], pedido.tamano ? TAMANO_LABEL[pedido.tamano].titulo : null]
+    .filter(Boolean)
+    .join(' · ');
 }
 
 export type Columna = { titulo: string; flex?: number; width?: number; align?: 'right' };
@@ -160,7 +172,8 @@ export function PedidoFila({
   accion?: React.ReactNode;
   wide: boolean;
 }) {
-  const abrir = () => router.push(`/empresa/pedidos/${pedido.id}`);
+  const nav = useNavEmpresa();
+  const abrir = () => nav.abrirPedido(pedido.id);
   const servicio = describirServicio(pedido);
   const recorrido = `${direccionCorta(pedido.origen?.direccion)} → ${direccionCorta(pedido.destino?.direccion)}`;
   const fotosLabel = fotos ? plural(fotos, 'foto', 'fotos') : 'Sin fotos';
@@ -193,7 +206,11 @@ export function PedidoFila({
   }
 
   return (
-    <Pressable accessibilityRole="link" accessibilityLabel={`${servicio}, ${recorrido}`} onPress={abrir} style={styles.item}>
+    <Pressable
+      accessibilityRole="link"
+      accessibilityLabel={`${servicio}, ${recorrido}`}
+      onPress={abrir}
+      style={styles.item}>
       <View style={styles.itemTop}>
         <View style={{ flex: 1, gap: 2 }}>
           <Text style={styles.tdStrong}>{servicio}</Text>
@@ -254,7 +271,14 @@ export function BotonChico({
 }
 
 const styles = StyleSheet.create({
-  card: { padding: 20, borderRadius: 18, backgroundColor: colors.white, borderWidth: 1, borderColor: CARD_BORDER, gap: 14 },
+  card: {
+    padding: 20,
+    borderRadius: 18,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: CARD_BORDER,
+    gap: 14,
+  },
   cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   cardTitle: { fontFamily: fonts.bold, fontSize: 18, color: colors.ink },
   stat: { flexGrow: 1, flexBasis: 150, gap: 6 },
@@ -285,7 +309,14 @@ const styles = StyleSheet.create({
   liveText: { fontFamily: fonts.bold, fontSize: 12, color: colors.success },
   vacio: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 20, color: colors.muted, paddingVertical: 8 },
   chofer: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   avatarText: { fontFamily: fonts.bold, fontSize: 14, color: '#3A3F45' },
   choferText: { flex: 1, minWidth: 0 },
   choferNombre: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
@@ -309,9 +340,23 @@ const styles = StyleSheet.create({
   tdMuted: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted },
   fotosCell: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   accionCell: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
-  item: { gap: 8, padding: 14, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.white },
+  item: {
+    gap: 8,
+    padding: 14,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.white,
+  },
   itemTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   itemBottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingTop: 4 },
-  botonChico: { height: 36, paddingHorizontal: 16, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  botonChico: {
+    height: 36,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   botonChicoText: { fontFamily: fonts.bold, fontSize: 14 },
 });

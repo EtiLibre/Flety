@@ -1,5 +1,4 @@
-import { Link, router } from 'expo-router';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AnuncioPopup } from '@/components/AnuncioPopup';
 import { AccionCola } from '@/components/empresa/AccionCola';
@@ -20,6 +19,7 @@ import { EmpresaShell } from '@/components/web/EmpresaShell';
 import { useAccion } from '@/hooks/use-accion';
 import { useEmpresa } from '@/hooks/use-empresa';
 import { useIsWide } from '@/hooks/use-is-wide';
+import { useNavEmpresa } from '@/hooks/use-nav-empresa';
 import { useAuth } from '@/lib/auth';
 import { estadoDelChofer, nombreChofer } from '@/lib/empresa';
 import { EN_VIAJE } from '@/lib/seguimiento';
@@ -29,6 +29,7 @@ const MAX_FILAS = 6;
 
 export default function PanelEmpresa() {
   const isWide = useIsWide();
+  const nav = useNavEmpresa();
   const { role } = useAuth();
   const { empresa, cola, pedidos, choferes, fotos, loading, error: errorCarga, recargar } = useEmpresa();
   const { pendiente, error, ejecutar } = useAccion(recargar);
@@ -89,9 +90,9 @@ export default function PanelEmpresa() {
                       ))}
                     </View>
                     {cola.length > MAX_FILAS ? (
-                      <Link href="/empresa/pedidos" style={styles.link}>
-                        Ver los {cola.length} pedidos en cola
-                      </Link>
+                      <Pressable accessibilityRole="link" onPress={() => nav.ir('pedidos')}>
+                        <Text style={styles.link}>Ver los {cola.length} pedidos en cola</Text>
+                      </Pressable>
                     ) : null}
                   </>
                 ) : (
@@ -143,9 +144,9 @@ export default function PanelEmpresa() {
                     .join(', ')}
                 </Text>
               ) : null}
-              <Link href="/empresa/choferes" style={styles.link}>
-                Ver todos los choferes
-              </Link>
+              <Pressable accessibilityRole="link" onPress={() => nav.ir('choferes')}>
+                <Text style={styles.link}>Ver todos los choferes</Text>
+              </Pressable>
             </Card>
           </View>
         </>
@@ -156,7 +157,8 @@ export default function PanelEmpresa() {
 }
 
 function AbrirDetalle({ id }: { id: string }) {
-  return <BotonChico title="Asignar" variant="dark" onPress={() => router.push(`/empresa/pedidos/${id}`)} />;
+  const nav = useNavEmpresa();
+  return <BotonChico title="Asignar" variant="dark" onPress={() => nav.abrirPedido(id)} />;
 }
 
 const styles = StyleSheet.create({

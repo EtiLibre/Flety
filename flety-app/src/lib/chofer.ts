@@ -3,6 +3,7 @@ import type { LatLng } from '@/components/map/types';
 import type { OrderEstado } from './state-machine';
 import { supabase } from './supabase';
 import type { Vehiculo } from './types';
+import type { DatosVehiculo } from './vehiculos';
 
 // App del chofer. Qué transición puede hacer lo decide el trigger
 // validate_order_transition (migración 0004): solo el chofer asignado avanza
@@ -66,7 +67,7 @@ export type MiChofer = {
   company_id: string;
   disponibilidad: boolean;
   ubicacion_actual: LatLng | null;
-  vehiculo: { tipo?: Vehiculo; patente?: string } | null;
+  vehiculo: DatosVehiculo | null;
   empresa: string | null;
 };
 
@@ -89,12 +90,19 @@ export async function miChofer(userId: string): Promise<MiChofer | null> {
 }
 
 // El vehículo con el que aparece en el marketplace.
-export async function guardarVehiculo(driverId: string, vehiculo: { tipo: Vehiculo; patente: string }) {
-  const patente = vehiculo.patente.trim().toUpperCase();
-  const { error } = await supabase
-    .from('drivers')
-    .update({ vehiculo: patente ? { tipo: vehiculo.tipo, patente } : { tipo: vehiculo.tipo } })
-    .eq('id', driverId);
+export async function guardarVehiculo(driverId: string, vehiculo: DatosVehiculo & { tipo: Vehiculo }) {
+  // Solo los campos con valor (jsonb limpio).
+  const limpio = Object.fromEntries(
+    Object.entries({
+      tipo: vehiculo.tipo,
+      marca: vehiculo.marca?.trim(),
+      modelo: vehiculo.modelo?.trim(),
+      anio: vehiculo.anio?.trim(),
+      color: vehiculo.color,
+      patente: vehiculo.patente?.trim().toUpperCase(),
+    }).filter(([, v]) => !!v)
+  );
+  const { error } = await supabase.from('drivers').update({ vehiculo: limpio }).eq('id', driverId);
   if (error) throw new Error('No pudimos guardar tu vehículo. Probá de nuevo.');
 }
 

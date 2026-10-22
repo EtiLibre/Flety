@@ -3,7 +3,7 @@ import type { LatLng } from '@/components/map/types';
 import { EN_VIAJE } from './seguimiento';
 import type { OrderEstado } from './state-machine';
 import { supabase } from './supabase';
-import type { Vehiculo } from './types';
+import type { DatosVehiculo } from './vehiculos';
 
 // Datos del panel de empresas. Lo que cada uno puede ver/tocar lo deciden las
 // políticas RLS y el trigger validate_order_transition (migraciones 0004/0008):
@@ -15,7 +15,7 @@ export type Chofer = {
   id: string;
   user_id: string;
   disponibilidad: boolean;
-  vehiculo: { tipo?: Vehiculo; patente?: string } | null;
+  vehiculo: DatosVehiculo | null;
   ubicacion_actual: LatLng | null;
   nombre: string | null;
   email: string | null;
