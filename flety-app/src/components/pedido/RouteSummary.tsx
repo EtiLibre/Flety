@@ -34,8 +34,22 @@ export function RouteSummary({ origen, destino, chips }: { origen: string; desti
 const styles = StyleSheet.create({
   card: { gap: 10, padding: 16, borderRadius: radius.xl, backgroundColor: colors.surface },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  dotOrigen: { width: 10, height: 10, borderRadius: 5, borderWidth: 3, borderColor: colors.ink, backgroundColor: colors.white },
-  dotDestino: { width: 10, height: 10, borderRadius: 3, backgroundColor: colors.accent, borderWidth: 2, borderColor: colors.ink },
+  dotOrigen: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 3,
+    borderColor: colors.ink,
+    backgroundColor: colors.white,
+  },
+  dotDestino: {
+    width: 10,
+    height: 10,
+    borderRadius: 3,
+    backgroundColor: colors.accent,
+    borderWidth: 2,
+    borderColor: colors.ink,
+  },
   address: { flex: 1, fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingTop: 4 },
   chip: {

@@ -1,7 +1,7 @@
 import { Check, Star } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { VehiculoIlustracion } from '@/components/VehiculoIlustracion';
+import { FotoVehiculoMini } from '@/components/FotoVehiculo';
 import { iniciales } from '@/lib/empresa';
 import { minutosHasta, type Fletero } from '@/lib/marketplace';
 import { formatARS } from '@/lib/pricing';
@@ -66,7 +66,7 @@ export function FleteroOption({
         </View>
       </View>
       <View style={styles.right}>
-        <VehiculoIlustracion tipo={fletero.vehiculo} color={fletero.auto?.color ?? 'blanco'} ancho={66} />
+        <FotoVehiculoMini vehiculo={fletero.auto} tipo={fletero.vehiculo} ancho={66} />
         <Text style={styles.price}>{fletero.precio != null ? formatARS(fletero.precio) : '—'}</Text>
         {selected ? (
           <View style={styles.check}>

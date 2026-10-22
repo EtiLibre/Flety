@@ -1,5 +1,7 @@
 import type { LatLng } from '@/components/map/types';
 
+import { VEHICULOS_BUCKET } from './fotoModelo';
+import type { FotoLocal } from './pedido-draft';
 import type { OrderEstado } from './state-machine';
 import { supabase } from './supabase';
 import type { Vehiculo } from './types';
@@ -100,10 +102,31 @@ export async function guardarVehiculo(driverId: string, vehiculo: DatosVehiculo 
       anio: vehiculo.anio?.trim(),
       color: vehiculo.color,
       patente: vehiculo.patente?.trim().toUpperCase(),
+      fotos: vehiculo.fotos?.length ? vehiculo.fotos.slice(0, 3) : null,
+      // Con fotos propias no hace falta la del modelo.
+      foto_modelo: vehiculo.fotos?.length ? null : vehiculo.foto_modelo,
     }).filter(([, v]) => !!v)
   );
   const { error } = await supabase.from('drivers').update({ vehiculo: limpio }).eq('id', driverId);
   if (error) throw new Error('No pudimos guardar tu vehículo. Probá de nuevo.');
+}
+
+// Sube una foto del vehículo a la carpeta del chofer (bucket público "vehiculos",
+// migración 0015) y devuelve la ruta para guardarla en drivers.vehiculo.fotos.
+export async function subirFotoVehiculo(driverId: string, foto: FotoLocal, index: number) {
+  const ext = foto.mimeType.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg';
+  const path = `${driverId}/${Date.now()}-${index}.${ext}`;
+  const body = foto.file ?? (await (await fetch(foto.uri)).arrayBuffer());
+  const { error } = await supabase.storage
+    .from(VEHICULOS_BUCKET)
+    .upload(path, body, { contentType: foto.mimeType, upsert: false });
+  if (error) throw new Error('No pudimos subir la foto. Probá de nuevo.');
+  return path;
+}
+
+export async function borrarFotosVehiculo(paths: string[]) {
+  if (!paths.length) return;
+  await supabase.storage.from(VEHICULOS_BUCKET).remove(paths);
 }
 
 export async function cambiarDisponibilidad(driverId: string, disponible: boolean) {

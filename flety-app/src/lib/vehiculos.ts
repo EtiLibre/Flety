@@ -1,7 +1,7 @@
 import type { Vehiculo } from './types';
 
-// Datos del vehículo del chofer (drivers.vehiculo, jsonb). La plataforma dibuja
-// el vehículo según el tipo y lo pinta del color elegido (VehiculoIlustracion).
+// Datos del vehículo del chofer (drivers.vehiculo, jsonb). Se muestra su foto
+// real (ver lib/fotoModelo.ts) o, si no hay, el dibujo según tipo y color.
 export type DatosVehiculo = {
   tipo?: Vehiculo;
   marca?: string;
@@ -9,19 +9,17 @@ export type DatosVehiculo = {
   anio?: string;
   color?: ColorVehiculo;
   patente?: string;
+  // Rutas en el bucket "vehiculos" (fotos que subió el chofer, hasta 3).
+  fotos?: string[];
+  // Foto de referencia del modelo (Wikimedia Commons) o "ninguna" si el chofer
+  // dijo que ninguna se parece (entonces se muestra el dibujo).
+  foto_modelo?: FotoModelo | 'ninguna' | null;
 };
 
+export type FotoModelo = { url: string; pagina: string; autor: string; licencia: string };
+
 export type ColorVehiculo =
-  | 'blanco'
-  | 'gris'
-  | 'plateado'
-  | 'negro'
-  | 'rojo'
-  | 'azul'
-  | 'verde'
-  | 'amarillo'
-  | 'naranja'
-  | 'bordo';
+  'blanco' | 'gris' | 'plateado' | 'negro' | 'rojo' | 'azul' | 'verde' | 'amarillo' | 'naranja' | 'bordo';
 
 export const COLORES: Record<ColorVehiculo, { label: string; hex: string }> = {
   blanco: { label: 'Blanco', hex: '#F2F3F5' },
@@ -38,7 +36,10 @@ export const COLORES: Record<ColorVehiculo, { label: string; hex: string }> = {
 
 // Formato de patente argentina: "AE 123 FT" (Mercosur) o "ABC 123" (anterior).
 export function formatoPatente(texto: string) {
-  const limpio = texto.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
+  const limpio = texto
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, 7);
   if (/^[A-Z]{2}\d{3}[A-Z]{0,2}$/.test(limpio) && limpio.length > 5) {
     return `${limpio.slice(0, 2)} ${limpio.slice(2, 5)} ${limpio.slice(5)}`.trim();
   }

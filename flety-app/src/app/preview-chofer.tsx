@@ -11,7 +11,7 @@ import { colors, fonts } from '@/theme';
 import PanelChofer from './chofer/panel';
 
 // SOLO DESARROLLO: la app del chofer con datos de ejemplo, sin iniciar sesión
-// ni Supabase. ?estado=solicitud|asignado|en_camino_origen|cargando|en_camino_destino|libre|sin-empresa
+// ni Supabase. ?estado=solicitud|asignado|en_camino_origen|cargando|en_camino_destino|libre|sin-empresa|vehiculo
 // (los botones que escriben en la base fallan acá, es esperado). En producción redirige al inicio.
 
 const ESTADOS = [
@@ -22,6 +22,7 @@ const ESTADOS = [
   'en_camino_destino',
   'libre',
   'sin-empresa',
+  'vehiculo',
 ] as const;
 
 const PEDIDO: Pedido = {
@@ -66,7 +67,9 @@ export default function PreviewChofer() {
   const estado = ESTADOS.find((e) => e === params.estado) ?? 'asignado';
 
   const pedido =
-    estado === 'libre' || estado === 'sin-empresa' || estado === 'solicitud' ? null : { ...PEDIDO, estado };
+    estado === 'libre' || estado === 'sin-empresa' || estado === 'solicitud' || estado === 'vehiculo'
+      ? null
+      : { ...PEDIDO, estado };
   // Un cliente lo eligió en el marketplace: reserva de 5 minutos.
   const solicitud: Pedido | null =
     estado === 'solicitud'
@@ -82,7 +85,13 @@ export default function PreviewChofer() {
         }
       : null;
   const datos: DatosChofer = {
-    chofer: estado === 'sin-empresa' ? null : CHOFER,
+    chofer:
+      estado === 'sin-empresa'
+        ? null
+        : estado === 'vehiculo'
+          ? // Sin tipo cargado: muestra el formulario del vehículo (fotos y foto del modelo).
+            { ...CHOFER, vehiculo: { marca: 'Renault', modelo: 'Kangoo', anio: '2021', color: 'rojo' as const } }
+          : CHOFER,
     pedidos: pedido ? [pedido] : [],
     solicitudes: solicitud ? [solicitud] : [],
     hechosHoy: 2,

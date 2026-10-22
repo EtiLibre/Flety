@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
-import { PatenteChip, VehiculoIlustracion } from '@/components/VehiculoIlustracion';
+import { FotoVehiculo } from '@/components/FotoVehiculo';
+import { PatenteChip } from '@/components/VehiculoIlustracion';
 import { iniciales } from '@/lib/empresa';
 import { perfilDeEjemplo, perfilFletero, type Fletero, type PerfilFletero } from '@/lib/marketplace';
 import { formatARS } from '@/lib/pricing';
@@ -89,9 +90,7 @@ export function PerfilContenido({ perfil }: { perfil: PerfilFletero }) {
       </View>
 
       <View style={styles.vehiculo}>
-        <View style={styles.vehiculoArte}>
-          <VehiculoIlustracion tipo={v.tipo ?? 'camioneta'} color={v.color ?? 'blanco'} ancho={250} />
-        </View>
+        <FotoVehiculo vehiculo={v} tipo={v.tipo ?? 'camioneta'} />
         <View style={styles.vehiculoInfo}>
           <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
             <Text style={styles.vehiculoTipo}>{v.tipo ? VEHICULO_LABEL[v.tipo].titulo : 'Vehículo'}</Text>
@@ -102,7 +101,6 @@ export function PerfilContenido({ perfil }: { perfil: PerfilFletero }) {
         {v.patente && !v.patente_completa ? (
           <Text style={styles.nota}>La patente completa la ves cuando acepta tu pedido.</Text>
         ) : null}
-        <Text style={styles.nota}>Dibujo generado por Flety según el tipo y el color del vehículo.</Text>
       </View>
 
       <View style={{ gap: 10 }}>
@@ -248,7 +246,6 @@ const styles = StyleSheet.create({
   statValor: { fontFamily: fonts.display, fontSize: 17, color: colors.ink },
   statLabel: { fontFamily: fonts.regular, fontSize: 11, color: colors.muted, textAlign: 'center' },
   vehiculo: { gap: 10 },
-  vehiculoArte: { alignItems: 'center', paddingVertical: 10, borderRadius: 20, backgroundColor: '#EEF0F2' },
   vehiculoInfo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   vehiculoTipo: { fontFamily: fonts.semibold, fontSize: 12, color: colors.muted },
   vehiculoModelo: { fontFamily: fonts.bold, fontSize: 16, color: colors.ink },

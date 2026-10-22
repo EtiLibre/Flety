@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { PatenteChip, VehiculoIlustracion } from '@/components/VehiculoIlustracion';
+import { FotoVehiculoMini } from '@/components/FotoVehiculo';
+import { PatenteChip } from '@/components/VehiculoIlustracion';
 import { iniciales } from '@/lib/empresa';
 import { perfilFletero, type PerfilFletero } from '@/lib/marketplace';
 import { describirModelo } from '@/lib/vehiculos';
@@ -50,7 +51,7 @@ export function FleteroAsignado({ driverId }: { driverId: string }) {
         </Pressable>
       </View>
       <View style={styles.vehiculo}>
-        <VehiculoIlustracion tipo={p.vehiculo.tipo ?? 'camioneta'} color={p.vehiculo.color ?? 'blanco'} ancho={120} />
+        <FotoVehiculoMini vehiculo={p.vehiculo} tipo={p.vehiculo.tipo ?? 'camioneta'} ancho={120} />
         <View style={{ flex: 1, minWidth: 0, gap: 6 }}>
           <Text style={styles.modelo}>{modelo ?? 'Vehículo'}</Text>
           {p.vehiculo.patente ? (

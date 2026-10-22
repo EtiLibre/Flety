@@ -177,7 +177,15 @@ function Picker({
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.mapLand },
-  pinLayer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
+  pinLayer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   // La punta del pin (abajo al centro del ícono) cae justo en el centro del mapa.
   pin: { position: 'absolute', top: '50%', marginTop: -44, alignSelf: 'center' },
   pinShadow: {

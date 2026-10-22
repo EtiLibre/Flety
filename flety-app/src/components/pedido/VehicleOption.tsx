@@ -11,9 +11,26 @@ function VehicleIcon({ vehiculo }: { vehiculo: Vehiculo }) {
     vehiculo === 'utilitario'
       ? ['M2 16V9a2 2 0 0 1 2-2h9l5 4h2a2 2 0 0 1 2 2v3', 'M2 16h20']
       : ['M1 4h14v12H1z', 'M15 8h4l4 4v4h-8z'];
-  const wheels = vehiculo === 'utilitario' ? [[7, 17.5], [17, 17.5]] : [[6, 18], [18, 18]];
+  const wheels =
+    vehiculo === 'utilitario'
+      ? [
+          [7, 17.5],
+          [17, 17.5],
+        ]
+      : [
+          [6, 18],
+          [18, 18],
+        ];
   return (
-    <Svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke={colors.ink} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+    <Svg
+      width={28}
+      height={28}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={colors.ink}
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round">
       {d.map((path) => (
         <Path key={path} d={path} />
       ))}
@@ -56,7 +73,14 @@ export function VehicleOption({
 }
 
 const styles = StyleSheet.create({
-  option: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: radius.xl, backgroundColor: colors.white },
+  option: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    padding: 12,
+    borderRadius: radius.xl,
+    backgroundColor: colors.white,
+  },
   idle: { borderWidth: 1, borderColor: colors.line, margin: 1 },
   selected: { borderWidth: 2, borderColor: colors.ink },
   icon: { width: 52, height: 52, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },

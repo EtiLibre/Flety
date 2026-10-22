@@ -54,7 +54,7 @@ const DEMO: {
     ajuste: 1,
     estrellas: 4.9,
     calificaciones: 38,
-    auto: { marca: 'Ford', modelo: 'F-100 con caja', anio: '2016', color: 'blanco', patente: 'AE 482 KD' },
+    auto: { marca: 'Ford', modelo: 'Ranger con caja', anio: '2016', color: 'blanco', patente: 'AE 482 KD' },
     viajes: 52,
     meses: 14,
     resenas: [

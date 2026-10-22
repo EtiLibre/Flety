@@ -15,7 +15,10 @@ export function Timeline({ estado }: { estado: OrderEstado }) {
         const active = current === index && !done;
         const last = index === TIMELINE.length - 1;
         return (
-          <View key={step.label} style={styles.item} accessibilityLabel={`${step.label}${done ? ', completado' : active ? ', en curso' : ''}`}>
+          <View
+            key={step.label}
+            style={styles.item}
+            accessibilityLabel={`${step.label}${done ? ', completado' : active ? ', en curso' : ''}`}>
             <View style={styles.rail}>
               {done ? (
                 <View style={styles.dotDone}>
@@ -39,9 +42,30 @@ export function Timeline({ estado }: { estado: OrderEstado }) {
 const styles = StyleSheet.create({
   item: { flexDirection: 'row', gap: 14 },
   rail: { alignItems: 'center' },
-  dotDone: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
-  dotActive: { width: 22, height: 22, borderRadius: 11, borderWidth: 6, borderColor: colors.accent, backgroundColor: colors.ink },
-  dotIdle: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: colors.line, backgroundColor: colors.white },
+  dotDone: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dotActive: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 6,
+    borderColor: colors.accent,
+    backgroundColor: colors.ink,
+  },
+  dotIdle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: colors.line,
+    backgroundColor: colors.white,
+  },
   line: { width: 2, height: 20 },
   label: { fontFamily: fonts.regular, fontSize: 15, color: colors.muted, paddingTop: 1 },
   labelDone: { fontFamily: fonts.semibold, color: colors.ink },

@@ -21,7 +21,12 @@ export function Choice({
       accessibilityRole="button"
       accessibilityState={{ selected }}
       onPress={onPress}
-      style={({ pressed }) => [styles.base, selected ? styles.selected : styles.idle, pressed && { opacity: 0.8 }, style]}>
+      style={({ pressed }) => [
+        styles.base,
+        selected ? styles.selected : styles.idle,
+        pressed && { opacity: 0.8 },
+        style,
+      ]}>
       <Text style={styles.title}>{title}</Text>
       {detail ? <Text style={styles.detail}>{detail}</Text> : null}
     </Pressable>
@@ -58,7 +63,14 @@ export function Segmented<T extends string>({
 }
 
 const styles = StyleSheet.create({
-  base: { flex: 1, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 11, gap: 2, backgroundColor: colors.white },
+  base: {
+    flex: 1,
+    borderRadius: radius.md,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    gap: 2,
+    backgroundColor: colors.white,
+  },
   idle: { borderWidth: 1, borderColor: colors.line, margin: 1 },
   selected: { borderWidth: 2, borderColor: colors.ink },
   title: { fontFamily: fonts.bold, fontSize: 14, color: colors.ink },

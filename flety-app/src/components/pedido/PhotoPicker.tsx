@@ -37,7 +37,11 @@ export function PhotoPicker({ fotos, onChange }: { fotos: FotoLocal[]; onChange:
       <View style={styles.grid}>
         {fotos.map((foto, index) => (
           <View key={foto.uri} style={styles.thumb}>
-            <Image source={{ uri: foto.uri }} style={styles.image} accessibilityLabel={`Foto ${index + 1} de la carga`} />
+            <Image
+              source={{ uri: foto.uri }}
+              style={styles.image}
+              accessibilityLabel={`Foto ${index + 1} de la carga`}
+            />
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`Quitar foto ${index + 1}`}
@@ -49,7 +53,11 @@ export function PhotoPicker({ fotos, onChange }: { fotos: FotoLocal[]; onChange:
           </View>
         ))}
         {restantes > 0 ? (
-          <Pressable accessibilityRole="button" accessibilityLabel="Agregar fotos de la carga" onPress={agregar} style={styles.add}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Agregar fotos de la carga"
+            onPress={agregar}
+            style={styles.add}>
             <Camera size={24} color={colors.ink} strokeWidth={2} />
           </Pressable>
         ) : null}

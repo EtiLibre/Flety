@@ -137,7 +137,8 @@ export function FechaHoraPicker({ value, onChange }: { value: Valor; onChange: (
                   disabled={!disponible}
                   onPress={() => onChange({ fecha: value.fecha, hora })}
                   style={[styles.hora, selected && styles.horaSelected, !disponible && styles.horaOff]}>
-                  <Text style={[styles.horaText, selected && styles.horaTextSelected, !disponible && styles.dayTextOff]}>
+                  <Text
+                    style={[styles.horaText, selected && styles.horaTextSelected, !disponible && styles.dayTextOff]}>
                     {hora}:00
                   </Text>
                 </Pressable>
@@ -174,7 +175,14 @@ function NavButton({
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, padding: 14, gap: 4, backgroundColor: colors.white },
+  card: {
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.line,
+    padding: 14,
+    gap: 4,
+    backgroundColor: colors.white,
+  },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
   mes: { fontFamily: fonts.display, fontSize: 18, letterSpacing: -0.3, color: colors.ink },
   nav: { flexDirection: 'row', gap: 6 },
@@ -187,7 +195,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   week: { flexDirection: 'row' },
-  weekDay: { flex: 1, textAlign: 'center', fontFamily: fonts.semibold, fontSize: 12, color: colors.muted, paddingVertical: 6 },
+  weekDay: {
+    flex: 1,
+    textAlign: 'center',
+    fontFamily: fonts.semibold,
+    fontSize: 12,
+    color: colors.muted,
+    paddingVertical: 6,
+  },
   cell: { flex: 1, alignItems: 'center', paddingVertical: 2 },
   day: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   dayHover: { backgroundColor: colors.surface },
