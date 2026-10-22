@@ -1,11 +1,13 @@
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
+import { DatosChoferModal } from '@/components/empresa/DatosChoferModal';
 import { InvitarChofer } from '@/components/empresa/InvitarChofer';
 import { Card, ChoferFila, Vacio } from '@/components/empresa/ui';
 import { EmpresaShell } from '@/components/web/EmpresaShell';
 import { useEmpresa } from '@/hooks/use-empresa';
-import { estadoDelChofer, type EstadoChofer } from '@/lib/empresa';
-import { colors } from '@/theme';
+import { estadoDelChofer, type Chofer, type EstadoChofer } from '@/lib/empresa';
+import { colors, fonts } from '@/theme';
 
 const ORDEN: EstadoChofer[] = ['disponible', 'en_viaje', 'no_disponible'];
 const TITULOS: Record<EstadoChofer, string> = {
@@ -17,6 +19,7 @@ const TITULOS: Record<EstadoChofer, string> = {
 export default function ChoferesEmpresa() {
   const { empresa, choferes, pedidos, loading, error: errorCarga, esAdmin, recargar } = useEmpresa();
   const estados = choferes.map((c) => ({ chofer: c, estado: estadoDelChofer(c, pedidos) }));
+  const [ficha, setFicha] = useState<Chofer | null>(null);
 
   return (
     <EmpresaShell
@@ -25,6 +28,9 @@ export default function ChoferesEmpresa() {
       empresa={empresa}
       title="Choferes"
       subtitle={esAdmin ? 'Los choferes de todas las empresas.' : 'Tu flota y quién está disponible ahora.'}>
+      {!loading && choferes.length ? (
+        <Text style={styles.ayuda}>Tocá un chofer para ver su ficha: DNI, licencia, domicilio y contacto.</Text>
+      ) : null}
       {loading ? (
         <ActivityIndicator color={colors.ink} style={{ marginTop: 40 }} />
       ) : (
@@ -34,7 +40,9 @@ export default function ChoferesEmpresa() {
             return (
               <Card key={estado} title={`${TITULOS[estado]} · ${lista.length}`} style={styles.col}>
                 {lista.length ? (
-                  lista.map(({ chofer }) => <ChoferFila key={chofer.id} chofer={chofer} estado={estado} />)
+                  lista.map(({ chofer }) => (
+                    <ChoferFila key={chofer.id} chofer={chofer} estado={estado} onPress={() => setFicha(chofer)} />
+                  ))
                 ) : (
                   <Vacio texto="Nadie por ahora." />
                 )}
@@ -46,6 +54,7 @@ export default function ChoferesEmpresa() {
       {!esAdmin && empresa?.estado_aprobacion === 'aprobada' ? (
         <InvitarChofer empresa={empresa.nombre} onCambio={recargar} />
       ) : null}
+      <DatosChoferModal chofer={ficha} onClose={() => setFicha(null)} />
     </EmpresaShell>
   );
 }
@@ -53,4 +62,5 @@ export default function ChoferesEmpresa() {
 const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 20, alignItems: 'flex-start' },
   col: { flexGrow: 1, flexBasis: 300 },
+  ayuda: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted, marginBottom: 12 },
 });

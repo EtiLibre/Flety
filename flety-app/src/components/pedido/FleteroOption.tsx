@@ -1,8 +1,8 @@
 import { Check, Star } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { AvatarFletero } from '@/components/AvatarFletero';
 import { FotoVehiculoMini } from '@/components/FotoVehiculo';
-import { iniciales } from '@/lib/empresa';
 import { minutosHasta, type Fletero } from '@/lib/marketplace';
 import { formatARS } from '@/lib/pricing';
 import { VEHICULO_LABEL } from '@/lib/types';
@@ -36,10 +36,14 @@ export function FleteroOption({
         !selected && hovered && styles.hover,
         pressed && { opacity: 0.9 },
       ]}>
-      <View style={[styles.avatar, selected && styles.avatarOn]}>
-        <Text style={styles.avatarText}>{iniciales(fletero.nombre)}</Text>
+      <AvatarFletero
+        nombre={fletero.nombre}
+        foto={fletero.foto_perfil}
+        tam={46}
+        style={[styles.avatar, selected && styles.avatarOn]}
+        textStyle={styles.avatarText}>
         <View style={styles.online} />
-      </View>
+      </AvatarFletero>
       <View style={styles.text}>
         <Text style={styles.title} numberOfLines={1}>
           {fletero.nombre} <Text style={styles.empresa}>· {fletero.empresa}</Text>

@@ -2,8 +2,8 @@ import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Camera, LogOut, MapPin, Navigation, Truck, User } from 'lucide-react-native';
-import { useState } from 'react';
+import { Camera, IdCard, LogOut, MapPin, Navigation, Truck, User } from 'lucide-react-native';
+import { useContext, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -16,7 +16,7 @@ import { ChatPedido } from '@/components/pedido/ChatPedido';
 import { AppMap } from '@/components/map/AppMap';
 import { MENDOZA, type MapMarker } from '@/components/map/types';
 import { useAccion } from '@/hooks/use-accion';
-import { useChofer } from '@/hooks/use-chofer';
+import { PerfilPreviewContext, useChofer } from '@/hooks/use-chofer';
 import { useCompartirUbicacion } from '@/hooks/use-compartir-ubicacion';
 import { useIsWide } from '@/hooks/use-is-wide';
 import { usePedidoEnVivo } from '@/hooks/use-pedido-en-vivo';
@@ -42,6 +42,9 @@ export default function PanelChofer() {
   const { chofer, pedidos, solicitudes, hechosHoy, clientes, loading, recargar } = useChofer();
   const [editVehiculo, setEditVehiculo] = useState(false);
   const accion = useAccion(recargar);
+  const perfilPreview = useContext(PerfilPreviewContext);
+  // En la vista previa (superadmin) el perfil se abre dentro de la demo.
+  const abrirPerfil = () => (perfilPreview ? perfilPreview() : router.push('/chofer/perfil'));
   const [disponibleLocal, setDisponibleLocal] = useState<boolean | null>(null);
   const disponible = disponibleLocal ?? chofer?.disponibilidad ?? false;
 
@@ -120,7 +123,7 @@ export default function PanelChofer() {
   const barra = (
     <View style={styles.topBlock}>
       <View style={styles.topRow}>
-        <Menu empresa={chofer.empresa} onVehiculo={() => setEditVehiculo(true)} />
+        <Menu empresa={chofer.empresa} onVehiculo={() => setEditVehiculo(true)} onPerfil={abrirPerfil} />
         <Pressable
           accessibilityRole="switch"
           accessibilityState={{ checked: disponible }}
@@ -478,7 +481,15 @@ function EstadoGps({ estado }: { estado: ReturnType<typeof useCompartirUbicacion
   return <Text style={[styles.gps, estado !== 'pidiendo' && styles.gpsWarn]}>{texto}</Text>;
 }
 
-function Menu({ empresa, onVehiculo }: { empresa: string | null; onVehiculo: () => void }) {
+function Menu({
+  empresa,
+  onVehiculo,
+  onPerfil,
+}: {
+  empresa: string | null;
+  onVehiculo: () => void;
+  onPerfil: () => void;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <View style={{ zIndex: 10 }}>
@@ -492,6 +503,16 @@ function Menu({ empresa, onVehiculo }: { empresa: string | null; onVehiculo: () 
       {open ? (
         <View style={styles.menu}>
           {empresa ? <Text style={styles.menuEmpresa}>Chofer de {empresa}</Text> : null}
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              setOpen(false);
+              onPerfil();
+            }}
+            style={styles.salir}>
+            <IdCard size={18} color={d.text} strokeWidth={2} />
+            <Text style={[styles.salirText, { color: d.text }]}>Mi perfil</Text>
+          </Pressable>
           <Pressable
             accessibilityRole="button"
             onPress={() => {

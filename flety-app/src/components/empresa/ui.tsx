@@ -98,11 +98,19 @@ export function describirVehiculoChofer(chofer: Chofer): string {
   return chofer.vehiculo?.patente ? `${tipo} · ${chofer.vehiculo.patente}` : tipo;
 }
 
-export function ChoferFila({ chofer, estado }: { chofer: Chofer; estado: EstadoChofer }) {
+export function ChoferFila({
+  chofer,
+  estado,
+  onPress,
+}: {
+  chofer: Chofer;
+  estado: EstadoChofer;
+  onPress?: () => void;
+}) {
   const nombre = nombreChofer(chofer);
   const e = ESTADO_CHOFER[estado];
-  return (
-    <View style={styles.chofer}>
+  const contenido = (
+    <>
       <View style={styles.avatar}>
         <Text style={styles.avatarText}>{iniciales(nombre)}</Text>
       </View>
@@ -115,7 +123,19 @@ export function ChoferFila({ chofer, estado }: { chofer: Chofer; estado: EstadoC
         </Text>
       </View>
       <Badge label={e.label} tone={e.tone} />
-    </View>
+      {onPress ? <ChevronRight size={16} color={colors.muted} strokeWidth={2} /> : null}
+    </>
+  );
+  return onPress ? (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Ver ficha de ${nombre}`}
+      onPress={onPress}
+      style={({ hovered }: { hovered?: boolean }) => [styles.chofer, styles.choferBtn, hovered && styles.choferHover]}>
+      {contenido}
+    </Pressable>
+  ) : (
+    <View style={styles.chofer}>{contenido}</View>
   );
 }
 
@@ -309,6 +329,8 @@ const styles = StyleSheet.create({
   liveText: { fontFamily: fonts.bold, fontSize: 12, color: colors.success },
   vacio: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 20, color: colors.muted, paddingVertical: 8 },
   chofer: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  choferBtn: { marginHorizontal: -8, paddingHorizontal: 8, paddingVertical: 6, borderRadius: radius.md },
+  choferHover: { backgroundColor: colors.surface },
   avatar: {
     width: 40,
     height: 40,

@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AvatarFletero } from '@/components/AvatarFletero';
 import { FotoVehiculoMini } from '@/components/FotoVehiculo';
 import { PatenteChip } from '@/components/VehiculoIlustracion';
-import { iniciales } from '@/lib/empresa';
 import { perfilFletero, type PerfilFletero } from '@/lib/marketplace';
 import { describirModelo } from '@/lib/vehiculos';
 import { colors, fonts, radius } from '@/theme';
@@ -33,9 +33,13 @@ export function FleteroAsignado({ driverId }: { driverId: string }) {
   return (
     <View style={styles.card}>
       <View style={styles.top}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{iniciales(p.nombre)}</Text>
-        </View>
+        <AvatarFletero
+          nombre={p.nombre}
+          foto={p.foto_perfil}
+          tam={46}
+          style={styles.avatar}
+          textStyle={styles.avatarText}
+        />
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={styles.nombre}>{p.nombre}</Text>
           <View style={styles.row}>

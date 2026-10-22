@@ -26,6 +26,8 @@ export type Fletero = {
   demo?: boolean;
   // Marca, modelo, año y color (sin patente) para dibujar el vehículo.
   auto: DatosVehiculo | null;
+  // Ruta de la foto de perfil (bucket "perfiles", migración 0016).
+  foto_perfil?: string | null;
 };
 
 // SOLO SUPERADMIN: fleteros de ejemplo alrededor del retiro, con precios
@@ -151,6 +153,7 @@ type FleteroRow = {
   estrellas: number | string | null;
   calificaciones: number | null;
   auto: DatosVehiculo | null;
+  foto_perfil?: string | null;
 };
 
 export async function fleterosDisponibles(
@@ -179,6 +182,7 @@ export async function fleterosDisponibles(
     estrellas: r.estrellas == null ? null : Number(r.estrellas),
     calificaciones: r.calificaciones ?? 0,
     auto: r.auto ?? null,
+    foto_perfil: r.foto_perfil ?? null,
   }));
 }
 
@@ -260,6 +264,7 @@ export type PerfilFletero = {
   nombre: string;
   empresa: string;
   empresa_verificada: boolean;
+  foto_perfil?: string | null;
   desde: string;
   vehiculo: DatosVehiculo & { patente_completa?: boolean };
   estrellas: number | null;

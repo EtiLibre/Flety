@@ -31,6 +31,9 @@ function ordenar(a: Pedido, b: Pedido) {
   return (a.programado_para ?? a.created_at).localeCompare(b.programado_para ?? b.created_at);
 }
 
+// Vista previa (superadmin): "Mi perfil" se abre dentro de la demo en vez de navegar.
+export const PerfilPreviewContext = createContext<(() => void) | null>(null);
+
 export function useChofer() {
   const { session } = useAuth();
   const userId = session?.user.id ?? null;

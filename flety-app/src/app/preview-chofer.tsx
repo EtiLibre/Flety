@@ -2,16 +2,17 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FOTOS_EJEMPLO } from '@/dev/datos-ejemplo';
-import { ChoferPreviewContext, type DatosChofer } from '@/hooks/use-chofer';
+import { ChoferPreviewContext, PerfilPreviewContext, type DatosChofer } from '@/hooks/use-chofer';
 import { PedidoPreviewContext } from '@/hooks/use-pedido-en-vivo';
 import { AuthPreview, useAuth } from '@/lib/auth';
 import type { Pedido } from '@/lib/orders';
 import { colors, fonts } from '@/theme';
 
 import PanelChofer from './chofer/panel';
+import PerfilChofer from './chofer/perfil';
 
 // SOLO DESARROLLO: la app del chofer con datos de ejemplo, sin iniciar sesión
-// ni Supabase. ?estado=solicitud|asignado|en_camino_origen|cargando|en_camino_destino|libre|sin-empresa|vehiculo
+// ni Supabase. ?estado=solicitud|asignado|en_camino_origen|cargando|en_camino_destino|libre|sin-empresa|vehiculo|perfil
 // (los botones que escriben en la base fallan acá, es esperado). En producción redirige al inicio.
 
 const ESTADOS = [
@@ -23,6 +24,7 @@ const ESTADOS = [
   'libre',
   'sin-empresa',
   'vehiculo',
+  'perfil',
 ] as const;
 
 const PEDIDO: Pedido = {
@@ -67,7 +69,11 @@ export default function PreviewChofer() {
   const estado = ESTADOS.find((e) => e === params.estado) ?? 'asignado';
 
   const pedido =
-    estado === 'libre' || estado === 'sin-empresa' || estado === 'solicitud' || estado === 'vehiculo'
+    estado === 'libre' ||
+    estado === 'sin-empresa' ||
+    estado === 'solicitud' ||
+    estado === 'vehiculo' ||
+    estado === 'perfil'
       ? null
       : { ...PEDIDO, estado };
   // Un cliente lo eligió en el marketplace: reserva de 5 minutos.
@@ -103,7 +109,9 @@ export default function PreviewChofer() {
       <ChoferPreviewContext.Provider value={datos}>
         <PedidoPreviewContext.Provider value={pedido ? { pedido, chofer: null, fotos: FOTOS_EJEMPLO } : null}>
           <View style={{ flex: 1 }}>
-            <PanelChofer />
+            <PerfilPreviewContext.Provider value={() => router.setParams({ estado: 'perfil' })}>
+              {estado === 'perfil' ? <PerfilChofer /> : <PanelChofer />}
+            </PerfilPreviewContext.Provider>
             <View style={styles.switcher}>
               {ESTADOS.map((e) => (
                 <Pressable

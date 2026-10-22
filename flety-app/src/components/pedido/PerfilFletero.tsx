@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { AvatarFletero } from '@/components/AvatarFletero';
 import { FotoVehiculo } from '@/components/FotoVehiculo';
 import { PatenteChip } from '@/components/VehiculoIlustracion';
-import { iniciales } from '@/lib/empresa';
 import { perfilDeEjemplo, perfilFletero, type Fletero, type PerfilFletero } from '@/lib/marketplace';
 import { formatARS } from '@/lib/pricing';
 import { VEHICULO_LABEL } from '@/lib/types';
@@ -46,9 +46,13 @@ export function PerfilContenido({ perfil }: { perfil: PerfilFletero }) {
   return (
     <View style={styles.contenido}>
       <View style={styles.cabecera}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{iniciales(perfil.nombre)}</Text>
-        </View>
+        <AvatarFletero
+          nombre={perfil.nombre}
+          foto={perfil.foto_perfil}
+          tam={64}
+          style={styles.avatar}
+          textStyle={styles.avatarText}
+        />
         <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
           <Text style={styles.nombre}>{perfil.nombre}</Text>
           <View style={styles.empresaRow}>
