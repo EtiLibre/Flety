@@ -1,5 +1,5 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { FOTOS_EJEMPLO } from '@/dev/datos-ejemplo';
 import { ChoferPreviewContext, PerfilPreviewContext, type DatosChofer } from '@/hooks/use-chofer';
@@ -26,6 +26,18 @@ const ESTADOS = [
   'vehiculo',
   'perfil',
 ] as const;
+
+const ETIQUETAS: Record<(typeof ESTADOS)[number], string> = {
+  solicitud: 'Solicitud',
+  asignado: 'Asignado',
+  en_camino_origen: 'Yendo al retiro',
+  cargando: 'Cargando',
+  en_camino_destino: 'Yendo al destino',
+  libre: 'Sin viaje',
+  'sin-empresa': 'Sin empresa',
+  vehiculo: 'Vehículo',
+  perfil: 'Perfil',
+};
 
 const PEDIDO: Pedido = {
   id: 'p-chofer-1',
@@ -109,18 +121,27 @@ export default function PreviewChofer() {
       <ChoferPreviewContext.Provider value={datos}>
         <PedidoPreviewContext.Provider value={pedido ? { pedido, chofer: null, fotos: FOTOS_EJEMPLO } : null}>
           <View style={{ flex: 1 }}>
-            <PerfilPreviewContext.Provider value={() => router.setParams({ estado: 'perfil' })}>
-              {estado === 'perfil' ? <PerfilChofer /> : <PanelChofer />}
-            </PerfilPreviewContext.Provider>
-            <View style={styles.switcher}>
+            {/* Selector de estados de ejemplo: una franja arriba (no flota sobre la app). */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.switcher}
+              contentContainerStyle={styles.switcherContent}>
               {ESTADOS.map((e) => (
                 <Pressable
                   key={e}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: e === estado }}
                   onPress={() => router.setParams({ estado: e })}
                   style={[styles.chip, e === estado && styles.chipOn]}>
-                  <Text style={[styles.chipText, e === estado && { color: colors.ink }]}>{e.replace(/_/g, ' ')}</Text>
+                  <Text style={[styles.chipText, e === estado && { color: colors.ink }]}>{ETIQUETAS[e]}</Text>
                 </Pressable>
               ))}
+            </ScrollView>
+            <View style={{ flex: 1 }}>
+              <PerfilPreviewContext.Provider value={() => router.setParams({ estado: 'perfil' })}>
+                {estado === 'perfil' ? <PerfilChofer /> : <PanelChofer />}
+              </PerfilPreviewContext.Provider>
             </View>
           </View>
         </PedidoPreviewContext.Provider>
@@ -130,20 +151,9 @@ export default function PreviewChofer() {
 }
 
 const styles = StyleSheet.create({
-  switcher: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'flex-end',
-    maxWidth: 360,
-    gap: 4,
-    padding: 4,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-  },
-  chip: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  switcher: { flexGrow: 0, backgroundColor: '#0B0E12', borderBottomWidth: 1, borderBottomColor: '#2A313B' },
+  switcherContent: { gap: 6, paddingHorizontal: 10, paddingVertical: 7 },
+  chip: { paddingHorizontal: 11, paddingVertical: 6, borderRadius: 999, backgroundColor: '#1A1F26' },
   chipOn: { backgroundColor: colors.accent },
-  chipText: { fontFamily: fonts.semibold, fontSize: 11, color: colors.white },
+  chipText: { fontFamily: fonts.semibold, fontSize: 12, color: colors.white },
 });

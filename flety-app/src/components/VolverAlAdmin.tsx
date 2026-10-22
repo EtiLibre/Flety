@@ -7,7 +7,8 @@ import { useAuth } from '@/lib/auth';
 import { colors, fonts } from '@/theme';
 
 // Para el superadmin que está recorriendo la app como otro usuario
-// ("Ver la app como…"): una cápsula flotante para volver al panel.
+// ("Ver la app como…"): una barra arriba de todo (no flotante, así no tapa los
+// botones de la app) para volver al panel.
 export function VolverAlAdmin() {
   const { role } = useAuth();
   const pathname = usePathname();
@@ -15,37 +16,47 @@ export function VolverAlAdmin() {
   if (role !== 'superadmin' || pathname.startsWith('/empresa') || pathname === '/restablecer') return null;
 
   return (
-    <View style={[styles.wrap, { top: insets.top + 8 }]} pointerEvents="box-none">
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Volver al panel de administración"
-        onPress={() => router.replace('/empresa/panel')}
-        style={({ hovered }: { hovered?: boolean }) => [styles.pill, hovered && { transform: [{ scale: 1.03 }] }]}>
+    <View style={[styles.barra, { paddingTop: insets.top }]}>
+      <View style={styles.fila}>
         <Eye size={15} color={colors.accent} strokeWidth={2.2} />
-        <Text style={styles.text}>Vista de usuario</Text>
-        <View style={styles.sep} />
-        <ArrowLeft size={15} color={colors.white} strokeWidth={2.2} />
-        <Text style={[styles.text, styles.volver]}>Volver al admin</Text>
-      </Pressable>
+        <Text style={styles.text} numberOfLines={1}>
+          Vista de usuario
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Volver al panel de administración"
+          onPress={() => router.replace('/empresa/panel')}
+          hitSlop={8}
+          style={({ hovered }: { hovered?: boolean }) => [styles.volverBtn, hovered && { opacity: 0.85 }]}>
+          <ArrowLeft size={14} color={colors.ink} strokeWidth={2.4} />
+          <Text style={styles.volver}>Volver al admin</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center', zIndex: 1000 },
-  pill: {
+  barra: { backgroundColor: '#12161C', borderBottomWidth: 1, borderBottomColor: '#2A313B', zIndex: 1000 },
+  fila: {
+    height: 40,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    backgroundColor: 'rgba(18,22,28,0.92)',
-    borderWidth: 1,
-    borderColor: '#2A313B',
-    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
+    gap: 8,
+    paddingHorizontal: 12,
+    width: '100%',
+    maxWidth: 1200,
+    alignSelf: 'center',
   },
-  text: { fontFamily: fonts.semibold, fontSize: 13, color: '#C5CBD3' },
-  volver: { fontFamily: fonts.bold, color: colors.white },
-  sep: { width: 1, height: 14, backgroundColor: '#3A424D', marginHorizontal: 2 },
+  text: { flex: 1, minWidth: 0, fontFamily: fonts.semibold, fontSize: 13, color: '#C5CBD3' },
+  volverBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: colors.accent,
+  },
+  volver: { fontFamily: fonts.bold, fontSize: 12, color: colors.ink },
 });

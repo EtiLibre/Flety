@@ -46,10 +46,13 @@ function RootStack() {
   if (!ready) return null;
 
   return (
-    <>
-      <Stack screenOptions={{ headerShown: false }} />
+    // La barra del superadmin va arriba, en el flujo: empuja la app y no tapa nada.
+    <View style={{ flex: 1 }}>
       <VolverAlAdmin />
-    </>
+      <View style={{ flex: 1 }}>
+        <Stack screenOptions={{ headerShown: false }} />
+      </View>
+    </View>
   );
 }
 
