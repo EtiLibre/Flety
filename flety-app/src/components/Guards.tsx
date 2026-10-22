@@ -17,8 +17,10 @@ function Loader({ dark }: { dark?: boolean }) {
 // sesión, manda al inicio que corresponde a su rol.
 export function PublicOnly({ children, dark }: { children: React.ReactNode; dark?: boolean }) {
   const { session, role, loadingProfile } = useAuth();
-  const { next } = useGlobalSearchParams<{ next?: string }>();
+  const { next, vista } = useGlobalSearchParams<{ next?: string; vista?: string }>();
   if (session && loadingProfile) return <Loader dark={dark} />;
+  // El superadmin puede ver la página pública tal como la ve un visitante.
+  if (session && role === 'superadmin' && vista === 'publica') return <>{children}</>;
   if (session && role) return <Redirect href={destinoDespuesDeEntrar(role, next)} />;
   return <>{children}</>;
 }

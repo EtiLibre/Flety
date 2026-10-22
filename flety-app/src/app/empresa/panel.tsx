@@ -30,7 +30,7 @@ const MAX_FILAS = 6;
 export default function PanelEmpresa() {
   const isWide = useIsWide();
   const { role } = useAuth();
-  const { empresa, cola, pedidos, choferes, fotos, loading, recargar } = useEmpresa();
+  const { empresa, cola, pedidos, choferes, fotos, loading, error: errorCarga, recargar } = useEmpresa();
   const { pendiente, error, ejecutar } = useAccion(recargar);
 
   const enCurso = pedidos.filter((p) => EN_VIAJE.includes(p.estado));
@@ -48,6 +48,7 @@ export default function PanelEmpresa() {
 
   return (
     <EmpresaShell
+      aviso={errorCarga}
       active="panel"
       empresa={empresa}
       title="Panel de operaciones"

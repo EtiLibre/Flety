@@ -10,6 +10,7 @@ import { PedidoForm } from '@/components/pedido/PedidoForm';
 import { ClienteShell } from '@/components/web/ClienteShell';
 import { useIsWide } from '@/hooks/use-is-wide';
 import { useRuta } from '@/hooks/use-ruta';
+import { useAuth } from '@/lib/auth';
 import { avisar } from '@/lib/confirm';
 import { rumbo } from '@/lib/geo';
 import { PedidoDraftProvider, usePedidoDraft } from '@/lib/pedido-draft';
@@ -29,7 +30,9 @@ const PASO_MS = 1100;
 type Fase = 'retiro' | 'entrega';
 
 export default function PreviewMapa() {
-  if (!__DEV__) return <Redirect href="/" />;
+  // En producción, solo el superadmin ("Ver la app como…" del panel).
+  const { role } = useAuth();
+  if (!__DEV__ && role !== 'superadmin') return <Redirect href="/" />;
   return (
     <PedidoDraftProvider initial={EJEMPLO}>
       <Preview />
@@ -93,8 +96,8 @@ function Preview() {
     <>
       <View style={styles.notice}>
         <Text style={styles.noticeText}>
-          Vista previa: el camión es un chofer simulado que recorre la ruta real. En un pedido de verdad se mueve con la ubicación
-          que comparte el chofer desde su app.
+          Vista previa: el camión es un chofer simulado que recorre la ruta real. En un pedido de verdad se mueve con la
+          ubicación que comparte el chofer desde su app.
         </Text>
       </View>
 

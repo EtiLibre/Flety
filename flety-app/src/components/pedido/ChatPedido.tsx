@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/lib/auth';
 import { enviarMensaje, mensajesDelPedido, ROL_LABEL, type Mensaje } from '@/lib/mensajes';
+import { canal } from '@/lib/realtime';
 import { supabase } from '@/lib/supabase';
 import { colors, fonts } from '@/theme';
 
@@ -113,7 +114,7 @@ function Ventana({
     const agregar = (m: Mensaje) =>
       setMensajes((prev) => (prev?.some((x) => x.id === m.id) ? prev : [...(prev ?? []), m]));
     const channel = supabase
-      .channel(`chat-${orderId}`)
+      .channel(canal(`chat-${orderId}`))
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'mensajes', filter: `order_id=eq.${orderId}` },

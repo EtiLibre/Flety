@@ -1,9 +1,10 @@
-import { Link, router } from 'expo-router';
+import { Link, router, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
   Building2,
   ChartBar,
   Clock,
+  Eye,
   LayoutGrid,
   Megaphone,
   Wallet,
@@ -81,6 +82,7 @@ export function EmpresaShell({
   title,
   subtitle,
   actions,
+  aviso,
   children,
 }: {
   active: SeccionEmpresa;
@@ -88,6 +90,8 @@ export function EmpresaShell({
   title: string;
   subtitle?: string;
   actions?: React.ReactNode;
+  // Aviso de error de carga (se muestra arriba del contenido).
+  aviso?: string | null;
   children: React.ReactNode;
 }) {
   const isWide = useIsWide();
@@ -131,6 +135,7 @@ export function EmpresaShell({
               );
             })}
           </View>
+          {role === 'superadmin' ? <VerComo /> : null}
           <View style={styles.sidebarFooter}>
             <EmpresaCard empresa={empresa} />
             <Salir />
@@ -138,6 +143,8 @@ export function EmpresaShell({
         </View>
         <ScrollView style={styles.main} contentContainerStyle={styles.mainContent}>
           {header}
+          {aviso ? <Text style={styles.aviso}>{aviso}</Text> : null}
+          {aviso ? <Text style={styles.aviso}>{aviso}</Text> : null}
           {children}
         </ScrollView>
       </View>
@@ -151,7 +158,12 @@ export function EmpresaShell({
         <Marca />
         <Salir compact />
       </View>
-      <View style={styles.tabs} accessibilityRole="tablist">
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.tabsScroll}
+        contentContainerStyle={styles.tabs}
+        accessibilityRole="tablist">
         {secciones.map(({ id, label, href }) => {
           const current = id === active;
           return (
@@ -164,13 +176,49 @@ export function EmpresaShell({
             </Link>
           );
         })}
-      </View>
+      </ScrollView>
       <ScrollView style={styles.main} contentContainerStyle={styles.mainContentNarrow}>
         <EmpresaCard empresa={empresa} light />
+        {role === 'superadmin' ? <VerComo light /> : null}
         {header}
         {children}
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+// Superadmin: recorrer la app como la ve cada tipo de usuario.
+const VISTAS: { label: string; detalle: string; href: Href }[] = [
+  { label: 'Visitante', detalle: 'Página pública', href: { pathname: '/', params: { vista: 'publica' } } },
+  { label: 'Cliente', detalle: 'Pedir y seguir fletes', href: '/cliente/inicio' },
+  { label: 'Chofer', detalle: 'Demo con datos de ejemplo', href: '/preview-chofer' },
+  { label: 'Empresa', detalle: 'Demo con datos de ejemplo', href: '/preview-empresa' },
+];
+
+function VerComo({ light }: { light?: boolean }) {
+  return (
+    <View style={[styles.verComo, light && styles.verComoLight]}>
+      <View style={styles.verComoHead}>
+        <Eye size={14} color={light ? colors.muted : '#A9B0BA'} strokeWidth={2.2} />
+        <Text style={[styles.verComoTitulo, light && { color: colors.muted }]}>Ver la app como…</Text>
+      </View>
+      <View style={light ? styles.verComoChips : styles.verComoLista}>
+        {VISTAS.map((v) => (
+          <Pressable
+            key={v.label}
+            accessibilityRole="link"
+            accessibilityLabel={`Ver la app como ${v.label.toLowerCase()}: ${v.detalle}`}
+            onPress={() => router.push(v.href)}
+            style={({ hovered }: { hovered?: boolean }) => [
+              light ? styles.verComoChip : styles.verComoItem,
+              hovered && (light ? { backgroundColor: colors.surface } : { backgroundColor: '#232A34' }),
+            ]}>
+            <Text style={[styles.verComoLabel, light && { color: colors.ink }]}>{v.label}</Text>
+            {light ? null : <Text style={styles.verComoDetalle}>{v.detalle}</Text>}
+          </Pressable>
+        ))}
+      </View>
+    </View>
   );
 }
 
@@ -285,6 +333,29 @@ const styles = StyleSheet.create({
   navItemActive: { backgroundColor: '#232A34' },
   navText: { fontFamily: fonts.medium, fontSize: 15, color: '#C5CBD3' },
   navTextActive: { fontFamily: fonts.semibold, color: colors.white },
+  verComo: { gap: 6, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#232A34' },
+  verComoLight: {
+    padding: 14,
+    borderRadius: 16,
+    borderTopWidth: 1,
+    borderWidth: 1,
+    borderColor: CARD_BORDER,
+    backgroundColor: colors.white,
+  },
+  verComoHead: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12 },
+  verComoTitulo: { fontFamily: fonts.semibold, fontSize: 12, color: '#A9B0BA' },
+  verComoLista: { gap: 2 },
+  verComoItem: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 10 },
+  verComoLabel: { fontFamily: fonts.semibold, fontSize: 14, color: colors.white },
+  verComoDetalle: { fontFamily: fonts.regular, fontSize: 11, color: '#8B95A1' },
+  verComoChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingTop: 4 },
+  verComoChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: CARD_BORDER,
+  },
   sidebarFooter: { marginTop: 'auto', gap: 12 },
   empresaCard: {
     gap: 6,
@@ -313,7 +384,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
-  tabs: { flexDirection: 'row', backgroundColor: colors.ink, paddingHorizontal: 16, gap: 22 },
+  tabsScroll: { flexGrow: 0, backgroundColor: colors.ink },
+  tabs: { flexDirection: 'row', paddingHorizontal: 16, gap: 22 },
   tab: {
     fontFamily: fonts.medium,
     fontSize: 15,
@@ -323,6 +395,16 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   tabActive: { fontFamily: fonts.bold, color: colors.white, borderBottomColor: colors.accent },
+  aviso: {
+    fontFamily: fonts.medium,
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.danger,
+    backgroundColor: colors.dangerBg,
+    padding: 14,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
   header: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16 },
   headerText: { gap: 4, flexShrink: 1 },
   title: { fontFamily: fonts.display, fontSize: 32, letterSpacing: -0.6, color: colors.ink },

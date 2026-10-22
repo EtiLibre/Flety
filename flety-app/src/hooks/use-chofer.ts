@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/auth';
 import { ESTADOS_ACTIVOS_CHOFER, miChofer, type MiChofer } from '@/lib/chofer';
 import { nombresDeClientes } from '@/lib/empresa';
 import { PEDIDO_COLUMNS, type Pedido } from '@/lib/orders';
+import { canal } from '@/lib/realtime';
 import { supabase } from '@/lib/supabase';
 
 export type DatosChofer = {
@@ -85,7 +86,7 @@ export function useChofer() {
   useEffect(() => {
     if (!driverId || preview) return;
     const channel = supabase
-      .channel(`chofer-app-${driverId}`)
+      .channel(canal(`chofer-app-${driverId}`))
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders', filter: `driver_id=eq.${driverId}` },

@@ -7,11 +7,13 @@ import {
   Figtree_800ExtraBold,
   useFonts,
 } from '@expo-google-fonts/figtree';
-import { Stack, usePathname } from 'expo-router';
+import { Stack, usePathname, type ErrorBoundaryProps } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { Pressable, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { VolverAlAdmin } from '@/components/VolverAlAdmin';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { PedidoDraftProvider } from '@/lib/pedido-draft';
 import { registrarVisita } from '@/lib/visitas';
@@ -43,7 +45,12 @@ function RootStack() {
 
   if (!ready) return null;
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <>
+      <Stack screenOptions={{ headerShown: false }} />
+      <VolverAlAdmin />
+    </>
+  );
 }
 
 export default function RootLayout() {
@@ -56,5 +63,39 @@ export default function RootLayout() {
         </PedidoDraftProvider>
       </AuthProvider>
     </SafeAreaProvider>
+  );
+}
+
+// Si una pantalla falla, en vez de quedar en blanco se ve esto (expo-router lo
+// usa para cualquier error de render de las rutas).
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return (
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+        gap: 14,
+        backgroundColor: '#F5F5F2',
+      }}>
+      <Text style={{ fontSize: 22, fontWeight: '800', color: '#12161C', textAlign: 'center' }}>Algo salió mal</Text>
+      <Text style={{ fontSize: 15, color: '#5B6470', textAlign: 'center', maxWidth: 420 }}>
+        Esta pantalla tuvo un problema. Probá de nuevo; si sigue pasando, avisanos.
+      </Text>
+      {__DEV__ ? <Text style={{ fontSize: 12, color: '#B42318', textAlign: 'center' }}>{error.message}</Text> : null}
+      <Pressable
+        accessibilityRole="button"
+        onPress={retry}
+        style={{
+          height: 50,
+          paddingHorizontal: 28,
+          borderRadius: 14,
+          backgroundColor: '#FFC233',
+          justifyContent: 'center',
+        }}>
+        <Text style={{ fontSize: 16, fontWeight: '700', color: '#12161C' }}>Reintentar</Text>
+      </Pressable>
+    </View>
   );
 }

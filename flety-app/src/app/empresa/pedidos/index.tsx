@@ -54,7 +54,18 @@ export default function PedidosEmpresa() {
   const isWide = useIsWide();
   const params = useLocalSearchParams<{ tab?: string }>();
   const tab: GrupoPedidos = TABS.some((t) => t.id === params.tab) ? (params.tab as GrupoPedidos) : 'cola';
-  const { empresa, cola, pedidos, choferes, fotos, clientes, loading, recargar, esAdmin } = useEmpresa();
+  const {
+    empresa,
+    cola,
+    pedidos,
+    choferes,
+    fotos,
+    clientes,
+    loading,
+    error: errorCarga,
+    recargar,
+    esAdmin,
+  } = useEmpresa();
   const { pendiente, error, ejecutar } = useAccion(recargar);
 
   const grupos: Record<GrupoPedidos, Pedido[]> = { cola, asignados: [], en_curso: [], historial: [] };
@@ -118,6 +129,7 @@ export default function PedidosEmpresa() {
 
   return (
     <EmpresaShell
+      aviso={errorCarga}
       active="pedidos"
       empresa={empresa}
       title="Pedidos"

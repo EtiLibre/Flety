@@ -15,11 +15,12 @@ const TITULOS: Record<EstadoChofer, string> = {
 };
 
 export default function ChoferesEmpresa() {
-  const { empresa, choferes, pedidos, loading, esAdmin, recargar } = useEmpresa();
+  const { empresa, choferes, pedidos, loading, error: errorCarga, esAdmin, recargar } = useEmpresa();
   const estados = choferes.map((c) => ({ chofer: c, estado: estadoDelChofer(c, pedidos) }));
 
   return (
     <EmpresaShell
+      aviso={errorCarga}
       active="choferes"
       empresa={empresa}
       title="Choferes"

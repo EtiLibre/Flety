@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { EmpresaPreviewContext, type DatosEmpresa } from '@/hooks/use-empresa';
 import { PedidoPreviewContext } from '@/hooks/use-pedido-en-vivo';
-import { AuthPreview } from '@/lib/auth';
+import { AuthPreview, useAuth } from '@/lib/auth';
 import type { Chofer } from '@/lib/empresa';
 import type { Pedido } from '@/lib/orders';
 import { MarketingPreviewContext, type Estadisticas } from '@/lib/marketing';
@@ -222,7 +222,9 @@ const ESTADISTICAS: Estadisticas = {
 
 export default function PreviewEmpresa() {
   const params = useLocalSearchParams<{ vista?: string; rol?: string }>();
-  if (!__DEV__) return <Redirect href="/" />;
+  // En producción, solo el superadmin ("Ver la app como…" del panel).
+  const { role } = useAuth();
+  if (!__DEV__ && role !== 'superadmin') return <Redirect href="/" />;
   const vista = VISTAS.find((v) => v === params.vista) ?? 'panel';
   const rol: UserRole = vista === 'marketing' ? 'marketing' : params.rol === 'superadmin' ? 'superadmin' : 'empresa';
   const detalle = vista === 'en-viaje' ? PEDIDOS[3] : PEDIDOS[2];

@@ -11,6 +11,7 @@ import {
   type Empresa,
 } from '@/lib/empresa';
 import { PEDIDO_COLUMNS, type Pedido } from '@/lib/orders';
+import { canal } from '@/lib/realtime';
 import { supabase } from '@/lib/supabase';
 
 export type DatosEmpresa = {
@@ -44,6 +45,7 @@ export function useEmpresa() {
   const preview = useContext(EmpresaPreviewContext);
   const [datos, setDatos] = useState<DatosEmpresa>(VACIO);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
   const recargar = useCallback(() => setVersion((v) => v + 1), []);
 
@@ -87,6 +89,19 @@ export function useEmpresa() {
         pedidosQuery,
         choferesQuery,
       ]);
+      // Una consulta que falla (p. ej. faltan migraciones en la base) se avisa en
+      // pantalla en vez de dejarla cargando.
+      const fallo = [colaRes, pedidosRes, choferesRes].find((r) => 'error' in r && r.error);
+      const detalle = fallo && 'error' in fallo ? fallo.error?.message : null;
+      if (!cancelled) {
+        setError(
+          detalle
+            ? detalle.includes('does not exist') || detalle.includes('schema cache')
+              ? 'Falta actualizar la base de datos: corré las migraciones pendientes en Supabase (SQL Editor).'
+              : 'No pudimos cargar todos los datos. Probá de nuevo en un momento.'
+            : null
+        );
+      }
       const cola = (colaRes.data as Pedido[] | null) ?? [];
       const pedidos = (pedidosRes.data as Pedido[] | null) ?? [];
       const [fotos, clientes] = await Promise.all([
@@ -105,7 +120,11 @@ export function useEmpresa() {
       setLoading(false);
     }
 
-    cargar();
+    cargar().catch(() => {
+      if (cancelled) return;
+      setError('No pudimos conectarnos. Revisá tu conexión y volvé a intentar.');
+      setLoading(false);
+    });
     return () => {
       cancelled = true;
     };
@@ -120,7 +139,7 @@ export function useEmpresa() {
       timer = setTimeout(recargar, 400);
     };
     const channel = supabase
-      .channel(`empresa-${companyId ?? role}`)
+      .channel(canal(`empresa-${companyId ?? role}`))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, pedirRecarga)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'drivers' }, pedirRecarga)
       .subscribe();
@@ -132,6 +151,6 @@ export function useEmpresa() {
     };
   }, [role, companyId, recargar, preview]);
 
-  if (preview) return { ...preview, loading: false, recargar, esAdmin };
-  return { ...datos, loading, recargar, esAdmin };
+  if (preview) return { ...preview, loading: false, error: null, recargar, esAdmin };
+  return { ...datos, loading, error, recargar, esAdmin };
 }

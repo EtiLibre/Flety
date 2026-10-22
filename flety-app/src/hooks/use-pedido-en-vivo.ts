@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 
 import type { LatLng } from '@/components/map/types';
 import { fotosDelPedido, PEDIDO_COLUMNS, type Pedido } from '@/lib/orders';
+import { canal } from '@/lib/realtime';
 import { supabase } from '@/lib/supabase';
 
 // SOLO DESARROLLO: pedido de ejemplo para las vistas previas (sin Supabase).
@@ -35,7 +36,7 @@ export function usePedidoEnVivo(id: string | undefined) {
     fotosDelPedido(id).then((urls) => !cancelled && setFotos(urls));
 
     const channel = supabase
-      .channel(`pedido-${id}`)
+      .channel(canal(`pedido-${id}`))
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${id}` }, (payload) => {
         setPedido((prev) => (prev ? { ...prev, ...(payload.new as Partial<Pedido>) } : prev));
       })
@@ -61,7 +62,7 @@ export function usePedidoEnVivo(id: string | undefined) {
       .then(({ data }) => !cancelled && data && read(data));
 
     const channel = supabase
-      .channel(`chofer-${driverId}`)
+      .channel(canal(`chofer-${driverId}`))
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'drivers', filter: `id=eq.${driverId}` }, (payload) =>
         read(payload.new as { ubicacion_actual?: LatLng | null })
       )

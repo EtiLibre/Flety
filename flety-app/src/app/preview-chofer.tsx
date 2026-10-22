@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { FOTOS_EJEMPLO } from '@/dev/datos-ejemplo';
 import { ChoferPreviewContext, type DatosChofer } from '@/hooks/use-chofer';
 import { PedidoPreviewContext } from '@/hooks/use-pedido-en-vivo';
-import { AuthPreview } from '@/lib/auth';
+import { AuthPreview, useAuth } from '@/lib/auth';
 import type { Pedido } from '@/lib/orders';
 import { colors, fonts } from '@/theme';
 
@@ -14,7 +14,15 @@ import PanelChofer from './chofer/panel';
 // ni Supabase. ?estado=solicitud|asignado|en_camino_origen|cargando|en_camino_destino|libre|sin-empresa
 // (los botones que escriben en la base fallan acá, es esperado). En producción redirige al inicio.
 
-const ESTADOS = ['solicitud', 'asignado', 'en_camino_origen', 'cargando', 'en_camino_destino', 'libre', 'sin-empresa'] as const;
+const ESTADOS = [
+  'solicitud',
+  'asignado',
+  'en_camino_origen',
+  'cargando',
+  'en_camino_destino',
+  'libre',
+  'sin-empresa',
+] as const;
 
 const PEDIDO: Pedido = {
   id: 'p-chofer-1',
@@ -52,7 +60,9 @@ const CHOFER = {
 
 export default function PreviewChofer() {
   const params = useLocalSearchParams<{ estado?: string }>();
-  if (!__DEV__) return <Redirect href="/" />;
+  // En producción, solo el superadmin ("Ver la app como…" del panel).
+  const { role } = useAuth();
+  if (!__DEV__ && role !== 'superadmin') return <Redirect href="/" />;
   const estado = ESTADOS.find((e) => e === params.estado) ?? 'asignado';
 
   const pedido =
@@ -87,7 +97,10 @@ export default function PreviewChofer() {
             <PanelChofer />
             <View style={styles.switcher}>
               {ESTADOS.map((e) => (
-                <Pressable key={e} onPress={() => router.setParams({ estado: e })} style={[styles.chip, e === estado && styles.chipOn]}>
+                <Pressable
+                  key={e}
+                  onPress={() => router.setParams({ estado: e })}
+                  style={[styles.chip, e === estado && styles.chipOn]}>
                   <Text style={[styles.chipText, e === estado && { color: colors.ink }]}>{e.replace(/_/g, ' ')}</Text>
                 </Pressable>
               ))}
