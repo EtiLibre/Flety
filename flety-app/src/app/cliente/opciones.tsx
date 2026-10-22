@@ -18,7 +18,7 @@ import { useAuth } from '@/lib/auth';
 import { avisar } from '@/lib/confirm';
 import { distanciaEstimadaKm } from '@/lib/distance';
 import { describirCuandoDraft, plural } from '@/lib/format';
-import { fleterosDisponibles, type Fletero } from '@/lib/marketplace';
+import { fleterosDeEjemplo, fleterosDisponibles, type Fletero } from '@/lib/marketplace';
 import { crearPedido } from '@/lib/orders';
 import { draftListoParaCotizar, usePedidoDraft } from '@/lib/pedido-draft';
 import { fetchTarifas, formatARS, precioEstimado, type Tarifa } from '@/lib/pricing';
@@ -34,6 +34,9 @@ type Modo = 'cualquiera' | 'elegir';
 
 // Fleteros disponibles cerca del retiro (se vuelve a buscar si cambia el pedido).
 function useFleteros(origen: GeoPoint | null, km: number, ayudantes: number, vehiculo: Vehiculo) {
+  const { role } = useAuth();
+  // El superadmin ("Ver la app como cliente") ve fleteros de ejemplo si no hay reales.
+  const demo = role === 'superadmin';
   const key = origen ? `${origen.lat},${origen.lng}:${Math.round(km * 10)}:${ayudantes}:${vehiculo}` : '';
   const [estado, setEstado] = useState<{ key: string; fleteros: Fletero[]; error: boolean }>({
     key: '',
@@ -45,14 +48,18 @@ function useFleteros(origen: GeoPoint | null, km: number, ayudantes: number, veh
     if (!origen) return;
     let cancelled = false;
     fleterosDisponibles(origen, km, ayudantes, vehiculo)
-      .then((fleteros) => !cancelled && setEstado({ key, fleteros, error: false }))
+      .then(async (fleteros) => {
+        const lista =
+          fleteros.length || !demo ? fleteros : fleterosDeEjemplo(origen, km, ayudantes, await fetchTarifas());
+        if (!cancelled) setEstado({ key, fleteros: lista, error: false });
+      })
       .catch(() => !cancelled && setEstado({ key, fleteros: [], error: true }));
     return () => {
       cancelled = true;
     };
     // key resume origen/km/ayudantes/vehículo.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+  }, [key, demo]);
 
   const listo = estado.key === key;
   return { fleteros: listo ? estado.fleteros : [], cargando: !!origen && !listo, error: listo && estado.error };
@@ -262,6 +269,15 @@ function OpcionesContenido({
             <ActivityIndicator color={colors.ink} />
           ) : marketplace.fleteros.length ? (
             <View style={styles.options} accessibilityRole="radiogroup">
+              {marketplace.fleteros.some((f) => f.demo) ? (
+                <View style={styles.demo}>
+                  <Text style={styles.demoTitle}>Vista de ejemplo (solo la ves vos)</Text>
+                  <Text style={styles.demoText}>
+                    Todavía no hay fleteros reales disponibles cerca. Así se va a ver el marketplace para el cliente; a
+                    estos no se les puede pedir.
+                  </Text>
+                </View>
+              ) : null}
               {marketplace.fleteros.map((f) => (
                 <FleteroOption
                   key={f.driver_id}
@@ -297,14 +313,16 @@ function OpcionesContenido({
         title={
           modo === 'elegir'
             ? fletero
-              ? `Pedirle a ${fletero.nombre}`
+              ? fletero.demo
+                ? 'Fletero de ejemplo: no se puede pedir'
+                : `Pedirle a ${fletero.nombre}`
               : 'Elegí un fletero'
             : `Confirmar ${VEHICULO_LABEL[vehiculo].titulo.toLowerCase()}`
         }
         variant="dark"
         onPress={confirmar}
         loading={enviando}
-        disabled={cargandoRuta || (modo === 'elegir' && !fletero)}
+        disabled={cargandoRuta || (modo === 'elegir' && (!fletero || !!fletero.demo))}
       />
     </>
   );
@@ -317,6 +335,9 @@ const styles = StyleSheet.create({
   title: { fontFamily: fonts.display, fontSize: 26, letterSpacing: -0.5, color: colors.ink },
   subtitle: { fontFamily: fonts.regular, fontSize: 14, color: colors.muted },
   options: { gap: 10 },
+  demo: { gap: 2, padding: 12, borderRadius: 14, backgroundColor: '#E8EEFF' },
+  demoTitle: { fontFamily: fonts.bold, fontSize: 13, color: '#2F45B5' },
+  demoText: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18, color: '#2F45B5' },
   vacio: { gap: 4, padding: 16, borderRadius: 16, backgroundColor: colors.surface },
   vacioTitle: { fontFamily: fonts.bold, fontSize: 15, color: colors.ink },
   trust: { flexDirection: 'row', alignItems: 'center', gap: 8 },

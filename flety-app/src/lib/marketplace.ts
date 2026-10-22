@@ -21,7 +21,91 @@ export type Fletero = {
   // Reputación (promedio de estrellas y cuántas calificaciones tiene).
   estrellas: number | null;
   calificaciones: number;
+  // Fletero de ejemplo (solo lo ve el superadmin para previsualizar el marketplace).
+  demo?: boolean;
 };
+
+// SOLO SUPERADMIN: fleteros de ejemplo alrededor del retiro, con precios
+// calculados con las tarifas de Flety (cada "empresa" con un pequeño ajuste),
+// para ver cómo luce el marketplace cuando todavía no hay choferes reales.
+const DEMO: {
+  nombre: string;
+  empresa: string;
+  vehiculo: Vehiculo;
+  km: number;
+  rumbo: number;
+  ajuste: number;
+  estrellas: number | null;
+  calificaciones: number;
+}[] = [
+  {
+    nombre: 'Martín',
+    empresa: 'Fletes Cuyo',
+    vehiculo: 'camioneta',
+    km: 1.2,
+    rumbo: 40,
+    ajuste: 1,
+    estrellas: 4.9,
+    calificaciones: 38,
+  },
+  {
+    nombre: 'Lucía',
+    empresa: 'Mudanzas del Sol',
+    vehiculo: 'camion',
+    km: 2.6,
+    rumbo: 160,
+    ajuste: 1.08,
+    estrellas: 4.8,
+    calificaciones: 21,
+  },
+  {
+    nombre: 'Diego',
+    empresa: 'Fletes Cuyo',
+    vehiculo: 'utilitario',
+    km: 3.4,
+    rumbo: 250,
+    ajuste: 1,
+    estrellas: null,
+    calificaciones: 0,
+  },
+  {
+    nombre: 'Paula',
+    empresa: 'Traslados Andes',
+    vehiculo: 'camioneta',
+    km: 5.1,
+    rumbo: 320,
+    ajuste: 0.94,
+    estrellas: 4.6,
+    calificaciones: 12,
+  },
+];
+
+export function fleterosDeEjemplo(origen: LatLng, km: number, ayudantes: number, tarifas: Tarifa[]): Fletero[] {
+  return DEMO.map((d, i) => {
+    const rad = (d.rumbo * Math.PI) / 180;
+    const posicion = {
+      lat: origen.lat + (d.km / 111) * Math.cos(rad),
+      lng: origen.lng + (d.km / (111 * Math.cos((origen.lat * Math.PI) / 180))) * Math.sin(rad),
+    };
+    const t = tarifas.find((x) => x.vehiculo === d.vehiculo);
+    const precio = t
+      ? Math.round(((t.base + t.por_km * km + t.por_ayudante * ayudantes) * d.ajuste) / 100) * 100
+      : null;
+    return {
+      driver_id: `demo-${i}`,
+      nombre: d.nombre,
+      empresa: d.empresa,
+      company_id: `demo-${d.empresa}`,
+      vehiculo: d.vehiculo,
+      distancia_km: d.km,
+      posicion,
+      precio,
+      estrellas: d.estrellas,
+      calificaciones: d.calificaciones,
+      demo: true,
+    };
+  });
+}
 
 type FleteroRow = {
   driver_id: string;
