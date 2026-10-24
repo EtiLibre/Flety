@@ -4,7 +4,9 @@ import {
   Banknote,
   Building2,
   ChartBar,
+  ChevronDown,
   ChevronRight,
+  ChevronUp,
   Clock,
   Eye,
   Headset,
@@ -122,32 +124,12 @@ export function EmpresaShell({
     return (
       <View style={styles.screen}>
         <StatusBar style="light" />
-        <View style={styles.sidebar} role="navigation" aria-label="Principal">
-          <Marca />
-          <View style={styles.nav}>
-            {principales.map(({ id, label, Icon }) => {
-              const current = id === active;
-              return (
-                <Pressable
-                  key={id}
-                  accessibilityRole="link"
-                  aria-current={current ? 'page' : undefined}
-                  onPress={() => nav.ir(id)}
-                  style={({ hovered }: { hovered?: boolean }) => [
-                    styles.navItem,
-                    (current || hovered) && styles.navItemActive,
-                  ]}>
-                  <Icon size={20} color={current ? colors.white : '#C5CBD3'} strokeWidth={2} />
-                  <Text style={[styles.navText, current && styles.navTextActive]}>{label}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-          {role === 'superadmin' ? <VerComo /> : null}
-          <View style={styles.sidebarFooter}>
-            <EmpresaCard empresa={empresa} />
+        <View style={styles.sidebarWrap} role="navigation" aria-label="Principal">
+          {/* Con scroll: con muchas secciones (superadmin), Ayuda, Mi cuenta y Cerrar sesión no quedan fuera de la pantalla. */}
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.sidebar} showsVerticalScrollIndicator={false}>
+            <Marca />
             <View style={styles.nav}>
-              {extras.map(({ id, label, Icon }) => {
+              {principales.map(({ id, label, Icon }) => {
                 const current = id === active;
                 return (
                   <Pressable
@@ -156,17 +138,42 @@ export function EmpresaShell({
                     aria-current={current ? 'page' : undefined}
                     onPress={() => nav.ir(id)}
                     style={({ hovered }: { hovered?: boolean }) => [
-                      styles.navItemChico,
+                      styles.navItem,
                       (current || hovered) && styles.navItemActive,
                     ]}>
-                    <Icon size={18} color={current ? colors.white : '#C5CBD3'} strokeWidth={2} />
-                    <Text style={[styles.navText, styles.navTextChico, current && styles.navTextActive]}>{label}</Text>
+                    <Icon size={20} color={current ? colors.white : '#C5CBD3'} strokeWidth={2} />
+                    <Text style={[styles.navText, current && styles.navTextActive]}>{label}</Text>
                   </Pressable>
                 );
               })}
-              <Salir />
             </View>
-          </View>
+            {role === 'superadmin' ? <VerComo /> : null}
+            <View style={styles.sidebarFooter}>
+              <EmpresaCard empresa={empresa} />
+              <View style={styles.nav}>
+                {extras.map(({ id, label, Icon }) => {
+                  const current = id === active;
+                  return (
+                    <Pressable
+                      key={id}
+                      accessibilityRole="link"
+                      aria-current={current ? 'page' : undefined}
+                      onPress={() => nav.ir(id)}
+                      style={({ hovered }: { hovered?: boolean }) => [
+                        styles.navItemChico,
+                        (current || hovered) && styles.navItemActive,
+                      ]}>
+                      <Icon size={18} color={current ? colors.white : '#C5CBD3'} strokeWidth={2} />
+                      <Text style={[styles.navText, styles.navTextChico, current && styles.navTextActive]}>
+                        {label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+                <Salir />
+              </View>
+            </View>
+          </ScrollView>
         </View>
         <ScrollView style={styles.main} contentContainerStyle={styles.mainContent}>
           {header}
@@ -286,28 +293,43 @@ const VISTAS: { label: string; detalle: string; href: Href }[] = [
 ];
 
 function VerComo({ light }: { light?: boolean }) {
+  // En la barra lateral arranca plegado, para que Ayuda, Mi cuenta y Cerrar
+  // sesión entren en pantalla sin desplazar.
+  const [abierto, setAbierto] = useState(!!light);
   return (
     <View style={[styles.verComo, light && styles.verComoLight]}>
-      <View style={styles.verComoHead}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: abierto }}
+        disabled={light}
+        onPress={() => setAbierto((a) => !a)}
+        style={styles.verComoHead}>
         <Eye size={14} color={light ? colors.muted : '#A9B0BA'} strokeWidth={2.2} />
-        <Text style={[styles.verComoTitulo, light && { color: colors.muted }]}>Ver la app como…</Text>
-      </View>
-      <View style={light ? styles.verComoChips : styles.verComoLista}>
-        {VISTAS.map((v) => (
-          <Pressable
-            key={v.label}
-            accessibilityRole="link"
-            accessibilityLabel={`Ver la app como ${v.label.toLowerCase()}: ${v.detalle}`}
-            onPress={() => router.push(v.href)}
-            style={({ hovered }: { hovered?: boolean }) => [
-              light ? styles.verComoChip : styles.verComoItem,
-              hovered && (light ? { backgroundColor: colors.surface } : { backgroundColor: '#232A34' }),
-            ]}>
-            <Text style={[styles.verComoLabel, light && { color: colors.ink }]}>{v.label}</Text>
-            {light ? null : <Text style={styles.verComoDetalle}>{v.detalle}</Text>}
-          </Pressable>
-        ))}
-      </View>
+        <Text style={[styles.verComoTitulo, light && { color: colors.muted }, { flex: 1 }]}>Ver la app como…</Text>
+        {light ? null : abierto ? (
+          <ChevronUp size={14} color="#A9B0BA" strokeWidth={2.2} />
+        ) : (
+          <ChevronDown size={14} color="#A9B0BA" strokeWidth={2.2} />
+        )}
+      </Pressable>
+      {abierto ? (
+        <View style={light ? styles.verComoChips : styles.verComoLista}>
+          {VISTAS.map((v) => (
+            <Pressable
+              key={v.label}
+              accessibilityRole="link"
+              accessibilityLabel={`Ver la app como ${v.label.toLowerCase()}: ${v.detalle}`}
+              onPress={() => router.push(v.href)}
+              style={({ hovered }: { hovered?: boolean }) => [
+                light ? styles.verComoChip : styles.verComoItem,
+                hovered && (light ? { backgroundColor: colors.surface } : { backgroundColor: '#232A34' }),
+              ]}>
+              <Text style={[styles.verComoLabel, light && { color: colors.ink }]}>{v.label}</Text>
+              {light ? null : <Text style={styles.verComoDetalle}>{v.detalle}</Text>}
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -397,7 +419,8 @@ function Salir() {
 const styles = StyleSheet.create({
   screen: { flex: 1, flexDirection: 'row', backgroundColor: PANEL_BG },
   screenNarrow: { flex: 1, backgroundColor: colors.ink },
-  sidebar: { width: 248, backgroundColor: colors.ink, paddingVertical: 24, paddingHorizontal: 16, gap: 24 },
+  sidebarWrap: { width: 248, backgroundColor: colors.ink },
+  sidebar: { flexGrow: 1, paddingVertical: 24, paddingHorizontal: 16, gap: 20 },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 8 },
   brandMark: {
     width: 36,
@@ -419,7 +442,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   nav: { gap: 4 },
-  navItem: { flexDirection: 'row', alignItems: 'center', gap: 12, height: 44, paddingHorizontal: 12, borderRadius: 12 },
+  navItem: { flexDirection: 'row', alignItems: 'center', gap: 12, height: 40, paddingHorizontal: 12, borderRadius: 12 },
   navItemActive: { backgroundColor: '#232A34' },
   navText: { fontFamily: fonts.medium, fontSize: 15, color: '#C5CBD3' },
   navTextActive: { fontFamily: fonts.semibold, color: colors.white },
