@@ -376,7 +376,7 @@ function LandingPage() {
         <View style={styles.dark}>
           <View style={[styles.container, styles.footer]}>
             <View style={[styles.footerTop, { flexDirection: isMid ? 'row' : 'column' }]}>
-              <View style={{ gap: 12, maxWidth: 360 }}>
+              <View style={{ gap: 12, maxWidth: 360, flexShrink: 1 }}>
                 <Text style={styles.footerBrand}>flety</Text>
                 <Text style={styles.footerText}>Fletes y mudanzas con empresas verificadas. Mendoza, Argentina.</Text>
               </View>
@@ -611,7 +611,8 @@ const styles = StyleSheet.create({
   footerTop: { justifyContent: 'space-between', gap: 32 },
   footerBrand: { fontFamily: fonts.display, fontSize: 24, color: colors.white },
   footerText: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 22, color: colors.mutedOnInk },
-  footerCols: { flexDirection: 'row', gap: 56 },
+  // Las columnas bajan de línea si no entran (antes "Legal" quedaba cortada en el celular).
+  footerCols: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 40, rowGap: 24, flexShrink: 1 },
   footerHead: { fontFamily: fonts.bold, fontSize: 15, color: colors.white },
   footerLink: { fontFamily: fonts.regular, fontSize: 15, color: colors.mutedOnInk },
   copyright: {

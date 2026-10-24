@@ -221,7 +221,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryText: { fontFamily: fonts.bold, fontSize: 16, color: colors.white },
-  secondary: { paddingVertical: 10 },
+  // flexShrink: en celulares chicos el texto baja de línea en vez de cortarse.
+  secondary: { paddingVertical: 10, flexShrink: 1, maxWidth: '100%' },
   secondaryText: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink, textDecorationLine: 'underline' },
   visual: { width: '100%', alignItems: 'center', justifyContent: 'center' },
   phone: {
