@@ -29,8 +29,8 @@ export default function Registro() {
       setError('Completá todos los campos.');
       return;
     }
-    if (password.length < 6) {
-      setError('La contraseña tiene que tener al menos 6 caracteres.');
+    if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+      setError('La contraseña tiene que tener al menos 8 caracteres, con letras y números.');
       return;
     }
     setLoading(true);
@@ -105,7 +105,7 @@ export default function Registro() {
         label="Contraseña"
         value={password}
         onChangeText={setPassword}
-        placeholder="Mínimo 6 caracteres"
+        placeholder="8 o más, con letras y números"
         secureTextEntry
         autoComplete="new-password"
         textContentType="newPassword"

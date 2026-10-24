@@ -63,8 +63,8 @@ export default function Restablecer() {
 
   async function guardar() {
     setError(null);
-    if (password.length < 6) {
-      setError('La contraseña tiene que tener al menos 6 caracteres.');
+    if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+      setError('La contraseña tiene que tener al menos 8 caracteres, con letras y números.');
       return;
     }
     if (password !== repetir) {
@@ -94,7 +94,7 @@ export default function Restablecer() {
         label="Contraseña nueva"
         value={password}
         onChangeText={setPassword}
-        placeholder="Mínimo 6 caracteres"
+        placeholder="8 o más, con letras y números"
         secureTextEntry
         autoComplete="new-password"
         textContentType="newPassword"
