@@ -2,17 +2,24 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { FOTOS_EJEMPLO } from '@/dev/datos-ejemplo';
-import { ChoferPreviewContext, PerfilPreviewContext, type DatosChofer } from '@/hooks/use-chofer';
+import { BarraInferior } from '@/components/nav/BarraInferior';
+import { ChoferPreviewContext, type DatosChofer } from '@/hooks/use-chofer';
+import { ViajesPreviewContext } from '@/hooks/use-mis-viajes';
+import { NavChoferDemoContext, TABS_CHOFER, type DestinoChofer, type TabChofer } from '@/hooks/use-nav-chofer';
 import { PedidoPreviewContext } from '@/hooks/use-pedido-en-vivo';
 import { AuthPreview, useAuth } from '@/lib/auth';
 import type { Pedido } from '@/lib/orders';
 import { colors, fonts } from '@/theme';
 
+import AyudaChofer from './chofer/ayuda';
+import CuentaChofer from './chofer/cuenta';
 import PanelChofer from './chofer/panel';
 import PerfilChofer from './chofer/perfil';
+import VehiculoChofer from './chofer/vehiculo';
+import MisViajes from './chofer/viajes';
 
 // SOLO DESARROLLO: la app del chofer con datos de ejemplo, sin iniciar sesión
-// ni Supabase. ?estado=solicitud|asignado|en_camino_origen|cargando|en_camino_destino|libre|sin-empresa|vehiculo|perfil
+// ni Supabase. ?estado=solicitud|asignado|en_camino_origen|cargando|en_camino_destino|libre|sin-empresa|sin-vehiculo|viajes|ayuda|cuenta|perfil|vehiculo
 // (los botones que escriben en la base fallan acá, es esperado). En producción redirige al inicio.
 
 const ESTADOS = [
@@ -23,9 +30,14 @@ const ESTADOS = [
   'en_camino_destino',
   'libre',
   'sin-empresa',
-  'vehiculo',
+  'sin-vehiculo',
+  'viajes',
+  'ayuda',
+  'cuenta',
   'perfil',
+  'vehiculo',
 ] as const;
+
 
 const ETIQUETAS: Record<(typeof ESTADOS)[number], string> = {
   solicitud: 'Solicitud',
@@ -35,8 +47,12 @@ const ETIQUETAS: Record<(typeof ESTADOS)[number], string> = {
   en_camino_destino: 'Yendo al destino',
   libre: 'Sin viaje',
   'sin-empresa': 'Sin empresa',
-  vehiculo: 'Vehículo',
+  'sin-vehiculo': 'Sin vehículo',
+  viajes: 'Mis viajes',
+  ayuda: 'Ayuda',
+  cuenta: 'Cuenta',
   perfil: 'Perfil',
+  vehiculo: 'Mi vehículo',
 };
 
 const PEDIDO: Pedido = {
@@ -64,6 +80,50 @@ const PEDIDO: Pedido = {
 // Reserva de ejemplo: ~4,5 minutos desde que se abre la vista previa.
 const RESERVA_HASTA = new Date(Date.now() + 4 * 60_000 + 32_000).toISOString();
 
+// Historial de ejemplo para "Mis viajes".
+function haceDias(dias: number, hora: number) {
+  const d = new Date();
+  d.setDate(d.getDate() - dias);
+  d.setHours(hora, 15, 0, 0);
+  return d.toISOString();
+}
+
+const VIAJES: Pedido[] = [
+  { ...PEDIDO, id: 'v1', estado: 'confirmado', created_at: haceDias(0, 9), precio_estimado: 39500 },
+  {
+    ...PEDIDO,
+    id: 'v2',
+    tipo: 'flete',
+    tamano: 'chico',
+    estado: 'liquidado',
+    created_at: haceDias(1, 16),
+    distancia_km: 6.4,
+    precio_estimado: 31700,
+    origen: { lat: -32.9, lng: -68.85, direccion: 'Belgrano 450, Godoy Cruz' },
+    destino: { lat: -32.88, lng: -68.8, direccion: 'Bandera de los Andes 2100, Guaymallén' },
+  },
+  {
+    ...PEDIDO,
+    id: 'v3',
+    estado: 'cancelado_cliente',
+    created_at: haceDias(2, 11),
+    precio_estimado: 45200,
+  },
+  {
+    ...PEDIDO,
+    id: 'v4',
+    tipo: 'mudanza',
+    tamano: 'grande',
+    ayudantes: 2,
+    estado: 'liquidado',
+    created_at: haceDias(4, 8),
+    distancia_km: 11.8,
+    precio_estimado: 78900,
+    origen: { lat: -32.95, lng: -68.86, direccion: 'San Martín Sur 800, Luján de Cuyo' },
+    destino: { lat: -32.89, lng: -68.84, direccion: 'Sarmiento 120, Mendoza' },
+  },
+];
+
 const CHOFER = {
   id: 'drv-1',
   company_id: 'emp-1',
@@ -79,15 +139,20 @@ export default function PreviewChofer() {
   const { role } = useAuth();
   if (!__DEV__ && role !== 'superadmin') return <Redirect href="/" />;
   const estado = ESTADOS.find((e) => e === params.estado) ?? 'asignado';
-
-  const pedido =
-    estado === 'libre' ||
-    estado === 'sin-empresa' ||
-    estado === 'solicitud' ||
-    estado === 'vehiculo' ||
-    estado === 'perfil'
+  // Las pestañas y los accesos de Cuenta cambian de pantalla dentro de la demo.
+  const ir = (d: DestinoChofer) => router.setParams({ estado: d === 'panel' ? 'asignado' : d });
+  const tab: TabChofer | null =
+    estado === 'perfil' || estado === 'vehiculo'
       ? null
-      : { ...PEDIDO, estado };
+      : estado === 'viajes' || estado === 'ayuda' || estado === 'cuenta'
+        ? estado
+        : 'panel';
+
+  // Solo los estados de viaje tienen un pedido en curso.
+  const pedido: Pedido | null =
+    estado === 'asignado' || estado === 'en_camino_origen' || estado === 'cargando' || estado === 'en_camino_destino'
+      ? { ...PEDIDO, estado }
+      : null;
   // Un cliente lo eligió en el marketplace: reserva de 5 minutos.
   const solicitud: Pedido | null =
     estado === 'solicitud'
@@ -106,7 +171,7 @@ export default function PreviewChofer() {
     chofer:
       estado === 'sin-empresa'
         ? null
-        : estado === 'vehiculo'
+        : estado === 'sin-vehiculo'
           ? // Sin tipo cargado: muestra el formulario del vehículo (fotos y foto del modelo).
             { ...CHOFER, vehiculo: { marca: 'Renault', modelo: 'Kangoo', anio: '2021', color: 'rojo' as const } }
           : CHOFER,
@@ -138,11 +203,26 @@ export default function PreviewChofer() {
                 </Pressable>
               ))}
             </ScrollView>
-            <View style={{ flex: 1 }}>
-              <PerfilPreviewContext.Provider value={() => router.setParams({ estado: 'perfil' })}>
-                {estado === 'perfil' ? <PerfilChofer /> : <PanelChofer />}
-              </PerfilPreviewContext.Provider>
-            </View>
+            <NavChoferDemoContext.Provider value={ir}>
+              <ViajesPreviewContext.Provider value={VIAJES}>
+                <View style={{ flex: 1 }}>
+                  {estado === 'viajes' ? (
+                    <MisViajes />
+                  ) : estado === 'ayuda' ? (
+                    <AyudaChofer />
+                  ) : estado === 'cuenta' ? (
+                    <CuentaChofer />
+                  ) : estado === 'perfil' ? (
+                    <PerfilChofer />
+                  ) : estado === 'vehiculo' ? (
+                    <VehiculoChofer />
+                  ) : (
+                    <PanelChofer />
+                  )}
+                </View>
+                {tab ? <BarraInferior items={TABS_CHOFER} activo={tab} onIr={ir} tema="oscuro" /> : null}
+              </ViajesPreviewContext.Provider>
+            </NavChoferDemoContext.Provider>
           </View>
         </PedidoPreviewContext.Provider>
       </ChoferPreviewContext.Provider>

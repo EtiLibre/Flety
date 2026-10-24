@@ -1,12 +1,9 @@
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ListOrdered, LogOut, Package, Route, Search, Truck, User } from 'lucide-react-native';
-import { useState } from 'react';
+import { Package, Route, Search, Truck } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AnuncioPopup } from '@/components/AnuncioPopup';
-import { IconButton } from '@/components/IconButton';
 import { AppMap } from '@/components/map/AppMap';
 import type { MapMarker } from '@/components/map/types';
 import { PedidoForm } from '@/components/pedido/PedidoForm';
@@ -20,9 +17,8 @@ import { useRuta } from '@/hooks/use-ruta';
 import { useAuth } from '@/lib/auth';
 import { usePedidoDraft } from '@/lib/pedido-draft';
 import { TERMINAL_ESTADOS } from '@/lib/state-machine';
-import { supabase } from '@/lib/supabase';
 import type { TipoServicio } from '@/lib/types';
-import { colors, fonts, radius, shadow } from '@/theme';
+import { colors, fonts, radius } from '@/theme';
 
 const SERVICIOS = [
   { tipo: 'flete', titulo: 'Flete', detalle: 'Pocas cosas', Icon: Truck },
@@ -86,11 +82,9 @@ function InicioDesktop() {
 }
 
 function InicioMovil() {
-  const insets = useSafeAreaInsets();
   const { nombre } = useAuth();
   const { update } = usePedidoDraft();
   const { markers, location } = useMapMarkers();
-  const [menuOpen, setMenuOpen] = useState(false);
   const firstName = nombre?.split(' ')[0];
 
   function pedir(tipo?: TipoServicio) {
@@ -106,46 +100,6 @@ function InicioMovil() {
         markers={markers.filter((m) => m.kind === 'user')}
         style={StyleSheet.absoluteFill}
       />
-
-      <View style={[styles.topBar, { top: insets.top + 12 }]}>
-        <View />
-        <View style={styles.profileArea}>
-          <IconButton label="Perfil" onPress={() => setMenuOpen((open) => !open)}>
-            <User size={22} color={colors.ink} strokeWidth={2} />
-          </IconButton>
-          {menuOpen ? (
-            <View style={styles.menu}>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => {
-                  setMenuOpen(false);
-                  router.push('/cliente/pedidos');
-                }}
-                style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.7 }]}>
-                <ListOrdered size={18} color={colors.ink} strokeWidth={2} />
-                <Text style={styles.menuItemText}>Mis pedidos</Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => {
-                  setMenuOpen(false);
-                  router.push('/unirse');
-                }}
-                style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.7 }]}>
-                <Truck size={18} color={colors.ink} strokeWidth={2} />
-                <Text style={styles.menuItemText}>Soy chofer · tengo un código</Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => supabase.auth.signOut()}
-                style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.7 }]}>
-                <LogOut size={18} color={colors.danger} strokeWidth={2} />
-                <Text style={[styles.menuItemText, { color: colors.danger }]}>Cerrar sesión</Text>
-              </Pressable>
-            </View>
-          ) : null}
-        </View>
-      </View>
 
       <View style={styles.sheetArea} pointerEvents="box-none">
         <Sheet style={styles.sheet}>
@@ -205,24 +159,6 @@ const styles = StyleSheet.create({
   activos: { gap: 10, paddingTop: 18, borderTopWidth: 1, borderTopColor: colors.lineSoft },
   activosTitle: { fontFamily: fonts.bold, fontSize: 14, color: colors.muted },
   screen: { flex: 1, backgroundColor: colors.mapLand },
-  topBar: {
-    position: 'absolute',
-    left: 20,
-    right: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    zIndex: 1000,
-  },
-  profileArea: { alignItems: 'flex-end', gap: 8 },
-  menu: {
-    backgroundColor: colors.white,
-    borderRadius: radius.lg,
-    paddingVertical: 6,
-    minWidth: 190,
-    ...shadow.floating,
-  },
-  menuItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, height: 44 },
-  menuItemText: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
   sheetArea: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center', zIndex: 1000 },
   sheet: { width: '100%', maxWidth: 560 },
   titles: { gap: 2 },

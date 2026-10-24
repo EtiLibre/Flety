@@ -1,6 +1,6 @@
 import { Link } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { LogOut, Truck, User } from 'lucide-react-native';
+import { LogOut, Truck, User, UserRound } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -8,16 +8,24 @@ import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { colors, fonts, radius, shadow } from '@/theme';
 
+const NAV = [
+  { id: 'pedir', label: 'Pedir', href: '/cliente/inicio' },
+  { id: 'pedidos', label: 'Mis fletes', href: '/cliente/pedidos' },
+  { id: 'ayuda', label: 'Ayuda', href: '/cliente/ayuda' },
+  { id: 'cuenta', label: 'Cuenta', href: '/cliente/cuenta' },
+] as const;
+
 // Layout desktop del cliente (canvas "Web · cliente"): barra superior,
-// panel a la izquierda y mapa grande a la derecha.
+// panel a la izquierda y mapa grande a la derecha. Sin mapa (Ayuda, Cuenta),
+// el contenido va centrado.
 export function ClienteShell({
   active,
   panel,
   map,
 }: {
-  active: 'pedir' | 'pedidos';
+  active: (typeof NAV)[number]['id'];
   panel: React.ReactNode;
-  map: React.ReactNode;
+  map?: React.ReactNode;
 }) {
   const { nombre, session } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -35,12 +43,11 @@ export function ClienteShell({
           </Link>
           {session ? (
             <View style={styles.nav} accessibilityRole="menubar">
-              <Link href="/cliente/inicio" style={[styles.navLink, active === 'pedir' && styles.navLinkActive]}>
-                Pedir
-              </Link>
-              <Link href="/cliente/pedidos" style={[styles.navLink, active === 'pedidos' && styles.navLinkActive]}>
-                Mis pedidos
-              </Link>
+              {NAV.map((n) => (
+                <Link key={n.id} href={n.href} style={[styles.navLink, active === n.id && styles.navLinkActive]}>
+                  {n.label}
+                </Link>
+              ))}
             </View>
           ) : null}
         </View>
@@ -60,6 +67,10 @@ export function ClienteShell({
             {menuOpen ? (
               <View style={styles.menu}>
                 {nombre ? <Text style={styles.menuName}>{nombre}</Text> : null}
+                <Link href="/cliente/cuenta" style={styles.menuItem}>
+                  <UserRound size={18} color={colors.ink} strokeWidth={2} />
+                  <Text style={[styles.menuItemText, { color: colors.ink }]}>Mi cuenta</Text>
+                </Link>
                 <Link href="/unirse" style={styles.menuItem}>
                   <Truck size={18} color={colors.ink} strokeWidth={2} />
                   <Text style={[styles.menuItemText, { color: colors.ink }]}>Soy chofer · tengo un código</Text>
@@ -74,15 +85,21 @@ export function ClienteShell({
         )}
       </View>
 
-      <View style={styles.body}>
-        <ScrollView
-          style={styles.panel}
-          contentContainerStyle={styles.panelContent}
-          keyboardShouldPersistTaps="handled">
+      {map ? (
+        <View style={styles.body}>
+          <ScrollView
+            style={styles.panel}
+            contentContainerStyle={styles.panelContent}
+            keyboardShouldPersistTaps="handled">
+            {panel}
+          </ScrollView>
+          <View style={styles.mapArea}>{map}</View>
+        </View>
+      ) : (
+        <ScrollView style={styles.full} contentContainerStyle={styles.fullContent} keyboardShouldPersistTaps="handled">
           {panel}
         </ScrollView>
-        <View style={styles.mapArea}>{map}</View>
-      </View>
+      )}
     </View>
   );
 }
@@ -161,4 +178,6 @@ const styles = StyleSheet.create({
   panel: { width: 440, maxWidth: '45%', flexGrow: 0, borderRightWidth: 1, borderRightColor: colors.lineSoft },
   panelContent: { padding: 28, gap: 22 },
   mapArea: { flex: 1, backgroundColor: colors.mapLand },
+  full: { flex: 1, backgroundColor: '#F4F5F7' },
+  fullContent: { padding: 32, gap: 16, width: '100%', maxWidth: 720, alignSelf: 'center' },
 });

@@ -35,7 +35,15 @@ export default function Unirse() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.dark.bg },
-  content: { padding: 20, gap: 24, width: '100%', maxWidth: 480, alignSelf: 'center', flexGrow: 1, justifyContent: 'center' },
+  content: {
+    padding: 20,
+    gap: 24,
+    width: '100%',
+    maxWidth: 480,
+    alignSelf: 'center',
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
   back: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start' },
   backText: { fontFamily: fonts.semibold, fontSize: 15, color: colors.dark.text },
 });

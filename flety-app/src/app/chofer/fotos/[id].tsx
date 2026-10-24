@@ -29,7 +29,9 @@ export default function FotosChofer() {
         <Pressable accessibilityRole="button" accessibilityLabel="Cerrar fotos" onPress={cerrar} style={styles.close}>
           <X size={22} color={d.text} strokeWidth={2.2} />
         </Pressable>
-        <Text style={styles.headerText}>{fotos.length ? `Foto ${index + 1} de ${fotos.length}` : 'Fotos de la carga'}</Text>
+        <Text style={styles.headerText}>
+          {fotos.length ? `Foto ${index + 1} de ${fotos.length}` : 'Fotos de la carga'}
+        </Text>
         <View style={{ width: 48 }} />
       </View>
 
@@ -79,7 +81,9 @@ export default function FotosChofer() {
               .filter(Boolean)
               .join(' · ')}
           </Text>
-          <Text style={styles.muted}>Fotos subidas por el cliente al crear el pedido. Usalas para saber qué vas a cargar.</Text>
+          <Text style={styles.muted}>
+            Fotos subidas por el cliente al crear el pedido. Usalas para saber qué vas a cargar.
+          </Text>
         </View>
       ) : null}
     </SafeAreaView>
@@ -114,7 +118,15 @@ const styles = StyleSheet.create({
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#3A424D' },
   dotOn: { width: 20, backgroundColor: colors.accent },
   thumbs: { gap: 10 },
-  thumb: { width: 68, height: 68, borderRadius: 14, overflow: 'hidden', borderWidth: 1, borderColor: '#333B46', backgroundColor: d.chip },
+  thumb: {
+    width: 68,
+    height: 68,
+    borderRadius: 14,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#333B46',
+    backgroundColor: d.chip,
+  },
   thumbOn: { borderWidth: 2, borderColor: colors.accent },
   info: { gap: 4, padding: 14, borderRadius: 16, backgroundColor: d.surface },
   infoTitle: { fontFamily: fonts.bold, fontSize: 15, color: d.text },

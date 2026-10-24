@@ -2,8 +2,8 @@ import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Camera, IdCard, LogOut, MapPin, Navigation, Truck, User } from 'lucide-react-native';
-import { useContext, useState } from 'react';
+import { Camera, LogOut, MapPin, Navigation, User } from 'lucide-react-native';
+import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -16,9 +16,10 @@ import { ChatPedido } from '@/components/pedido/ChatPedido';
 import { AppMap } from '@/components/map/AppMap';
 import { MENDOZA, type MapMarker } from '@/components/map/types';
 import { useAccion } from '@/hooks/use-accion';
-import { PerfilPreviewContext, useChofer } from '@/hooks/use-chofer';
+import { useChofer } from '@/hooks/use-chofer';
 import { useCompartirUbicacion } from '@/hooks/use-compartir-ubicacion';
 import { useIsWide } from '@/hooks/use-is-wide';
+import { useNavChofer } from '@/hooks/use-nav-chofer';
 import { usePedidoEnVivo } from '@/hooks/use-pedido-en-vivo';
 import { useRuta } from '@/hooks/use-ruta';
 import { avanzarViaje, cambiarDisponibilidad, ETAPAS, PASOS_VIAJE, urlNavegacion } from '@/lib/chofer';
@@ -40,11 +41,7 @@ function servicio(p: Pedido) {
 export default function PanelChofer() {
   const isWide = useIsWide();
   const { chofer, pedidos, solicitudes, hechosHoy, clientes, loading, recargar } = useChofer();
-  const [editVehiculo, setEditVehiculo] = useState(false);
   const accion = useAccion(recargar);
-  const perfilPreview = useContext(PerfilPreviewContext);
-  // En la vista previa (superadmin) el perfil se abre dentro de la demo.
-  const abrirPerfil = () => (perfilPreview ? perfilPreview() : router.push('/chofer/perfil'));
   const [disponibleLocal, setDisponibleLocal] = useState<boolean | null>(null);
   const disponible = disponibleLocal ?? chofer?.disponibilidad ?? false;
 
@@ -123,7 +120,7 @@ export default function PanelChofer() {
   const barra = (
     <View style={styles.topBlock}>
       <View style={styles.topRow}>
-        <Menu empresa={chofer.empresa} onVehiculo={() => setEditVehiculo(true)} onPerfil={abrirPerfil} />
+        <BotonCuenta empresa={chofer.empresa} />
         <Pressable
           accessibilityRole="switch"
           accessibilityState={{ checked: disponible }}
@@ -168,17 +165,9 @@ export default function PanelChofer() {
   ) : null;
 
   // Sin vehículo cargado no aparece en el marketplace: se lo pedimos.
-  const tarjetaVehiculo =
-    editVehiculo || !chofer.vehiculo?.tipo ? (
-      <MiVehiculo
-        driverId={chofer.id}
-        inicial={chofer.vehiculo}
-        onGuardado={() => {
-          setEditVehiculo(false);
-          recargar();
-        }}
-      />
-    ) : null;
+  const tarjetaVehiculo = !chofer.vehiculo?.tipo ? (
+    <MiVehiculo driverId={chofer.id} inicial={chofer.vehiculo} onGuardado={recargar} />
+  ) : null;
 
   const tarjeta = actual ? (
     actual.estado === 'asignado' ? (
@@ -481,52 +470,17 @@ function EstadoGps({ estado }: { estado: ReturnType<typeof useCompartirUbicacion
   return <Text style={[styles.gps, estado !== 'pidiendo' && styles.gpsWarn]}>{texto}</Text>;
 }
 
-function Menu({
-  empresa,
-  onVehiculo,
-  onPerfil,
-}: {
-  empresa: string | null;
-  onVehiculo: () => void;
-  onPerfil: () => void;
-}) {
-  const [open, setOpen] = useState(false);
+// Acceso a la cuenta (el resto del menú está en la barra de abajo).
+function BotonCuenta({ empresa }: { empresa: string | null }) {
+  const ir = useNavChofer();
   return (
-    <View style={{ zIndex: 10 }}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Menú"
-        onPress={() => setOpen((o) => !o)}
-        style={styles.menuBtn}>
-        <User size={22} color={d.text} strokeWidth={2} />
-      </Pressable>
-      {open ? (
-        <View style={styles.menu}>
-          {empresa ? <Text style={styles.menuEmpresa}>Chofer de {empresa}</Text> : null}
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => {
-              setOpen(false);
-              onPerfil();
-            }}
-            style={styles.salir}>
-            <IdCard size={18} color={d.text} strokeWidth={2} />
-            <Text style={[styles.salirText, { color: d.text }]}>Mi perfil</Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => {
-              setOpen(false);
-              onVehiculo();
-            }}
-            style={styles.salir}>
-            <Truck size={18} color={d.text} strokeWidth={2} />
-            <Text style={[styles.salirText, { color: d.text }]}>Mi vehículo</Text>
-          </Pressable>
-          <Salir />
-        </View>
-      ) : null}
-    </View>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={empresa ? `Mi cuenta, chofer de ${empresa}` : 'Mi cuenta'}
+      onPress={() => ir('cuenta')}
+      style={styles.menuBtn}>
+      <User size={22} color={d.text} strokeWidth={2} />
+    </Pressable>
   );
 }
 

@@ -22,6 +22,9 @@ const RUTAS: Record<SeccionEmpresa, Parameters<typeof router.navigate>[0]> = {
   contabilidad: '/empresa/contabilidad',
   marketing: '/empresa/marketing',
   anuncios: '/empresa/anuncios',
+  soporte: '/empresa/soporte',
+  ayuda: '/empresa/ayuda',
+  cuenta: '/empresa/cuenta',
 };
 
 export function useNavEmpresa(): NavEmpresa {

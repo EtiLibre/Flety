@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
 import { PerfilContenido } from '@/components/pedido/PerfilFletero';
 import { useChofer } from '@/hooks/use-chofer';
+import { useNavChofer } from '@/hooks/use-nav-chofer';
 import { useAuth } from '@/lib/auth';
 import { iniciales } from '@/lib/empresa';
 import { perfilFletero, type PerfilFletero } from '@/lib/marketplace';
@@ -39,6 +40,7 @@ type Carga = { id: string; foto: string | null; datos: DatosPrivados | null; err
 // que solo ven él, su empresa y Flety.
 export default function PerfilChofer() {
   const { chofer, loading } = useChofer();
+  const ir = useNavChofer();
   const driverId = chofer?.id ?? null;
   const [carga, setCarga] = useState<Carga | null>(null);
 
@@ -66,7 +68,7 @@ export default function PerfilChofer() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Volver"
-            onPress={() => (router.canGoBack() ? router.back() : router.replace('/chofer/panel'))}
+            onPress={() => (router.canGoBack() ? router.back() : ir('cuenta'))}
             style={styles.back}>
             <ChevronLeft size={22} color={d.text} strokeWidth={2.2} />
           </Pressable>

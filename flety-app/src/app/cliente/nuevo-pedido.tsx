@@ -15,7 +15,10 @@ export default function NuevoPedido() {
   if (isWide) return <Redirect href="/cliente/inicio" />;
 
   return (
-    <FormScreen illustration={false} title={TIPO_LABEL[draft.tipo]} subtitle="Contanos qué movés y te mostramos opciones y precios.">
+    <FormScreen
+      illustration={false}
+      title={TIPO_LABEL[draft.tipo]}
+      subtitle="Contanos qué movés y te mostramos opciones y precios.">
       <PedidoForm onContinue={() => router.push('/cliente/opciones')} />
     </FormScreen>
   );

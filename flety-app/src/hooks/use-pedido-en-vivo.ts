@@ -37,9 +37,13 @@ export function usePedidoEnVivo(id: string | undefined) {
 
     const channel = supabase
       .channel(canal(`pedido-${id}`))
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${id}` }, (payload) => {
-        setPedido((prev) => (prev ? { ...prev, ...(payload.new as Partial<Pedido>) } : prev));
-      })
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${id}` },
+        (payload) => {
+          setPedido((prev) => (prev ? { ...prev, ...(payload.new as Partial<Pedido>) } : prev));
+        }
+      )
       .subscribe();
 
     return () => {
@@ -63,8 +67,10 @@ export function usePedidoEnVivo(id: string | undefined) {
 
     const channel = supabase
       .channel(canal(`chofer-${driverId}`))
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'drivers', filter: `id=eq.${driverId}` }, (payload) =>
-        read(payload.new as { ubicacion_actual?: LatLng | null })
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'drivers', filter: `id=eq.${driverId}` },
+        (payload) => read(payload.new as { ubicacion_actual?: LatLng | null })
       )
       .subscribe();
 
@@ -74,6 +80,7 @@ export function usePedidoEnVivo(id: string | undefined) {
     };
   }, [driverId, preview]);
 
-  if (preview) return { pedido: preview.pedido, setPedido, notFound: false, chofer: preview.chofer, fotos: preview.fotos };
+  if (preview)
+    return { pedido: preview.pedido, setPedido, notFound: false, chofer: preview.chofer, fotos: preview.fotos };
   return { pedido, setPedido, notFound, chofer: driverId ? chofer : null, fotos };
 }

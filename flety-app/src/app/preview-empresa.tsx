@@ -1,5 +1,5 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { EmpresaPreviewContext, type DatosEmpresa } from '@/hooks/use-empresa';
 import { NavEmpresaDemoContext, type NavEmpresa } from '@/hooks/use-nav-empresa';
@@ -16,7 +16,9 @@ import { colors, fonts } from '@/theme';
 
 import DetallePedidoEmpresa from './empresa/pedidos/[id]';
 import PedidosEmpresa from './empresa/pedidos/index';
+import AyudaEmpresa from './empresa/ayuda';
 import ChoferesEmpresa from './empresa/choferes';
+import CuentaEmpresa from './empresa/cuenta';
 import Marketing from './empresa/marketing';
 import PanelEmpresa from './empresa/panel';
 import TarifasEmpresa from './empresa/tarifas';
@@ -175,7 +177,7 @@ const DATOS: DatosEmpresa = {
   clientes: { 'cli-1': 'Ana Pérez' },
 };
 
-const VISTAS = ['panel', 'pedidos', 'choferes', 'tarifas', 'detalle', 'marketing'] as const;
+const VISTAS = ['panel', 'pedidos', 'choferes', 'tarifas', 'detalle', 'marketing', 'ayuda', 'cuenta'] as const;
 type Vista = (typeof VISTAS)[number];
 
 // Estadísticas de ejemplo (30 días) para ver el panel de marketing.
@@ -257,29 +259,35 @@ export default function PreviewEmpresa() {
               chofer: enViaje ? (choferDetalle?.ubicacion_actual ?? null) : null,
               fotos: DATOS.fotos[detalle.id] ? FOTOS.slice(0, DATOS.fotos[detalle.id]) : [],
             }}>
+            {/* Atajos solo en desarrollo, en una franja arriba (no tapan la barra de abajo). */}
+            {__DEV__ ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.switcher}
+                contentContainerStyle={styles.switcherContent}>
+                {VISTAS.map((v) => (
+                  <Pressable
+                    key={v}
+                    onPress={() => router.setParams({ vista: v })}
+                    style={[styles.chip, v === vista && styles.chipOn]}>
+                    <Text style={[styles.chipText, v === vista && { color: colors.ink }]}>{v}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            ) : null}
             <View style={{ flex: 1 }}>
               {vista === 'panel' ? <PanelEmpresa /> : null}
               {vista === 'pedidos' ? <PedidosEmpresa /> : null}
               {vista === 'choferes' ? <ChoferesEmpresa /> : null}
+              {vista === 'ayuda' ? <AyudaEmpresa /> : null}
+              {vista === 'cuenta' ? <CuentaEmpresa /> : null}
               {vista === 'tarifas' ? <TarifasEmpresa /> : null}
               {vista === 'detalle' ? <DetallePedidoEmpresa /> : null}
               {vista === 'marketing' ? (
                 <MarketingPreviewContext.Provider value={ESTADISTICAS}>
                   <Marketing />
                 </MarketingPreviewContext.Provider>
-              ) : null}
-              {/* Atajos solo en desarrollo: en producción se navega con el menú del panel. */}
-              {__DEV__ ? (
-                <View style={styles.switcher}>
-                  {VISTAS.map((v) => (
-                    <Pressable
-                      key={v}
-                      onPress={() => router.setParams({ vista: v })}
-                      style={[styles.chip, v === vista && styles.chipOn]}>
-                      <Text style={[styles.chipText, v === vista && { color: colors.ink }]}>{v}</Text>
-                    </Pressable>
-                  ))}
-                </View>
               ) : null}
             </View>
           </PedidoPreviewContext.Provider>
@@ -290,16 +298,8 @@ export default function PreviewEmpresa() {
 }
 
 const styles = StyleSheet.create({
-  switcher: {
-    position: 'absolute',
-    bottom: 16,
-    right: 16,
-    flexDirection: 'row',
-    gap: 6,
-    padding: 6,
-    borderRadius: 14,
-    backgroundColor: 'rgba(18,22,28,0.85)',
-  },
+  switcher: { flexGrow: 0, backgroundColor: '#0B0E12' },
+  switcherContent: { gap: 6, paddingHorizontal: 10, paddingVertical: 7 },
   chip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 9 },
   chipOn: { backgroundColor: colors.accent },
   chipText: { fontFamily: fonts.semibold, fontSize: 12, color: colors.white },

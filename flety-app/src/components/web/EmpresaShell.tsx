@@ -3,20 +3,29 @@ import { StatusBar } from 'expo-status-bar';
 import {
   Building2,
   ChartBar,
+  ChevronRight,
   Clock,
   Eye,
+  Headset,
   LayoutGrid,
+  LifeBuoy,
   Megaphone,
+  Menu,
   Wallet,
   LogOut,
   Package,
   ShieldCheck,
   Tag,
   Truck,
+  UserRound,
   Users,
+  X,
 } from 'lucide-react-native';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { BarraInferior, type TabItem } from '@/components/nav/BarraInferior';
 
 import { useIsWide } from '@/hooks/use-is-wide';
 import { useNavEmpresa } from '@/hooks/use-nav-empresa';
@@ -26,57 +35,46 @@ import { supabase } from '@/lib/supabase';
 import { colors, fonts } from '@/theme';
 
 export type SeccionEmpresa =
-  'panel' | 'pedidos' | 'choferes' | 'tarifas' | 'empresas' | 'contabilidad' | 'marketing' | 'anuncios';
+  | 'panel'
+  | 'pedidos'
+  | 'choferes'
+  | 'tarifas'
+  | 'empresas'
+  | 'contabilidad'
+  | 'marketing'
+  | 'anuncios'
+  | 'soporte'
+  | 'ayuda'
+  | 'cuenta';
 
 const SECCIONES: {
   id: SeccionEmpresa;
   label: string;
-  href:
-    | '/empresa/panel'
-    | '/empresa/pedidos'
-    | '/empresa/choferes'
-    | '/empresa/tarifas'
-    | '/empresa/empresas'
-    | '/empresa/contabilidad'
-    | '/empresa/marketing'
-    | '/empresa/anuncios';
   Icon: typeof Package;
   // Solo para estos roles (si no se indica, para todos los del panel).
   roles?: string[];
+  // Ayuda y Mi cuenta: abajo del todo en la barra lateral y en "Más".
+  extra?: boolean;
 }[] = [
-  { id: 'panel', label: 'Panel', href: '/empresa/panel', Icon: LayoutGrid, roles: ['empresa', 'superadmin'] },
-  {
-    id: 'pedidos',
-    label: 'Pedidos',
-    href: '/empresa/pedidos',
-    Icon: Package,
-    roles: ['empresa', 'superadmin', 'contabilidad'],
-  },
-  { id: 'choferes', label: 'Choferes', href: '/empresa/choferes', Icon: Users, roles: ['empresa', 'superadmin'] },
-  { id: 'tarifas', label: 'Tarifas', href: '/empresa/tarifas', Icon: Tag, roles: ['empresa'] },
-  { id: 'empresas', label: 'Empresas', href: '/empresa/empresas', Icon: Building2, roles: ['superadmin'] },
-  {
-    id: 'contabilidad',
-    label: 'Contabilidad',
-    href: '/empresa/contabilidad',
-    Icon: Wallet,
-    roles: ['contabilidad', 'superadmin'],
-  },
-  {
-    id: 'marketing',
-    label: 'Marketing',
-    href: '/empresa/marketing',
-    Icon: ChartBar,
-    roles: ['marketing', 'superadmin'],
-  },
-  { id: 'anuncios', label: 'Anuncios', href: '/empresa/anuncios', Icon: Megaphone, roles: ['marketing', 'superadmin'] },
+  { id: 'panel', label: 'Panel', Icon: LayoutGrid, roles: ['empresa', 'superadmin'] },
+  { id: 'pedidos', label: 'Fletes', Icon: Package, roles: ['empresa', 'superadmin', 'contabilidad'] },
+  { id: 'choferes', label: 'Choferes', Icon: Users, roles: ['empresa', 'superadmin'] },
+  { id: 'tarifas', label: 'Tarifas', Icon: Tag, roles: ['empresa'] },
+  { id: 'empresas', label: 'Empresas', Icon: Building2, roles: ['superadmin'] },
+  { id: 'contabilidad', label: 'Contabilidad', Icon: Wallet, roles: ['contabilidad', 'superadmin'] },
+  { id: 'marketing', label: 'Marketing', Icon: ChartBar, roles: ['marketing', 'superadmin'] },
+  { id: 'anuncios', label: 'Anuncios', Icon: Megaphone, roles: ['marketing', 'superadmin'] },
+  { id: 'soporte', label: 'Soporte', Icon: Headset, roles: ['superadmin'] },
+  { id: 'ayuda', label: 'Ayuda', Icon: LifeBuoy, extra: true },
+  { id: 'cuenta', label: 'Mi cuenta', Icon: UserRound, extra: true },
 ];
 
 export const PANEL_BG = '#F4F5F7';
 export const CARD_BORDER = '#E3E6EA';
 
 // Layout del panel de empresas (canvas "Empresa · panel web"): barra lateral
-// oscura en desktop; en el celular, barra superior + pestañas.
+// oscura en desktop; en el celular, barra de abajo con las secciones
+// principales y "Más" para el resto.
 export function EmpresaShell({
   active,
   empresa,
@@ -99,6 +97,9 @@ export function EmpresaShell({
   const { role } = useAuth();
   const nav = useNavEmpresa();
   const secciones = SECCIONES.filter((s) => !s.roles || (role && s.roles.includes(role)));
+  const principales = secciones.filter((s) => !s.extra);
+  const extras = secciones.filter((s) => s.extra);
+  const [mas, setMas] = useState(false);
 
   const header = (
     <View style={styles.header}>
@@ -119,7 +120,7 @@ export function EmpresaShell({
         <View style={styles.sidebar} role="navigation" aria-label="Principal">
           <Marca />
           <View style={styles.nav}>
-            {secciones.map(({ id, label, Icon }) => {
+            {principales.map(({ id, label, Icon }) => {
               const current = id === active;
               return (
                 <Pressable
@@ -140,12 +141,30 @@ export function EmpresaShell({
           {role === 'superadmin' ? <VerComo /> : null}
           <View style={styles.sidebarFooter}>
             <EmpresaCard empresa={empresa} />
-            <Salir />
+            <View style={styles.nav}>
+              {extras.map(({ id, label, Icon }) => {
+                const current = id === active;
+                return (
+                  <Pressable
+                    key={id}
+                    accessibilityRole="link"
+                    aria-current={current ? 'page' : undefined}
+                    onPress={() => nav.ir(id)}
+                    style={({ hovered }: { hovered?: boolean }) => [
+                      styles.navItemChico,
+                      (current || hovered) && styles.navItemActive,
+                    ]}>
+                    <Icon size={18} color={current ? colors.white : '#C5CBD3'} strokeWidth={2} />
+                    <Text style={[styles.navText, styles.navTextChico, current && styles.navTextActive]}>{label}</Text>
+                  </Pressable>
+                );
+              })}
+              <Salir />
+            </View>
           </View>
         </View>
         <ScrollView style={styles.main} contentContainerStyle={styles.mainContent}>
           {header}
-          {aviso ? <Text style={styles.aviso}>{aviso}</Text> : null}
           {aviso ? <Text style={styles.aviso}>{aviso}</Text> : null}
           {children}
         </ScrollView>
@@ -153,39 +172,103 @@ export function EmpresaShell({
     );
   }
 
+  // Hasta 3 secciones en la barra; el resto, en "Más".
+  const enBarra = principales.slice(0, 3);
+  const enMas = [...principales.slice(3), ...extras];
+  const tabs: TabItem<SeccionEmpresa | 'mas'>[] = [
+    ...enBarra.map(({ id, label, Icon }) => ({ id, label, Icon })),
+    { id: 'mas', label: 'Más', Icon: Menu },
+  ];
+  const tabActivo: SeccionEmpresa | 'mas' = mas || !enBarra.some((s) => s.id === active) ? 'mas' : active;
+
   return (
     <SafeAreaView style={styles.screenNarrow} edges={['top']}>
       <StatusBar style="light" />
       <View style={styles.topBar}>
         <Marca />
-        <Salir compact />
       </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.tabsScroll}
-        contentContainerStyle={styles.tabs}
-        accessibilityRole="tablist">
-        {secciones.map(({ id, label }) => {
-          const current = id === active;
-          return (
+      <ScrollView style={styles.main} contentContainerStyle={styles.mainContentNarrow}>
+        <EmpresaCard empresa={empresa} light />
+        {role === 'superadmin' && active === 'panel' ? <VerComo light /> : null}
+        {header}
+        {aviso ? <Text style={styles.aviso}>{aviso}</Text> : null}
+        {children}
+      </ScrollView>
+      <BarraInferior
+        items={tabs}
+        activo={tabActivo}
+        onIr={(id) => (id === 'mas' ? setMas(true) : nav.ir(id))}
+        tema="claro"
+      />
+      <MenuMas
+        abierto={mas}
+        secciones={enMas}
+        active={active}
+        superadmin={role === 'superadmin'}
+        onIr={(id) => {
+          setMas(false);
+          nav.ir(id);
+        }}
+        onClose={() => setMas(false)}
+      />
+    </SafeAreaView>
+  );
+}
+
+// "Más" en el celular: el resto de las secciones, ayuda, cuenta y salir.
+function MenuMas({
+  abierto,
+  secciones,
+  active,
+  superadmin,
+  onIr,
+  onClose,
+}: {
+  abierto: boolean;
+  secciones: (typeof SECCIONES)[number][];
+  active: SeccionEmpresa;
+  superadmin: boolean;
+  onIr: (id: SeccionEmpresa) => void;
+  onClose: () => void;
+}) {
+  const insets = useSafeAreaInsets();
+  return (
+    <Modal visible={abierto} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={styles.masBackdrop} onPress={onClose} accessibilityLabel="Cerrar menú">
+        <Pressable style={[styles.masSheet, { paddingBottom: insets.bottom + 16 }]} onPress={() => {}}>
+          <View style={styles.masHead}>
+            <Text style={styles.masTitulo}>Más opciones</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Cerrar" onPress={onClose} hitSlop={8}>
+              <X size={22} color={colors.ink} />
+            </Pressable>
+          </View>
+          {secciones.map(({ id, label, Icon }) => (
             <Pressable
               key={id}
               accessibilityRole="link"
-              aria-current={current ? 'page' : undefined}
-              onPress={() => nav.ir(id)}>
-              <Text style={[styles.tab, current && styles.tabActive]}>{label}</Text>
+              aria-current={id === active ? 'page' : undefined}
+              onPress={() => onIr(id)}
+              style={({ pressed }) => [styles.masItem, id === active && styles.masItemOn, pressed && { opacity: 0.8 }]}>
+              <View style={styles.masIcono}>
+                <Icon size={19} color={colors.ink} strokeWidth={2} />
+              </View>
+              <Text style={styles.masLabel}>{label}</Text>
+              <ChevronRight size={18} color={colors.muted} />
             </Pressable>
-          );
-        })}
-      </ScrollView>
-      <ScrollView style={styles.main} contentContainerStyle={styles.mainContentNarrow}>
-        <EmpresaCard empresa={empresa} light />
-        {role === 'superadmin' ? <VerComo light /> : null}
-        {header}
-        {children}
-      </ScrollView>
-    </SafeAreaView>
+          ))}
+          {superadmin ? <VerComo light /> : null}
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => supabase.auth.signOut()}
+            style={({ pressed }) => [styles.masItem, pressed && { opacity: 0.8 }]}>
+            <View style={[styles.masIcono, { backgroundColor: colors.dangerBg }]}>
+              <LogOut size={19} color={colors.danger} strokeWidth={2} />
+            </View>
+            <Text style={[styles.masLabel, { color: colors.danger }]}>Cerrar sesión</Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 }
 
@@ -293,15 +376,15 @@ function EmpresaCard({ empresa, light }: { empresa: Empresa | null; light?: bool
   );
 }
 
-function Salir({ compact }: { compact?: boolean }) {
+function Salir() {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel="Cerrar sesión"
       onPress={() => supabase.auth.signOut()}
-      style={({ pressed }) => [styles.salir, compact && styles.salirCompact, pressed && { opacity: 0.7 }]}>
+      style={({ pressed }) => [styles.salir, pressed && { opacity: 0.7 }]}>
       <LogOut size={18} color="#C5CBD3" strokeWidth={2} />
-      {compact ? null : <Text style={styles.salirText}>Cerrar sesión</Text>}
+      <Text style={styles.salirText}>Cerrar sesión</Text>
     </Pressable>
   );
 }
@@ -374,7 +457,6 @@ const styles = StyleSheet.create({
   empresaNombre: { fontFamily: fonts.semibold, fontSize: 15, color: colors.white },
   empresaAviso: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18, color: '#A9B0BA' },
   salir: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 10 },
-  salirCompact: { padding: 10 },
   salirText: { fontFamily: fonts.medium, fontSize: 14, color: '#C5CBD3' },
   main: { flex: 1, backgroundColor: PANEL_BG },
   mainContent: { padding: 32, gap: 24, maxWidth: 1280, width: '100%' },
@@ -386,17 +468,42 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
-  tabsScroll: { flexGrow: 0, backgroundColor: colors.ink },
-  tabs: { flexDirection: 'row', paddingHorizontal: 16, gap: 22 },
-  tab: {
-    fontFamily: fonts.medium,
-    fontSize: 15,
-    color: '#A9B0BA',
-    paddingVertical: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+  navItemChico: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    height: 38,
+    paddingHorizontal: 12,
+    borderRadius: 10,
   },
-  tabActive: { fontFamily: fonts.bold, color: colors.white, borderBottomColor: colors.accent },
+  navTextChico: { fontSize: 14 },
+  masBackdrop: { flex: 1, backgroundColor: 'rgba(18,22,28,0.5)', justifyContent: 'flex-end' },
+  masSheet: {
+    gap: 4,
+    padding: 16,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    backgroundColor: colors.white,
+  },
+  masHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+    paddingBottom: 8,
+  },
+  masTitulo: { fontFamily: fonts.display, fontSize: 22, color: colors.ink },
+  masItem: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: 14 },
+  masItemOn: { backgroundColor: colors.surface },
+  masIcono: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  masLabel: { flex: 1, fontFamily: fonts.semibold, fontSize: 16, color: colors.ink },
   aviso: {
     fontFamily: fonts.medium,
     fontSize: 14,
