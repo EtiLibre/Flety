@@ -1,3 +1,4 @@
+import { authErrorMessage } from './auth-errors';
 import { supabase } from './supabase';
 
 // "Mi cuenta" (migración 0017): datos de public.users y credenciales de
@@ -103,7 +104,7 @@ export async function cambiarContrasena(email: string, actual: string, nueva: st
     throw new Error(
       error.message.toLowerCase().includes('different')
         ? 'La nueva contraseña tiene que ser distinta de la actual.'
-        : 'No pudimos cambiar la contraseña. Probá de nuevo.'
+        : authErrorMessage(error.message)
     );
   }
 }
