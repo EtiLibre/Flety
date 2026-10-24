@@ -7,6 +7,7 @@ import { FleteCard, grupoDe, type GrupoFlete } from '@/components/historial/Flet
 import { PantallaTab } from '@/components/nav/PantallaTab';
 import { Segmented } from '@/components/pedido/Choice';
 import { ClienteShell } from '@/components/web/ClienteShell';
+import { useAvisosFletes } from '@/hooks/use-avisos-fletes';
 import { useIsWide } from '@/hooks/use-is-wide';
 import { useMisPedidos } from '@/hooks/use-mis-pedidos';
 import type { Pedido } from '@/lib/orders';
@@ -25,6 +26,7 @@ export default function MisFletes() {
   const isWide = useIsWide();
   const { pedidos, loading } = useMisPedidos();
   const { update } = usePedidoDraft();
+  const { porCalificar, porPagar } = useAvisosFletes(pedidos);
   const enCurso = pedidos.filter((p) => grupoDe(p) === 'en_curso');
   const [grupoElegido, setGrupo] = useState<GrupoFlete | null>(null);
   // Si hay alguno en curso, se abre ahí; si no, en terminados.
@@ -88,6 +90,10 @@ export default function MisFletes() {
               tema="claro"
               onPress={() => router.push(`/cliente/pedidos/${p.id}`)}
               onRepetir={grupo !== 'en_curso' && p.origen && p.destino ? () => repetir(p) : undefined}
+              avisos={[
+                ...(porPagar.has(p.id) ? [{ label: 'Pago pendiente', bg: '#FEF3C7', fg: '#92400E' }] : []),
+                ...(porCalificar.has(p.id) ? [{ label: '★ Calificá a tu fletero', bg: '#FFF7D6', fg: '#7A5A00' }] : []),
+              ]}
             />
           ))}
         </View>

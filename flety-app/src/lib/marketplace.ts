@@ -4,6 +4,7 @@ import type { Pedido } from './orders';
 import type { Tarifa } from './pricing';
 import { supabase } from './supabase';
 import type { Vehiculo } from './types';
+import type { EstadoSeguro } from './seguros';
 import type { DatosVehiculo } from './vehiculos';
 
 // Marketplace (migración 0010): fleteros disponibles cerca del retiro, con el
@@ -28,6 +29,8 @@ export type Fletero = {
   auto: DatosVehiculo | null;
   // Ruta de la foto de perfil (bucket "perfiles", migración 0016).
   foto_perfil?: string | null;
+  // Estado del seguro del vehículo (migración 0018).
+  seguro?: EstadoSeguro | null;
 };
 
 // SOLO SUPERADMIN: fleteros de ejemplo alrededor del retiro, con precios
@@ -136,6 +139,8 @@ export function fleterosDeEjemplo(origen: LatLng, km: number, ayudantes: number,
       calificaciones: d.calificaciones,
       demo: true,
       auto: { marca: d.auto.marca, modelo: d.auto.modelo, anio: d.auto.anio, color: d.auto.color },
+      // El fletero nuevo todavía no tiene el seguro verificado.
+      seguro: d.calificaciones ? 'verificado' : 'en_revision',
     };
   });
 }
@@ -154,6 +159,7 @@ type FleteroRow = {
   calificaciones: number | null;
   auto: DatosVehiculo | null;
   foto_perfil?: string | null;
+  seguro?: EstadoSeguro | null;
 };
 
 export async function fleterosDisponibles(
@@ -183,6 +189,7 @@ export async function fleterosDisponibles(
     calificaciones: r.calificaciones ?? 0,
     auto: r.auto ?? null,
     foto_perfil: r.foto_perfil ?? null,
+    seguro: r.seguro ?? null,
   }));
 }
 
@@ -265,6 +272,7 @@ export type PerfilFletero = {
   empresa: string;
   empresa_verificada: boolean;
   foto_perfil?: string | null;
+  seguro?: EstadoSeguro | null;
   desde: string;
   vehiculo: DatosVehiculo & { patente_completa?: boolean };
   estrellas: number | null;
@@ -292,6 +300,7 @@ export function perfilDeEjemplo(f: Fletero): PerfilFletero | null {
     nombre: `${d.nombre} ${d.nombre === 'Martín' ? 'G.' : d.nombre === 'Lucía' ? 'F.' : d.nombre === 'Diego' ? 'S.' : 'R.'}`,
     empresa: d.empresa,
     empresa_verificada: true,
+    seguro: f.seguro ?? null,
     desde: desde.toISOString(),
     vehiculo: { tipo: d.vehiculo, ...d.auto, patente: patenteTapada(d.auto.patente ?? ''), patente_completa: false },
     estrellas: d.estrellas,

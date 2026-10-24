@@ -22,6 +22,7 @@ export default function AyudaCliente() {
     if (d === 'pedir') return router.push(isWide ? '/cliente/inicio' : '/cliente/nuevo-pedido');
     if (d === 'fletes') return router.navigate('/cliente/pedidos');
     if (d === 'cuenta') return router.navigate('/cliente/cuenta');
+    if (d === 'pagos') return router.push('/cliente/pagos');
     if (d === 'unirse') return router.push('/unirse');
   }
 

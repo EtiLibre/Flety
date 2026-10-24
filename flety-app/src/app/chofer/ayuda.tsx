@@ -9,6 +9,7 @@ const DESTINOS: Partial<Record<Destino, DestinoChofer>> = {
   cuenta: 'cuenta',
   perfil: 'perfil',
   vehiculo: 'vehiculo',
+  seguro: 'seguro',
 };
 
 export default function AyudaChofer() {

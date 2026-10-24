@@ -1,6 +1,7 @@
 import { router, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
+  Banknote,
   Building2,
   ChartBar,
   ChevronRight,
@@ -43,6 +44,8 @@ export type SeccionEmpresa =
   | 'contabilidad'
   | 'marketing'
   | 'anuncios'
+  | 'cobros'
+  | 'seguros'
   | 'soporte'
   | 'ayuda'
   | 'cuenta';
@@ -60,6 +63,8 @@ const SECCIONES: {
   { id: 'pedidos', label: 'Fletes', Icon: Package, roles: ['empresa', 'superadmin', 'contabilidad'] },
   { id: 'choferes', label: 'Choferes', Icon: Users, roles: ['empresa', 'superadmin'] },
   { id: 'tarifas', label: 'Tarifas', Icon: Tag, roles: ['empresa'] },
+  { id: 'cobros', label: 'Cobros', Icon: Banknote, roles: ['empresa', 'superadmin'] },
+  { id: 'seguros', label: 'Seguros', Icon: ShieldCheck, roles: ['superadmin'] },
   { id: 'empresas', label: 'Empresas', Icon: Building2, roles: ['superadmin'] },
   { id: 'contabilidad', label: 'Contabilidad', Icon: Wallet, roles: ['contabilidad', 'superadmin'] },
   { id: 'marketing', label: 'Marketing', Icon: ChartBar, roles: ['marketing', 'superadmin'] },

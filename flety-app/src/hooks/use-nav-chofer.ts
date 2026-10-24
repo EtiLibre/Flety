@@ -7,7 +7,7 @@ import type { TabItem } from '@/components/nav/BarraInferior';
 // Navegación de la app del chofer. En la demo (/preview-chofer, "Ver la app
 // como chofer") se cambia de pantalla dentro de la demo en vez de ir a las
 // rutas reales, que solo abren con una cuenta de chofer.
-export type DestinoChofer = 'panel' | 'viajes' | 'ayuda' | 'cuenta' | 'perfil' | 'vehiculo';
+export type DestinoChofer = 'panel' | 'viajes' | 'ayuda' | 'cuenta' | 'perfil' | 'vehiculo' | 'seguro';
 
 export const NavChoferDemoContext = createContext<((d: DestinoChofer) => void) | null>(null);
 
@@ -18,13 +18,14 @@ export const RUTAS_CHOFER = {
   cuenta: '/chofer/cuenta',
   perfil: '/chofer/perfil',
   vehiculo: '/chofer/vehiculo',
+  seguro: '/chofer/seguro',
 } as const;
 
 export function useNavChofer() {
   const demo = useContext(NavChoferDemoContext);
   return (d: DestinoChofer) => {
     if (demo) return demo(d);
-    if (d === 'perfil' || d === 'vehiculo') router.push(RUTAS_CHOFER[d]);
+    if (d === 'perfil' || d === 'vehiculo' || d === 'seguro') router.push(RUTAS_CHOFER[d]);
     else router.navigate(RUTAS_CHOFER[d]);
   };
 }

@@ -23,6 +23,8 @@ const RUTAS: Record<SeccionEmpresa, Parameters<typeof router.navigate>[0]> = {
   marketing: '/empresa/marketing',
   anuncios: '/empresa/anuncios',
   soporte: '/empresa/soporte',
+  cobros: '/empresa/cobros',
+  seguros: '/empresa/seguros',
   ayuda: '/empresa/ayuda',
   cuenta: '/empresa/cuenta',
 };

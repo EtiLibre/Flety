@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FleteCard } from '@/components/historial/FleteCard';
 import { PantallaTab } from '@/components/nav/PantallaTab';
-import { useChofer } from '@/hooks/use-chofer';
+import { ChoferPreviewContext, useChofer } from '@/hooks/use-chofer';
 import { HECHOS, resumen, useMisViajes, type Periodo } from '@/hooks/use-mis-viajes';
 import type { Pedido } from '@/lib/orders';
+import { ESTADO_PAGO, ESTADOS_PAGABLES, METODO_LABEL, pagosDeFletes, registrarCobro, type Pago } from '@/lib/pagos';
 import { formatARS } from '@/lib/pricing';
 import { colors, fonts } from '@/theme';
 
@@ -40,6 +41,7 @@ function tituloDia(p: Pedido) {
 export default function MisViajes() {
   const { chofer } = useChofer();
   const { viajes, loading, error } = useMisViajes(chofer?.id ?? null);
+  const { pagos, recargarPagos } = usePagosViajes(viajes);
   const [periodo, setPeriodo] = useState<Periodo>('semana');
   const [filtro, setFiltro] = useState<'todos' | 'hechos'>('todos');
   const r = resumen(viajes, periodo);
@@ -105,7 +107,27 @@ export default function MisViajes() {
           <View key={g.clave} style={{ gap: 10 }}>
             <Text style={styles.dia}>{g.titulo}</Text>
             {g.items.map((v) => (
-              <FleteCard key={v.id} pedido={v} tema="oscuro" />
+              <FleteCard
+                key={v.id}
+                pedido={v}
+                tema="oscuro"
+                avisos={
+                  ESTADOS_PAGABLES.includes(v.estado)
+                    ? [
+                        pagos[v.id]
+                          ? {
+                              label: `${ESTADO_PAGO[pagos[v.id].estado].label} · ${METODO_LABEL[pagos[v.id].metodo]}`,
+                              bg: ESTADO_PAGO[pagos[v.id].estado].bg,
+                              fg: ESTADO_PAGO[pagos[v.id].estado].fg,
+                            }
+                          : { label: 'Sin cobrar', bg: ESTADO_PAGO.pendiente.bg, fg: ESTADO_PAGO.pendiente.fg },
+                      ]
+                    : undefined
+                }>
+                {ESTADOS_PAGABLES.includes(v.estado) && pagos[v.id]?.estado !== 'confirmado' ? (
+                  <RegistrarCobro orderId={v.id} onListo={recargarPagos} />
+                ) : null}
+              </FleteCard>
             ))}
           </View>
         ))
@@ -115,6 +137,59 @@ export default function MisViajes() {
         </Text>
       )}
     </PantallaTab>
+  );
+}
+
+// Estado del cobro de cada viaje (en la demo no hay base: sin datos).
+function usePagosViajes(viajes: Pedido[]) {
+  const preview = useContext(ChoferPreviewContext);
+  const ids = viajes.filter((v) => ESTADOS_PAGABLES.includes(v.estado)).map((v) => v.id);
+  const [version, setVersion] = useState(0);
+  const clave = `${ids.join(',')}:${version}`;
+  const [res, setRes] = useState<{ clave: string; pagos: Record<string, Pago> } | null>(null);
+  useEffect(() => {
+    if (preview || !clave.split(':')[0]) return;
+    let cancelled = false;
+    pagosDeFletes(clave.split(':')[0].split(',')).then((pagos) => !cancelled && setRes({ clave, pagos }));
+    return () => {
+      cancelled = true;
+    };
+  }, [clave, preview]);
+  return { pagos: res?.clave === clave ? res.pagos : {}, recargarPagos: () => setVersion((v) => v + 1) };
+}
+
+function RegistrarCobro({ orderId, onListo }: { orderId: string; onListo: () => void }) {
+  const [enviando, setEnviando] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  async function cobrar(metodo: 'efectivo' | 'transferencia') {
+    setEnviando(metodo);
+    setError(null);
+    try {
+      await registrarCobro(orderId, metodo);
+      onListo();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo registrar.');
+    } finally {
+      setEnviando(null);
+    }
+  }
+  return (
+    <View style={{ gap: 6 }}>
+      <Text style={styles.cobroLabel}>¿Te pagó? Registrá el cobro:</Text>
+      <View style={styles.cobroBtns}>
+        {(['efectivo', 'transferencia'] as const).map((m) => (
+          <Pressable
+            key={m}
+            accessibilityRole="button"
+            disabled={!!enviando}
+            onPress={() => cobrar(m)}
+            style={styles.cobroBtn}>
+            <Text style={styles.cobroBtnText}>{enviando === m ? 'Guardando…' : METODO_LABEL[m]}</Text>
+          </Pressable>
+        ))}
+      </View>
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+    </View>
   );
 }
 
@@ -166,4 +241,16 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   error: { fontFamily: fonts.medium, fontSize: 13, color: '#FF8A80' },
+  cobroLabel: { fontFamily: fonts.semibold, fontSize: 12, color: d.muted },
+  cobroBtns: { flexDirection: 'row', gap: 8 },
+  cobroBtn: {
+    flex: 1,
+    height: 38,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: d.line,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cobroBtnText: { fontFamily: fonts.bold, fontSize: 13, color: d.text },
 });

@@ -1,4 +1,4 @@
-import { Check, Star } from 'lucide-react-native';
+import { Check, ShieldCheck, Star } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AvatarFletero } from '@/components/AvatarFletero';
@@ -62,6 +62,11 @@ export function FleteroOption({
           ) : (
             <Text style={styles.nuevo}>Nuevo en Flety</Text>
           )}
+          {fletero.seguro === 'verificado' || fletero.seguro === 'por_vencer' ? (
+            <View style={styles.seguro} accessibilityLabel="Seguro verificado">
+              <ShieldCheck size={12} color="#166534" strokeWidth={2.4} />
+            </View>
+          ) : null}
           {onVerPerfil ? (
             <Pressable accessibilityRole="button" onPress={onVerPerfil} hitSlop={8}>
               <Text style={styles.verPerfil}>Ver perfil</Text>
@@ -141,6 +146,15 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   price: { fontFamily: fonts.display, fontSize: 17, color: colors.ink },
+  seguro: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#DCFCE7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 4,
+  },
   check: {
     width: 18,
     height: 18,

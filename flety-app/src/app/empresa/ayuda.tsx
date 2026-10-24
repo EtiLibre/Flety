@@ -12,6 +12,7 @@ const DESTINOS: Partial<Record<Destino, SeccionEmpresa>> = {
   choferes: 'choferes',
   tarifas: 'tarifas',
   cuenta: 'cuenta',
+  cobros: 'cobros',
 };
 
 export default function AyudaEmpresa() {

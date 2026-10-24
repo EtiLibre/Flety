@@ -46,6 +46,8 @@ export function FleteCard({
   onPress,
   onRepetir,
   monto,
+  avisos,
+  children,
 }: {
   pedido: Pedido;
   tema: Tema;
@@ -53,6 +55,10 @@ export function FleteCard({
   onRepetir?: () => void;
   // Por defecto, el precio estimado.
   monto?: number | null;
+  // Etiquetas de lo que falta hacer ("Calificá", "Pago pendiente").
+  avisos?: { label: string; bg: string; fg: string }[];
+  // Acciones extra abajo (p. ej. registrar el cobro).
+  children?: React.ReactNode;
 }) {
   const p = paleta(tema);
   const grupo = grupoDe(pedido);
@@ -124,6 +130,18 @@ export function FleteCard({
         {onPress ? <ChevronRight size={18} color={p.muted} /> : null}
       </View>
 
+      {avisos?.length ? (
+        <View style={styles.avisos}>
+          {avisos.map((a) => (
+            <Text key={a.label} style={[styles.aviso, { backgroundColor: a.bg, color: a.fg }]}>
+              {a.label}
+            </Text>
+          ))}
+        </View>
+      ) : null}
+
+      {children}
+
       {onRepetir ? (
         <Pressable
           accessibilityRole="button"
@@ -172,4 +190,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   repetirText: { fontFamily: fonts.bold, fontSize: 13 },
+  avisos: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  aviso: {
+    fontFamily: fonts.bold,
+    fontSize: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
 });

@@ -2,8 +2,8 @@ import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Camera, LogOut, MapPin, Navigation, User } from 'lucide-react-native';
-import { useState } from 'react';
+import { Banknote, Camera, LogOut, MapPin, Navigation, ShieldAlert, User } from 'lucide-react-native';
+import { useContext, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -16,7 +16,7 @@ import { ChatPedido } from '@/components/pedido/ChatPedido';
 import { AppMap } from '@/components/map/AppMap';
 import { MENDOZA, type MapMarker } from '@/components/map/types';
 import { useAccion } from '@/hooks/use-accion';
-import { useChofer } from '@/hooks/use-chofer';
+import { ChoferPreviewContext, useChofer } from '@/hooks/use-chofer';
 import { useCompartirUbicacion } from '@/hooks/use-compartir-ubicacion';
 import { useIsWide } from '@/hooks/use-is-wide';
 import { useNavChofer } from '@/hooks/use-nav-chofer';
@@ -27,7 +27,9 @@ import { confirmar } from '@/lib/confirm';
 import { describirCuando, plural } from '@/lib/format';
 import { aceptarComoChofer, liberarSolicitud } from '@/lib/marketplace';
 import type { Pedido } from '@/lib/orders';
+import { registrarCobro } from '@/lib/pagos';
 import { formatARS } from '@/lib/pricing';
+import { polizasDelChofer, resumenSeguro, type EstadoSeguro } from '@/lib/seguros';
 import { supabase } from '@/lib/supabase';
 import { TAMANO_LABEL, TIPO_LABEL, VEHICULO_LABEL } from '@/lib/types';
 import { colors, fonts } from '@/theme';
@@ -142,6 +144,7 @@ export default function PanelChofer() {
         </View>
       )}
       <EstadoGps estado={gps.estado} />
+      <AvisoSeguro driverId={chofer.id} />
     </View>
   );
 
@@ -385,8 +388,81 @@ function EnViaje({
       {pedido.nota ? <Nota texto={pedido.nota} /> : null}
       <Fotos pedidoId={pedido.id} fotos={fotos} />
       <ChatPedido orderId={pedido.id} titulo={cliente?.split(' ')[0] ?? 'el cliente'} abierto tono="dark" />
+      {pedido.estado === 'en_camino_destino' ? <Cobro pedido={pedido} /> : null}
       {boton ? <Button title={boton} loading={cargando} onPress={onAvanzar} style={styles.mainBtn} /> : null}
     </View>
+  );
+}
+
+// Al llegar al destino el cliente paga: recordatorio y registro del efectivo.
+function Cobro({ pedido }: { pedido: Pedido }) {
+  const [estado, setEstado] = useState<'nada' | 'enviando' | 'hecho' | string>('nada');
+  if (pedido.precio_estimado == null) return null;
+  async function cobrarEfectivo() {
+    setEstado('enviando');
+    try {
+      await registrarCobro(pedido.id, 'efectivo');
+      setEstado('hecho');
+    } catch (e) {
+      setEstado(e instanceof Error ? e.message : 'No se pudo registrar.');
+    }
+  }
+  return (
+    <View style={styles.cobro}>
+      <Banknote size={20} color={colors.accent} strokeWidth={2} />
+      <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
+        <Text style={styles.cobroTitulo}>Al entregar, cobrá {formatARS(Number(pedido.precio_estimado))}</Text>
+        <Text style={styles.small}>En efectivo a vos o por transferencia a tu empresa.</Text>
+        {estado === 'hecho' ? (
+          <Text style={styles.cobroOk}>Cobro en efectivo registrado.</Text>
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            disabled={estado === 'enviando'}
+            onPress={cobrarEfectivo}
+            style={styles.cobroBtn}>
+            <Text style={styles.cobroBtnText}>{estado === 'enviando' ? 'Guardando…' : 'Cobré en efectivo'}</Text>
+          </Pressable>
+        )}
+        {estado !== 'nada' && estado !== 'enviando' && estado !== 'hecho' ? (
+          <Text style={styles.cobroError}>{estado}</Text>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+// Seguro del vehículo sin cargar, rechazado, vencido o por vencer.
+function AvisoSeguro({ driverId }: { driverId: string }) {
+  const preview = useContext(ChoferPreviewContext);
+  const ir = useNavChofer();
+  const [res, setRes] = useState<{ id: string; estado: EstadoSeguro } | null>(null);
+  useEffect(() => {
+    if (preview) return;
+    let cancelled = false;
+    polizasDelChofer(driverId)
+      .then((p) => !cancelled && setRes({ id: driverId, estado: resumenSeguro(p) }))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [driverId, preview]);
+  const estado = preview ? 'sin_seguro' : res?.id === driverId ? res.estado : null;
+  if (!estado || estado === 'verificado' || estado === 'en_revision') return null;
+  const texto =
+    estado === 'por_vencer'
+      ? 'Tu seguro vence pronto: cargá la renovación.'
+      : estado === 'vencido'
+        ? 'Tu seguro está vencido: cargá la póliza nueva.'
+        : estado === 'rechazado'
+          ? 'No pudimos verificar tu póliza: revisala.'
+          : 'Cargá el seguro de tu vehículo para trabajar tranquilo.';
+  return (
+    <Pressable accessibilityRole="button" onPress={() => ir('seguro')} style={styles.avisoSeguro}>
+      <ShieldAlert size={18} color={colors.accent} strokeWidth={2.2} />
+      <Text style={styles.avisoSeguroText}>{texto}</Text>
+      <Text style={styles.avisoSeguroLink}>Ver</Text>
+    </Pressable>
   );
 }
 
@@ -494,6 +570,41 @@ function Salir() {
 }
 
 const styles = StyleSheet.create({
+  cobro: {
+    flexDirection: 'row',
+    gap: 12,
+    padding: 12,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,194,51,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,194,51,0.3)',
+  },
+  cobroTitulo: { fontFamily: fonts.bold, fontSize: 15, color: d.text },
+  cobroBtn: {
+    alignSelf: 'flex-start',
+    marginTop: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: d.chip,
+    borderWidth: 1,
+    borderColor: d.line,
+  },
+  cobroBtnText: { fontFamily: fonts.bold, fontSize: 13, color: d.text },
+  cobroOk: { fontFamily: fonts.semibold, fontSize: 13, color: '#4ADE80' },
+  cobroError: { fontFamily: fonts.medium, fontSize: 12, color: '#FF8A80' },
+  avisoSeguro: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 12,
+    borderRadius: 16,
+    backgroundColor: 'rgba(26,31,38,0.96)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,194,51,0.4)',
+  },
+  avisoSeguroText: { flex: 1, fontFamily: fonts.semibold, fontSize: 13, color: d.text },
+  avisoSeguroLink: { fontFamily: fonts.bold, fontSize: 13, color: colors.accent, textDecorationLine: 'underline' },
   screen: { flex: 1, backgroundColor: d.bg },
   center: { alignItems: 'center', justifyContent: 'center' },
   joinContent: {

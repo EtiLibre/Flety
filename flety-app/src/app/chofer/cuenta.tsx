@@ -1,4 +1,4 @@
-import { IdCard, Truck } from 'lucide-react-native';
+import { IdCard, ShieldCheck, Truck } from 'lucide-react-native';
 
 import { CuentaForm, FilaCuenta } from '@/components/cuenta/CuentaForm';
 import { PantallaTab } from '@/components/nav/PantallaTab';
@@ -27,6 +27,13 @@ export default function CuentaChofer() {
               titulo="Mi vehículo"
               detalle={describirModelo(chofer.vehiculo ?? {}) ?? 'Cargá tu vehículo y sus fotos'}
               onPress={() => ir('vehiculo')}
+            />
+            <FilaCuenta
+              tema="oscuro"
+              Icon={ShieldCheck}
+              titulo="Mi seguro"
+              detalle="Póliza del vehículo, vigencia y verificación"
+              onPress={() => ir('seguro')}
             />
           </>
         ) : null}

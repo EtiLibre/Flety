@@ -20,6 +20,9 @@ export type Destino =
   | 'choferes'
   | 'tarifas'
   | 'soporte'
+  | 'seguro'
+  | 'pagos'
+  | 'cobros'
   | `flete:${string}`;
 
 export type Accion = { label: string; destino: Destino };
@@ -86,10 +89,41 @@ const CLIENTE: Pregunta[] = [
   {
     id: 'pago',
     categoria: 'Precios y pagos',
-    pregunta: '¿Cómo pago?',
+    pregunta: '¿Cómo, cuándo y a quién pago?',
     respuesta:
-      'Por ahora el pago se arregla directamente con la empresa que hace el flete (efectivo o transferencia, según la empresa). Estamos sumando el pago dentro de la app con Mercado Pago, con el dinero retenido hasta que confirmes la entrega.',
-    claves: ['pago', 'pagar', 'cobran', 'efectivo', 'transferencia', 'tarjeta', 'mercado pago', 'factura', 'seña'],
+      'Le pagás a la empresa que hace tu flete, al terminar el viaje: en efectivo al chofer o por transferencia al alias de la empresa (lo ves en el detalle del flete, con un botón para copiarlo). Después tocá “Ya pagué” y la empresa lo confirma. En Cuenta → Mis pagos tenés el historial y los comprobantes.',
+    claves: [
+      'pago',
+      'pagar',
+      'pague',
+      'cobran',
+      'efectivo',
+      'transferencia',
+      'alias',
+      'cbu',
+      'tarjeta',
+      'mercado pago',
+      'a quien',
+      'cuando pago',
+    ],
+    acciones: [{ label: 'Mis pagos', destino: 'pagos' }],
+  },
+  {
+    id: 'factura',
+    categoria: 'Precios y pagos',
+    pregunta: '¿Me dan factura?',
+    respuesta:
+      'La factura la emite la empresa que hizo el flete: pedísela por el chat del flete. En Mis pagos tenés un comprobante de cada pago (no reemplaza a la factura).',
+    claves: ['factura', 'facturan', 'comprobante', 'recibo', 'ticket'],
+    acciones: [{ label: 'Mis pagos', destino: 'pagos' }],
+  },
+  {
+    id: 'seguro_cliente',
+    categoria: 'Seguridad',
+    pregunta: '¿Los fleteros tienen seguro?',
+    respuesta:
+      'Cada chofer carga la póliza de su vehículo y Flety la revisa. En el perfil del fletero ves “Seguro verificado” cuando la póliza está vigente y comprobada. Para tus cosas, preguntale a la empresa si tiene seguro de carga.',
+    claves: ['seguro', 'asegurado', 'poliza', 'cobertura', 'si se rompe'],
   },
   {
     id: 'elegir',
@@ -331,9 +365,18 @@ const CHOFER: Pregunta[] = [
     categoria: 'Cobros',
     pregunta: '¿Cómo y cuándo cobro?',
     respuesta:
-      'Lo que cobrás lo arreglás con tu empresa. En Mis viajes ves cuántos viajes hiciste y el total facturado por día, semana y mes, para controlar con tu empresa.',
+      'El cliente paga al terminar el viaje: en efectivo a vos o por transferencia a tu empresa. Si te paga en efectivo, en Mis viajes tocá “Registrar cobro” en ese viaje. Ahí también ves lo facturado por día, semana y mes. Lo que te toca a vos lo arreglás con tu empresa.',
     claves: ['cobro', 'cobrar', 'pago', 'plata', 'ganancia', 'gane', 'sueldo', 'comision', 'liquidacion'],
     acciones: [{ label: 'Ver mis viajes', destino: 'viajes' }],
+  },
+  {
+    id: 'seguro',
+    categoria: 'Mi perfil',
+    pregunta: '¿Cómo cargo mi seguro?',
+    respuesta:
+      'En Cuenta → Mi seguro cargás la póliza de responsabilidad civil de tu vehículo: aseguradora, número, patente, fechas de vigencia y el certificado (foto o PDF). Flety la verifica y te avisamos 15 días antes de que venza. Con el seguro verificado, los clientes ven “Seguro verificado” en tu perfil.',
+    claves: ['seguro', 'poliza', 'cobertura', 'vencimiento', 'vence', 'aseguradora', 'certificado', 'renovar'],
+    acciones: [{ label: 'Mi seguro', destino: 'seguro' }],
   },
   {
     id: 'vehiculo',
@@ -464,7 +507,27 @@ const EMPRESA: Pregunta[] = [
     pregunta: '¿Cuánto cobra Flety?',
     respuesta:
       'Flety cobra una comisión por cada flete terminado (hoy, 10% del precio). Por ahora el cliente le paga a tu empresa y la comisión se liquida aparte; estamos sumando el cobro con Mercado Pago, que separa la comisión automáticamente.',
-    claves: ['comision', 'cuanto cobra flety', 'porcentaje', 'pago', 'liquidacion', 'mercado pago', 'factura'],
+    claves: ['comision', 'cuanto cobra flety', 'porcentaje', 'liquidacion', 'mercado pago'],
+  },
+  {
+    id: 'cobros',
+    categoria: 'Pagos',
+    pregunta: '¿Cómo cobro los fletes?',
+    respuesta:
+      'En Cobros cargá tu alias o CBU/CVU y si aceptás efectivo: el cliente los ve al terminar el viaje. Cuando te avisa que transfirió, confirmalo (o marcá que no te llegó). Lo que cobra tu chofer en efectivo queda registrado solo.',
+    claves: [
+      'cobro',
+      'cobrar',
+      'cobros',
+      'alias',
+      'cbu',
+      'cvu',
+      'transferencia',
+      'efectivo',
+      'me pagaron',
+      'confirmar pago',
+    ],
+    acciones: [{ label: 'Ir a Cobros', destino: 'cobros' }],
   },
   {
     id: 'cuenta',

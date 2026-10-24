@@ -15,11 +15,12 @@ import AyudaChofer from './chofer/ayuda';
 import CuentaChofer from './chofer/cuenta';
 import PanelChofer from './chofer/panel';
 import PerfilChofer from './chofer/perfil';
+import SeguroChofer from './chofer/seguro';
 import VehiculoChofer from './chofer/vehiculo';
 import MisViajes from './chofer/viajes';
 
 // SOLO DESARROLLO: la app del chofer con datos de ejemplo, sin iniciar sesión
-// ni Supabase. ?estado=solicitud|asignado|en_camino_origen|cargando|en_camino_destino|libre|sin-empresa|sin-vehiculo|viajes|ayuda|cuenta|perfil|vehiculo
+// ni Supabase. ?estado=solicitud|asignado|en_camino_origen|cargando|en_camino_destino|libre|sin-empresa|sin-vehiculo|viajes|ayuda|cuenta|perfil|vehiculo|seguro
 // (los botones que escriben en la base fallan acá, es esperado). En producción redirige al inicio.
 
 const ESTADOS = [
@@ -36,6 +37,7 @@ const ESTADOS = [
   'cuenta',
   'perfil',
   'vehiculo',
+  'seguro',
 ] as const;
 
 
@@ -53,6 +55,7 @@ const ETIQUETAS: Record<(typeof ESTADOS)[number], string> = {
   cuenta: 'Cuenta',
   perfil: 'Perfil',
   vehiculo: 'Mi vehículo',
+  seguro: 'Mi seguro',
 };
 
 const PEDIDO: Pedido = {
@@ -142,7 +145,7 @@ export default function PreviewChofer() {
   // Las pestañas y los accesos de Cuenta cambian de pantalla dentro de la demo.
   const ir = (d: DestinoChofer) => router.setParams({ estado: d === 'panel' ? 'asignado' : d });
   const tab: TabChofer | null =
-    estado === 'perfil' || estado === 'vehiculo'
+    estado === 'perfil' || estado === 'vehiculo' || estado === 'seguro'
       ? null
       : estado === 'viajes' || estado === 'ayuda' || estado === 'cuenta'
         ? estado
@@ -216,6 +219,8 @@ export default function PreviewChofer() {
                     <PerfilChofer />
                   ) : estado === 'vehiculo' ? (
                     <VehiculoChofer />
+                  ) : estado === 'seguro' ? (
+                    <SeguroChofer />
                   ) : (
                     <PanelChofer />
                   )}

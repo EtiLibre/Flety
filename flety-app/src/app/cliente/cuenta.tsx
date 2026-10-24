@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Truck } from 'lucide-react-native';
+import { Truck, Wallet } from 'lucide-react-native';
 import { StyleSheet, Text } from 'react-native';
 
 import { CuentaForm, FilaCuenta } from '@/components/cuenta/CuentaForm';
@@ -12,6 +12,13 @@ export default function CuentaCliente() {
   const isWide = useIsWide();
   const form = (
     <CuentaForm tema="claro">
+      <FilaCuenta
+        tema="claro"
+        Icon={Wallet}
+        titulo="Mis pagos"
+        detalle="Historial, pendientes y comprobantes"
+        onPress={() => router.push('/cliente/pagos')}
+      />
       <FilaCuenta
         tema="claro"
         Icon={Truck}

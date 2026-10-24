@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Package, Route, Search, Truck } from 'lucide-react-native';
+import { ChevronRight, Package, Route, Search, Star, Truck, Wallet } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AnuncioPopup } from '@/components/AnuncioPopup';
@@ -11,11 +11,13 @@ import { PedidosList } from '@/components/pedido/PedidosList';
 import { Sheet } from '@/components/Sheet';
 import { ClienteShell } from '@/components/web/ClienteShell';
 import { useCurrentLocation } from '@/hooks/use-current-location';
+import { useAvisosFletes } from '@/hooks/use-avisos-fletes';
 import { useIsWide } from '@/hooks/use-is-wide';
 import { useMisPedidos } from '@/hooks/use-mis-pedidos';
 import { useRuta } from '@/hooks/use-ruta';
 import { useAuth } from '@/lib/auth';
 import { usePedidoDraft } from '@/lib/pedido-draft';
+import { formatARS } from '@/lib/pricing';
 import { TERMINAL_ESTADOS } from '@/lib/state-machine';
 import type { TipoServicio } from '@/lib/types';
 import { colors, fonts, radius } from '@/theme';
@@ -58,6 +60,7 @@ function InicioDesktop() {
       active="pedir"
       panel={
         <>
+          <AvisoPendiente />
           <Text style={styles.desktopTitle} accessibilityRole="header">
             ¿Qué movemos hoy?
           </Text>
@@ -103,6 +106,7 @@ function InicioMovil() {
 
       <View style={styles.sheetArea} pointerEvents="box-none">
         <Sheet style={styles.sheet}>
+          <AvisoPendiente />
           <View style={styles.titles}>
             {firstName ? <Text style={styles.greeting}>Hola, {firstName}</Text> : null}
             <Text style={styles.title} accessibilityRole="header">
@@ -154,6 +158,37 @@ function InicioMovil() {
   );
 }
 
+// Lo más importante que le falta al cliente: un pago o calificar un flete.
+function AvisoPendiente() {
+  const { pedidos } = useMisPedidos();
+  const { porCalificar, porPagar } = useAvisosFletes(pedidos);
+  const pagar = pedidos.find((p) => porPagar.has(p.id));
+  const calificar = pedidos.find((p) => porCalificar.has(p.id));
+  const p = pagar ?? calificar;
+  if (!p) return null;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => router.push(`/cliente/pedidos/${p.id}`)}
+      style={({ pressed }) => [styles.aviso, pressed && { opacity: 0.85 }]}>
+      {pagar ? (
+        <Wallet size={20} color={colors.ink} strokeWidth={2.2} />
+      ) : (
+        <Star size={20} color={colors.ink} fill={colors.ink} strokeWidth={2} />
+      )}
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={styles.avisoTitulo}>{pagar ? 'Tenés un pago pendiente' : '¿Cómo te fue con tu flete?'}</Text>
+        <Text style={styles.avisoTexto} numberOfLines={1}>
+          {pagar
+            ? `${p.precio_estimado != null ? formatARS(Number(p.precio_estimado)) : 'Flete'} · tocá para ver cómo pagar`
+            : 'Calificá a tu fletero en un toque'}
+        </Text>
+      </View>
+      <ChevronRight size={18} color={colors.ink} />
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   desktopTitle: { fontFamily: fonts.display, fontSize: 30, letterSpacing: -0.6, color: colors.ink },
   activos: { gap: 10, paddingTop: 18, borderTopWidth: 1, borderTopColor: colors.lineSoft },
@@ -180,4 +215,16 @@ const styles = StyleSheet.create({
   serviceTitle: { fontFamily: fonts.bold, fontSize: 15, color: colors.ink },
   serviceDetail: { fontFamily: fonts.regular, fontSize: 12, color: colors.muted },
   locationNote: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted },
+  aviso: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    borderRadius: radius.lg,
+    backgroundColor: '#FFF3D6',
+    borderWidth: 1,
+    borderColor: '#FFE3A3',
+  },
+  avisoTitulo: { fontFamily: fonts.bold, fontSize: 14, color: colors.ink },
+  avisoTexto: { fontFamily: fonts.regular, fontSize: 13, color: '#5B4A1F' },
 });

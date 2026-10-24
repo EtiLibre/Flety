@@ -62,6 +62,12 @@ export function PerfilContenido({ perfil }: { perfil: PerfilFletero }) {
               {perfil.empresa_verificada ? <Text style={styles.verificada}> · verificada</Text> : null}
             </Text>
           </View>
+          {perfil.seguro === 'verificado' || perfil.seguro === 'por_vencer' ? (
+            <View style={styles.seguro}>
+              <ShieldCheck size={13} color="#166534" strokeWidth={2.4} />
+              <Text style={styles.seguroText}>Seguro verificado</Text>
+            </View>
+          ) : null}
         </View>
       </View>
 
@@ -238,6 +244,17 @@ const styles = StyleSheet.create({
   empresaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   empresa: { flexShrink: 1, fontFamily: fonts.semibold, fontSize: 14, color: colors.ink },
   verificada: { fontFamily: fonts.medium, color: colors.success },
+  seguro: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: '#DCFCE7',
+  },
+  seguroText: { fontFamily: fonts.bold, fontSize: 11, color: '#166534' },
   stats: {
     flexDirection: 'row',
     alignItems: 'center',

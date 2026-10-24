@@ -10,6 +10,7 @@ import { MobileMapLayout } from '@/components/MobileMapLayout';
 import { CalificarCard } from '@/components/pedido/CalificarCard';
 import { ChatPedido } from '@/components/pedido/ChatPedido';
 import { FleteroAsignado } from '@/components/pedido/FleteroAsignado';
+import { PagoCard } from '@/components/pedido/PagoCard';
 import { Timeline } from '@/components/pedido/Timeline';
 import { ClienteShell } from '@/components/web/ClienteShell';
 import { useAhora } from '@/hooks/use-ahora';
@@ -195,8 +196,30 @@ function Contenido({
         />
       ) : null}
 
-      {pedido.estado === 'confirmado' || pedido.estado === 'liquidado' ? (
-        <CalificarCard orderId={pedido.id} quien={fletero ?? 'tu fletero'} />
+      {/* Un solo bloque (no se vuelve a montar al pasar de entregado a confirmado). */}
+      {pedido.estado === 'entregado' || pedido.estado === 'confirmado' || pedido.estado === 'liquidado' ? (
+        <CalificarCard
+          orderId={pedido.id}
+          quien={fletero ?? 'tu fletero'}
+          confirmarAntes={
+            pedido.estado !== 'entregado'
+              ? undefined
+              : async () => {
+                  const { data, error: e } = await supabase
+                    .from('orders')
+                    .update({ estado: 'confirmado' })
+                    .eq('id', pedido.id)
+                    .select(PEDIDO_COLUMNS)
+                    .single();
+                  if (e) throw new Error('No pudimos confirmar la entrega. Probá de nuevo.');
+                  if (data) onChange(data as Pedido);
+                }
+          }
+        />
+      ) : null}
+
+      {pedido.company_id && !['cancelado_cliente', 'cancelado_empresa', 'reembolsado'].includes(pedido.estado) ? (
+        <PagoCard pedido={pedido} />
       ) : null}
 
       <View style={styles.details}>

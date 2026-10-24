@@ -8,8 +8,17 @@ import { colors, fonts, radius } from '@/theme';
 
 const ETIQUETAS = ['', 'Muy mal', 'Mal', 'Bien', 'Muy bien', '¡Excelente!'];
 
-// Después de confirmar la entrega: el cliente califica a la empresa y al chofer.
-export function CalificarCard({ orderId, quien }: { orderId: string; quien: string }) {
+// El cliente califica a la empresa y al chofer. Con el flete entregado (sin
+// confirmar), `confirmarAntes` confirma la entrega en el mismo paso.
+export function CalificarCard({
+  orderId,
+  quien,
+  confirmarAntes,
+}: {
+  orderId: string;
+  quien: string;
+  confirmarAntes?: () => Promise<void>;
+}) {
   const [hecha, setHecha] = useState<{ id: string; calif: Calificacion | null } | null>(null);
   const [estrellas, setEstrellas] = useState(0);
   const [comentario, setComentario] = useState('');
@@ -40,6 +49,7 @@ export function CalificarCard({ orderId, quien }: { orderId: string; quien: stri
     setEnviando(true);
     setError(null);
     try {
+      if (confirmarAntes) await confirmarAntes();
       await calificar(orderId, estrellas, comentario);
       setHecha({ id: orderId, calif: { estrellas, comentario: comentario.trim() || null } });
     } catch (e) {
@@ -51,8 +61,14 @@ export function CalificarCard({ orderId, quien }: { orderId: string; quien: stri
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>¿Cómo te fue con {quien}?</Text>
-      <Text style={styles.muted}>Tu calificación ayuda a otros clientes a elegir fletero.</Text>
+      <Text style={styles.title}>
+        {confirmarAntes ? `¿Llegó todo bien? Calificá a ${quien}` : `¿Cómo te fue con ${quien}?`}
+      </Text>
+      <Text style={styles.muted}>
+        {confirmarAntes
+          ? 'Al enviar, confirmás que recibiste el servicio. Tu calificación ayuda a otros clientes a elegir.'
+          : 'Tu calificación ayuda a otros clientes a elegir fletero.'}
+      </Text>
       <Estrellas valor={estrellas} onChange={setEstrellas} />
       {estrellas ? <Text style={styles.etiqueta}>{ETIQUETAS[estrellas]}</Text> : null}
       {estrellas ? (
@@ -68,7 +84,13 @@ export function CalificarCard({ orderId, quien }: { orderId: string; quien: stri
         />
       ) : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      <Button title="Enviar calificación" variant="dark" disabled={!estrellas} loading={enviando} onPress={enviar} />
+      <Button
+        title={confirmarAntes ? 'Confirmar y calificar' : 'Enviar calificación'}
+        variant="dark"
+        disabled={!estrellas}
+        loading={enviando}
+        onPress={enviar}
+      />
     </View>
   );
 }
