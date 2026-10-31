@@ -68,3 +68,16 @@ export async function direccionDeCoordenadas(
   }
   return { lat, lng, direccion: fallback };
 }
+
+// Localidad para mostrar ("Godoy Cruz"); null si no se puede saber.
+export async function localidadDeCoordenadas(lat: number, lng: number): Promise<string | null> {
+  try {
+    const res = await fetch(`${PHOTON}/reverse?lat=${lat}&lon=${lng}`);
+    if (!res.ok) return null;
+    const json = (await res.json()) as { features: PhotonFeature[] };
+    const p = json.features[0]?.properties;
+    return p?.city ?? p?.district ?? p?.state ?? null;
+  } catch {
+    return null;
+  }
+}

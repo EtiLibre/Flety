@@ -19,7 +19,7 @@ export default function AyudaCliente() {
 
   function navegar(d: Destino) {
     if (d.startsWith('flete:')) return router.push(`/cliente/pedidos/${d.slice(6)}`);
-    if (d === 'pedir') return router.push(isWide ? '/cliente/inicio' : '/cliente/nuevo-pedido');
+    if (d === 'pedir') return router.push(isWide ? '/cliente/mudanzas' : '/cliente/nuevo-pedido');
     if (d === 'fletes') return router.navigate('/cliente/pedidos');
     if (d === 'cuenta') return router.navigate('/cliente/cuenta');
     if (d === 'pagos') return router.push('/cliente/pagos');

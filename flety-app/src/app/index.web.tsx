@@ -25,6 +25,8 @@ import { Reveal } from '@/components/landing/Reveal';
 import { ScrollFab } from '@/components/landing/ScrollFab';
 import { usePedidoDraft } from '@/lib/pedido-draft';
 import type { TipoServicio } from '@/lib/types';
+import { IconoGrua } from '@/plataforma/IconoGrua';
+import { servicio, SERVICIOS as UNIDADES } from '@/plataforma/servicios';
 import { colors, fonts, radius } from '@/theme';
 
 // Landing pública (solo web). En iOS/Android, "/" es la bienvenida (index.tsx).
@@ -36,11 +38,11 @@ export default function Landing() {
   );
 }
 
-type SectionKey = 'como' | 'servicios' | 'empresas' | 'fleteros';
+type SectionKey = 'como' | 'servicios' | 'gruas' | 'empresas' | 'fleteros';
 
 const NAV_LINKS: { id: SectionKey; label: string }[] = [
-  { id: 'como', label: 'Cómo funciona' },
-  { id: 'servicios', label: 'Servicios' },
+  { id: 'como', label: 'Mudanzas' },
+  { id: 'gruas', label: 'Grúas' },
   { id: 'empresas', label: 'Para empresas' },
   { id: 'fleteros', label: 'Sumate como fletero' },
 ];
@@ -176,33 +178,63 @@ function LandingPage() {
               <Reveal>
                 <View style={styles.badge}>
                   <View style={styles.heroLiveDot} />
-                  <Text style={styles.badgeText}>Fleteros disponibles ahora en Mendoza</Text>
+                  <Text style={styles.badgeText}>Mendoza · fletes, mudanzas y grúas</Text>
                 </View>
               </Reveal>
               <Reveal delay={80}>
                 <Text style={[styles.h1, { fontSize: h1Size, lineHeight: h1Size * 1.02 }]} accessibilityRole="header">
-                  Mové lo que necesites, <Text style={{ color: colors.accent }}>cuando lo necesites.</Text>
+                  Una app para mover <Text style={{ color: colors.accent }}>lo que importa.</Text>
                 </Text>
               </Reveal>
               <Reveal delay={160}>
                 <Text style={styles.heroText}>
-                  Elegí al fletero que quieras o dejá que te lo asignemos. Empresas verificadas, precio antes de
-                  confirmar y tu carga en el mapa hasta que llega.
+                  Pedí un flete o una mudanza con empresas verificadas, y muy pronto también una grúa. Precio antes de
+                  confirmar y todo en el mapa, en vivo.
                 </Text>
               </Reveal>
               <Reveal delay={240}>
-                <View style={styles.pasosHero}>
-                  {['Creá tu cuenta', 'Cargá retiro y entrega', 'Elegí tu fletero'].map((paso, i) => (
-                    <View key={paso} style={styles.pasoHero}>
-                      <Text style={styles.pasoHeroNum}>{i + 1}</Text>
-                      <Text style={styles.pasoHeroText}>{paso}</Text>
-                    </View>
-                  ))}
+                <View style={[styles.serviciosHero, isMid && { flexDirection: 'row' }]}>
+                  {UNIDADES.map((sv) => {
+                    const activo = sv.estado === 'activo';
+                    return (
+                      <Pressable
+                        key={sv.id}
+                        accessibilityRole={activo ? 'link' : undefined}
+                        disabled={!activo}
+                        onPress={() => (activo ? pedir() : goTo('gruas'))}
+                        style={({ hovered }: { hovered?: boolean }) => [
+                          styles.servicioHero,
+                          isMid && { flex: 1 },
+                          hovered && activo && { borderColor: sv.color.acento },
+                        ]}>
+                        <View style={styles.servicioHeroTop}>
+                          <View style={[styles.servicioHeroIcono, { backgroundColor: sv.color.acento }]}>
+                            <sv.Icon
+                              size={20}
+                              color={sv.id === 'gruas' ? colors.white : colors.ink}
+                              strokeWidth={2.2}
+                            />
+                          </View>
+                          {!activo ? (
+                            <Text
+                              style={[
+                                styles.servicioHeroSello,
+                                { color: sv.color.acento, borderColor: sv.color.acento },
+                              ]}>
+                              Muy pronto
+                            </Text>
+                          ) : null}
+                        </View>
+                        <Text style={styles.servicioHeroTitulo}>{sv.titulo}</Text>
+                        <Text style={styles.servicioHeroTexto}>{sv.descripcion}</Text>
+                      </Pressable>
+                    );
+                  })}
                 </View>
               </Reveal>
               <Reveal delay={300}>
                 <View style={styles.heroButtons}>
-                  <Button title="Crear cuenta y pedir un flete" onPress={() => pedir()} style={styles.heroButton} />
+                  <Button title="Crear cuenta gratis" onPress={() => pedir()} style={styles.heroButton} />
                   <Pressable
                     accessibilityRole="link"
                     onPress={() => router.push('/login')}
@@ -239,7 +271,7 @@ function LandingPage() {
           onLayout={(e) => remember('como', e)}
           style={[styles.container, { paddingVertical: sectionPad, gap: 40 }]}>
           <Reveal>
-            <SectionTitle eyebrow="Cómo funciona" title="Tres pasos y tu carga está en camino" size={h2Size} />
+            <SectionTitle eyebrow="Mudanzas y fletes" title="Tres pasos y tu carga está en camino" size={h2Size} />
           </Reveal>
           <View style={styles.grid}>
             {PASOS.map((paso, index) => (
@@ -305,6 +337,44 @@ function LandingPage() {
         </View>
 
         {/* Para empresas */}
+        {/* Grúas (muy pronto) */}
+        <View onLayout={(e) => remember('gruas', e)} style={styles.gruasBand}>
+          <View style={[styles.container, { paddingVertical: sectionPad, gap: 32 }]}>
+            <Reveal>
+              <View style={{ gap: 12 }}>
+                <View style={styles.gruasSello}>
+                  <IconoGrua size={16} color={servicio('gruas').color.acento} />
+                  <Text style={styles.gruasSelloTexto}>Grúas · muy pronto</Text>
+                </View>
+                <Text style={[styles.h2Dark, { fontSize: h2Size, lineHeight: h2Size * 1.08 }]}>
+                  Auxilio para tu vehículo, sin llamadas ni vueltas
+                </Text>
+                <Text style={styles.gruasTexto}>
+                  Pedís la grúa desde el mapa, te asignamos la más cercana y la seguís en vivo hasta que llega. Sabés el
+                  precio antes de confirmar.
+                </Text>
+              </View>
+            </Reveal>
+            <View style={styles.grid}>
+              {PASOS_GRUAS.map((paso, index) => (
+                <Reveal key={paso.titulo} delay={index * 110} style={styles.cardSlot}>
+                  <View style={styles.gruasCard}>
+                    <View style={styles.gruasNum}>
+                      <Text style={styles.gruasNumText}>{index + 1}</Text>
+                    </View>
+                    <Text style={styles.gruasCardTitulo}>{paso.titulo}</Text>
+                    <Text style={styles.gruasCardTexto}>{paso.texto}</Text>
+                  </View>
+                </Reveal>
+              ))}
+            </View>
+            <Text style={styles.gruasNota}>
+              ¿Sos gruista o tenés una empresa de auxilio? Muy pronto vas a poder sumarte y recibir pedidos desde la
+              app.
+            </Text>
+          </View>
+        </View>
+
         <View onLayout={(e) => remember('empresas', e)} style={[styles.container, { paddingBottom: sectionPad }]}>
           <Reveal>
             <View style={[styles.empresas, { flexDirection: isWide ? 'row' : 'column', padding: isWide ? 56 : 28 }]}>
@@ -416,6 +486,12 @@ function LandingPage() {
   );
 }
 
+const PASOS_GRUAS = [
+  { titulo: 'Pedís desde el mapa', texto: 'Marcás dónde está el vehículo, a dónde va y qué le pasa.' },
+  { titulo: 'Te asignamos la más cercana', texto: 'La grúa disponible más cerca acepta y ves quién va.' },
+  { titulo: 'La seguís en vivo', texto: 'Ves la grúa en el mapa y cuánto falta, hasta la entrega.' },
+];
+
 function SectionTitle({ eyebrow, title, size }: { eyebrow: string; title: string; size: number }) {
   return (
     <View style={{ gap: 12, maxWidth: 640 }}>
@@ -428,6 +504,63 @@ function SectionTitle({ eyebrow, title, size }: { eyebrow: string; title: string
 }
 
 const styles = StyleSheet.create({
+  serviciosHero: { gap: 12 },
+  servicioHero: {
+    gap: 6,
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#2A313B',
+    backgroundColor: 'rgba(26,31,38,0.85)',
+  },
+  servicioHeroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  servicioHeroIcono: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  servicioHeroSello: {
+    fontFamily: fonts.bold,
+    fontSize: 11,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 999,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  servicioHeroTitulo: { fontFamily: fonts.bold, fontSize: 17, color: colors.white, marginTop: 4 },
+  servicioHeroTexto: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 20, color: colors.mutedOnInk },
+  gruasBand: { backgroundColor: '#1A0E08' },
+  gruasSello: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,107,26,0.12)',
+  },
+  gruasSelloTexto: { fontFamily: fonts.bold, fontSize: 13, color: '#FF8A4C' },
+  h2Dark: { fontFamily: fonts.display, letterSpacing: -0.8, color: colors.white, maxWidth: 760 },
+  gruasTexto: { fontFamily: fonts.regular, fontSize: 17, lineHeight: 26, color: '#E7C9B8', maxWidth: 640 },
+  gruasCard: {
+    flex: 1,
+    gap: 10,
+    padding: 22,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,107,26,0.25)',
+  },
+  gruasNum: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#FF6B1A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gruasNumText: { fontFamily: fonts.bold, fontSize: 15, color: colors.white },
+  gruasCardTitulo: { fontFamily: fonts.bold, fontSize: 18, color: colors.white },
+  gruasCardTexto: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 22, color: '#E7C9B8' },
+  gruasNota: { fontFamily: fonts.medium, fontSize: 15, lineHeight: 22, color: '#FFB48A' },
   page: { flex: 1, backgroundColor: colors.white },
   container: { width: '100%', maxWidth: 1200, alignSelf: 'center', paddingHorizontal: 24 },
   dark: { backgroundColor: colors.ink },

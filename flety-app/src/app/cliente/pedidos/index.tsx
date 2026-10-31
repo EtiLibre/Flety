@@ -13,6 +13,8 @@ import { useMisPedidos } from '@/hooks/use-mis-pedidos';
 import type { Pedido } from '@/lib/orders';
 import { usePedidoDraft } from '@/lib/pedido-draft';
 import { formatARS } from '@/lib/pricing';
+import { IconoGrua } from '@/plataforma/IconoGrua';
+import { servicio, SERVICIOS, type ServicioId } from '@/plataforma/servicios';
 import { colors, fonts } from '@/theme';
 
 const VACIO: Record<GrupoFlete, string> = {
@@ -21,7 +23,8 @@ const VACIO: Record<GrupoFlete, string> = {
   cancelados: 'No tenés fletes cancelados.',
 };
 
-// Historial del cliente: fletes en curso, terminados y cancelados.
+// Actividad del cliente: el historial de cada servicio (Mudanzas: fletes en
+// curso, terminados y cancelados; Grúas: muy pronto).
 export default function MisFletes() {
   const isWide = useIsWide();
   const { pedidos, loading } = useMisPedidos();
@@ -29,6 +32,7 @@ export default function MisFletes() {
   const { porCalificar, porPagar } = useAvisosFletes(pedidos);
   const enCurso = pedidos.filter((p) => grupoDe(p) === 'en_curso');
   const [grupoElegido, setGrupo] = useState<GrupoFlete | null>(null);
+  const [servicioTab, setServicioTab] = useState<ServicioId>('mudanzas');
   // Si hay alguno en curso, se abre ahí; si no, en terminados.
   const grupo = grupoElegido ?? (enCurso.length ? 'en_curso' : 'terminados');
   const lista = pedidos.filter((p) => grupoDe(p) === grupo);
@@ -36,7 +40,7 @@ export default function MisFletes() {
   const gastado = terminados.reduce((t, p) => t + (p.precio_estimado ?? 0), 0);
 
   function pedir() {
-    router.push(isWide ? '/cliente/inicio' : '/cliente/nuevo-pedido');
+    router.push(isWide ? '/cliente/mudanzas' : '/cliente/nuevo-pedido');
   }
 
   // "Pedir de nuevo": mismo recorrido, tamaño y ayudantes; el resto se elige otra vez.
@@ -55,7 +59,7 @@ export default function MisFletes() {
     pedir();
   }
 
-  const contenido = (
+  const mudanzas = (
     <>
       {terminados.length ? (
         <View style={styles.resumen}>
@@ -110,6 +114,23 @@ export default function MisFletes() {
     </>
   );
 
+  // Cada servicio muestra su propio historial (los datos no se mezclan).
+  const contenido = (
+    <>
+      <SelectorServicio valor={servicioTab} onCambio={setServicioTab} />
+      {servicioTab === 'mudanzas' ? (
+        mudanzas
+      ) : (
+        <View style={styles.vacio}>
+          <IconoGrua size={36} color={servicio('gruas').color.acento} />
+          <Text style={styles.vacioText}>
+            Muy pronto vas a poder pedir grúas desde la app. Tus servicios de grúa van a aparecer acá.
+          </Text>
+        </View>
+      )}
+    </>
+  );
+
   const nuevo = (
     <Pressable accessibilityRole="button" accessibilityLabel="Pedir un flete" onPress={pedir} style={styles.nuevo}>
       <Plus size={18} color={colors.ink} strokeWidth={2.6} />
@@ -125,9 +146,9 @@ export default function MisFletes() {
           <>
             <View style={styles.wideHead}>
               <Text style={styles.title} accessibilityRole="header">
-                Mis fletes
+                Actividad
               </Text>
-              {nuevo}
+              {servicioTab === 'mudanzas' ? nuevo : null}
             </View>
             {contenido}
           </>
@@ -138,16 +159,53 @@ export default function MisFletes() {
 
   return (
     <PantallaTab
-      titulo="Mis fletes"
-      subtitulo="Tus fletes y mudanzas, en curso y anteriores."
+      titulo="Actividad"
+      subtitulo="Tus servicios, en curso y anteriores."
       tema="claro"
-      derecha={nuevo}>
+      derecha={servicioTab === 'mudanzas' ? nuevo : undefined}>
       {contenido}
     </PantallaTab>
   );
 }
 
+function SelectorServicio({ valor, onCambio }: { valor: ServicioId; onCambio: (v: ServicioId) => void }) {
+  return (
+    <View style={styles.selector} role="tablist" aria-label="Servicio">
+      {SERVICIOS.map((s) => {
+        const on = s.id === valor;
+        return (
+          <Pressable
+            key={s.id}
+            role="tab"
+            aria-selected={on}
+            onPress={() => onCambio(s.id)}
+            style={[styles.selectorItem, on && { backgroundColor: s.color.suave, borderColor: s.color.acento }]}>
+            <s.Icon size={17} color={on ? s.color.texto : colors.muted} strokeWidth={2.2} />
+            <Text style={[styles.selectorTexto, on && { color: s.color.texto, fontFamily: fonts.bold }]}>
+              {s.nombre}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  selector: { flexDirection: 'row', gap: 8 },
+  selectorItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 46,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    backgroundColor: colors.white,
+  },
+  selectorTexto: { fontFamily: fonts.semibold, fontSize: 15, color: colors.muted },
   wideHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { fontFamily: fonts.display, fontSize: 30, letterSpacing: -0.6, color: colors.ink },
   resumen: {

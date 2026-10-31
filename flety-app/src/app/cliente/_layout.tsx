@@ -1,5 +1,5 @@
 import { router, Stack, usePathname } from 'expo-router';
-import { House, LifeBuoy, Package, UserRound } from 'lucide-react-native';
+import { History, House, LifeBuoy, UserRound } from 'lucide-react-native';
 import { View } from 'react-native';
 
 import { RequireRole } from '@/components/Guards';
@@ -10,7 +10,7 @@ type Tab = 'inicio' | 'fletes' | 'ayuda' | 'cuenta';
 
 const TABS: TabItem<Tab>[] = [
   { id: 'inicio', label: 'Inicio', Icon: House },
-  { id: 'fletes', label: 'Mis fletes', Icon: Package },
+  { id: 'fletes', label: 'Actividad', Icon: History },
   { id: 'ayuda', label: 'Ayuda', Icon: LifeBuoy },
   { id: 'cuenta', label: 'Cuenta', Icon: UserRound },
 ];

@@ -1,0 +1,204 @@
+import { router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { ArrowLeft, Package, Route, Search, Truck } from 'lucide-react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { AppMap } from '@/components/map/AppMap';
+import type { MapMarker } from '@/components/map/types';
+import { AvisoPendiente } from '@/components/pedido/AvisoPendiente';
+import { PedidoForm } from '@/components/pedido/PedidoForm';
+import { PedidosList } from '@/components/pedido/PedidosList';
+import { Sheet } from '@/components/Sheet';
+import { ClienteShell } from '@/components/web/ClienteShell';
+import { useCurrentLocation } from '@/hooks/use-current-location';
+import { useIsWide } from '@/hooks/use-is-wide';
+import { useMisPedidos } from '@/hooks/use-mis-pedidos';
+import { useRuta } from '@/hooks/use-ruta';
+import { useAuth } from '@/lib/auth';
+import { usePedidoDraft } from '@/lib/pedido-draft';
+import { TERMINAL_ESTADOS } from '@/lib/state-machine';
+import type { TipoServicio } from '@/lib/types';
+import { colors, fonts, radius } from '@/theme';
+
+const SERVICIOS = [
+  { tipo: 'flete', titulo: 'Flete', detalle: 'Pocas cosas', Icon: Truck },
+  { tipo: 'mudanza', titulo: 'Mudanza', detalle: 'Casa o depto', Icon: Package },
+  { tipo: 'larga_distancia', titulo: 'Larga distancia', detalle: 'Entre ciudades', Icon: Route },
+] as const;
+
+// Flety Mudanzas: pedir un flete o mudanza (antes era el inicio del cliente;
+// ahora el inicio es el selector de servicios).
+export default function InicioMudanzas() {
+  const isWide = useIsWide();
+  return <>{isWide ? <InicioDesktop /> : <InicioMovil />}</>;
+}
+
+function useMapMarkers() {
+  const location = useCurrentLocation();
+  const { draft } = usePedidoDraft();
+  const markers: MapMarker[] = [];
+  if (location.status === 'located')
+    markers.push({ id: 'yo', kind: 'user', position: location.position, label: 'Tu ubicación' });
+  if (draft.origen) markers.push({ id: 'origen', kind: 'origen', position: draft.origen, label: 'Retiro' });
+  if (draft.destino) markers.push({ id: 'destino', kind: 'destino', position: draft.destino, label: 'Entrega' });
+  const { ruta } = useRuta([draft.origen, draft.destino]);
+  return { location, markers, line: ruta?.coords };
+}
+
+function InicioDesktop() {
+  const { markers, line, location } = useMapMarkers();
+  const { pedidos } = useMisPedidos();
+  const activos = pedidos.filter((p) => !TERMINAL_ESTADOS.includes(p.estado));
+
+  return (
+    <ClienteShell
+      active="inicio"
+      panel={
+        <>
+          <AvisoPendiente />
+          <Text style={styles.desktopTitle} accessibilityRole="header">
+            ¿Qué movemos hoy?
+          </Text>
+          <PedidoForm onContinue={() => router.push('/cliente/opciones')} />
+          <View style={styles.activos}>
+            <Text style={styles.activosTitle}>Pedidos activos</Text>
+            <PedidosList pedidos={activos} emptyText="No tenés pedidos activos." />
+          </View>
+        </>
+      }
+      map={
+        <AppMap
+          center={location.position}
+          markers={markers}
+          line={line}
+          fitToMarkers={markers.some((m) => m.kind !== 'user')}
+          style={StyleSheet.absoluteFill}
+        />
+      }
+    />
+  );
+}
+
+function InicioMovil() {
+  const { nombre } = useAuth();
+  const insets = useSafeAreaInsets();
+  const { update } = usePedidoDraft();
+  const { markers, location } = useMapMarkers();
+  const firstName = nombre?.split(' ')[0];
+
+  function pedir(tipo?: TipoServicio) {
+    if (tipo) update({ tipo });
+    router.push('/cliente/nuevo-pedido');
+  }
+
+  return (
+    <View style={styles.screen}>
+      <StatusBar style="dark" />
+      <AppMap
+        center={location.position}
+        markers={markers.filter((m) => m.kind === 'user')}
+        style={StyleSheet.absoluteFill}
+      />
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Volver al inicio"
+        onPress={() => (router.canGoBack() ? router.back() : router.replace('/cliente/inicio'))}
+        style={[styles.volver, { top: insets.top + 12 }]}>
+        <ArrowLeft size={20} color={colors.ink} strokeWidth={2.2} />
+      </Pressable>
+
+      <View style={styles.sheetArea} pointerEvents="box-none">
+        <Sheet style={styles.sheet}>
+          <AvisoPendiente />
+          <View style={styles.titles}>
+            {firstName ? <Text style={styles.greeting}>Hola, {firstName}</Text> : null}
+            <Text style={styles.title} accessibilityRole="header">
+              ¿Qué movemos hoy?
+            </Text>
+          </View>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Elegir destino"
+            onPress={() => pedir()}
+            style={({ pressed }) => [styles.search, pressed && { opacity: 0.8 }]}>
+            <Search size={22} color={colors.ink} strokeWidth={2} />
+            <Text style={styles.searchText}>¿A dónde lo llevamos?</Text>
+          </Pressable>
+
+          <View style={styles.services}>
+            {SERVICIOS.map(({ tipo, titulo, detalle, Icon }, index) => {
+              const highlighted = index === 0;
+              return (
+                <Pressable
+                  key={tipo}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${titulo}: ${detalle}`}
+                  onPress={() => pedir(tipo)}
+                  style={({ pressed }) => [
+                    styles.service,
+                    { backgroundColor: highlighted ? colors.accent : colors.surface },
+                    pressed && { opacity: 0.85 },
+                  ]}>
+                  <Icon size={28} color={colors.ink} strokeWidth={2} />
+                  <View style={styles.serviceText}>
+                    <Text style={styles.serviceTitle}>{titulo}</Text>
+                    <Text style={[styles.serviceDetail, highlighted && { color: '#3A3F45' }]}>{detalle}</Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {location.status === 'denied' ? (
+            <Text style={styles.locationNote}>
+              Activá la ubicación para ver dónde estás. Por ahora te mostramos Mendoza.
+            </Text>
+          ) : null}
+        </Sheet>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  desktopTitle: { fontFamily: fonts.display, fontSize: 30, letterSpacing: -0.6, color: colors.ink },
+  activos: { gap: 10, paddingTop: 18, borderTopWidth: 1, borderTopColor: colors.lineSoft },
+  activosTitle: { fontFamily: fonts.bold, fontSize: 14, color: colors.muted },
+  screen: { flex: 1, backgroundColor: colors.mapLand },
+  volver: {
+    position: 'absolute',
+    left: 16,
+    zIndex: 1000,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 4px 14px rgba(18, 22, 28, 0.16)',
+  },
+  sheetArea: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center', zIndex: 1000 },
+  sheet: { width: '100%', maxWidth: 560 },
+  titles: { gap: 2 },
+  greeting: { fontFamily: fonts.semibold, fontSize: 15, color: colors.muted },
+  title: { fontFamily: fonts.display, fontSize: 28, letterSpacing: -0.6, color: colors.ink },
+  search: {
+    height: 56,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+  },
+  searchText: { fontFamily: fonts.medium, fontSize: 17, color: colors.muted },
+  services: { flexDirection: 'row', gap: 10 },
+  service: { flex: 1, height: 104, borderRadius: radius.xl, padding: 14, justifyContent: 'space-between' },
+  serviceText: { gap: 2 },
+  serviceTitle: { fontFamily: fonts.bold, fontSize: 15, color: colors.ink },
+  serviceDetail: { fontFamily: fonts.regular, fontSize: 12, color: colors.muted },
+  locationNote: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted },
+});

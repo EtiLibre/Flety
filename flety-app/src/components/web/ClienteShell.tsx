@@ -9,8 +9,8 @@ import { supabase } from '@/lib/supabase';
 import { colors, fonts, radius, shadow } from '@/theme';
 
 const NAV = [
-  { id: 'pedir', label: 'Pedir', href: '/cliente/inicio' },
-  { id: 'pedidos', label: 'Mis fletes', href: '/cliente/pedidos' },
+  { id: 'inicio', label: 'Inicio', href: '/cliente/inicio' },
+  { id: 'pedidos', label: 'Actividad', href: '/cliente/pedidos' },
   { id: 'ayuda', label: 'Ayuda', href: '/cliente/ayuda' },
   { id: 'cuenta', label: 'Cuenta', href: '/cliente/cuenta' },
 ] as const;

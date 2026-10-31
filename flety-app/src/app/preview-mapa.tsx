@@ -123,7 +123,7 @@ function Preview() {
     </>
   );
 
-  if (isWide) return <ClienteShell active="pedir" panel={panel} map={map} />;
+  if (isWide) return <ClienteShell active="inicio" panel={panel} map={map} />;
   return (
     <MobileMapLayout map={map} mapHeight={380}>
       {panel}

@@ -80,7 +80,7 @@ export default function Opciones() {
 
   // Al recargar la página en web el borrador se pierde: volvemos al formulario.
   if (draftListoParaCotizar(draft)) {
-    return <Redirect href={isWide ? '/cliente/inicio' : '/cliente/nuevo-pedido'} />;
+    return <Redirect href={isWide ? '/cliente/mudanzas' : '/cliente/nuevo-pedido'} />;
   }
 
   const origen = draft.origen!;
@@ -120,7 +120,7 @@ export default function Opciones() {
   if (isWide) {
     return (
       <ClienteShell
-        active="pedir"
+        active="inicio"
         panel={
           <>
             <Pressable accessibilityRole="link" onPress={() => router.back()} style={styles.backLink}>
