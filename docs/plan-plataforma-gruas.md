@@ -275,12 +275,21 @@ En **cada** etapa:
 
 ---
 
-## 8. Decisiones para aprobar (Director de producto)
+## 8. Decisiones tomadas (31/10/2026)
 
-1. **Marca:** Flety como plataforma, con "Flety Mudanzas" y "Flety Grúas". El acento de Grúas sería naranja baliza (o azul).
-2. **Prestadores de grúa:** independientes **y** empresas de auxilio con flota (como Flety). ¿O solo uno de los dos al principio?
-3. **Asignación:** automática al más cercano (gana el primero que acepta). Más adelante se puede sumar que el cliente elija.
-4. **Zona inicial:** Gran Mendoza.
-5. **Precio:** cotización cerrada al solicitar, con adicionales que el cliente aprueba en la app si aparecen en el lugar (por ejemplo, el vehículo está en un subsuelo).
-6. **Orden:** las etapas como están, o adelantar Grúas (3 a 5) antes del nuevo inicio.
-7. **Paso técnico tuyo:** agregar el esquema `gruas` a "Exposed schemas" en Supabase cuando llegue la etapa 3. Te guío.
+1. **Marca provisoria.** El nombre y los colores viven en `src/plataforma/marca.ts` y `src/plataforma/servicios.ts` para cambiarlos en un solo lugar.
+2. **Gruistas independientes y empresas de auxilio con flota.**
+3. **Asignación automática tipo Uber**: se ofrece a la grúa más cercana y gana la primera que acepta.
+4. **Cobertura nacional, arrancando en Mendoza.** Zonas por provincia y ciudad, activables desde el panel.
+5. **Precio como en Flety.** Cada empresa o gruista carga su tarifa (base, por km, mínimos, por tipo de vehículo, recargos) y la plataforma suma su comisión; el cliente ve el total. Con asignación automática, el cliente ve el precio de la grúa recomendada (la más cercana). Si no acepta, se ofrece a la siguiente solo si no cobra más; si cobra más, el cliente confirma el nuevo precio.
+6. **Orden:** las etapas como están en §6.
+
+## 9. Avance
+
+- [x] Etapa 1: base de la plataforma (registro de servicios, marca centralizada, ícono e ilustración de grúa).
+- [x] Etapa 2: nuevo inicio (selector), Actividad por servicio, landing con los dos servicios. Grúas aparece como "Muy pronto".
+- [ ] Etapa 3: datos y precios de Grúas.
+- [ ] Etapa 4: gruistas.
+- [ ] Etapa 5: pedir grúa y despacho en vivo.
+- [ ] Etapa 6: operación y reportes.
+- [ ] Etapa 7: pagos.
