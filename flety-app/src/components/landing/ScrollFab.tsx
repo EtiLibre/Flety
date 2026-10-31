@@ -1,6 +1,7 @@
 import { ArrowUp } from 'lucide-react-native';
 import { Pressable, StyleSheet, type ViewStyle } from 'react-native';
 
+import { Degrade, SOMBRAS } from '@/plataforma/estilo';
 import { colors } from '@/theme';
 
 const transition = {
@@ -9,8 +10,8 @@ const transition = {
   transitionTimingFunction: 'cubic-bezier(0.2, 0.7, 0.2, 1)',
 } as unknown as ViewStyle;
 
-// Flecha flotante abajo a la derecha: no se ve arriba de todo; aparece al
-// bajar y lleva de vuelta al inicio.
+// Flecha flotante abajo a la derecha (botón con degradé): no se ve arriba de
+// todo; aparece al bajar y lleva de vuelta al inicio.
 export function ScrollFab({ visible, onPress }: { visible: boolean; onPress: () => void }) {
   return (
     <Pressable
@@ -25,7 +26,8 @@ export function ScrollFab({ visible, onPress }: { visible: boolean; onPress: () 
         transition,
         visible ? (hovered ? styles.hover : styles.shown) : styles.hidden,
       ]}>
-      <ArrowUp size={22} color={colors.ink} strokeWidth={2.4} />
+      <Degrade nombre="sol" style={[StyleSheet.absoluteFill, styles.fondo]} />
+      <ArrowUp size={22} color={colors.ink} strokeWidth={2.6} />
     </Pressable>
   );
 }
@@ -36,14 +38,16 @@ const styles = StyleSheet.create({
     right: 22,
     bottom: 22,
     zIndex: 40,
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: colors.accent,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.85)',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 10px 28px rgba(18, 22, 28, 0.22)',
+    boxShadow: `${SOMBRAS.sol}, inset 0px 1px 0px rgba(255,255,255,0.65)`,
   },
+  fondo: { borderRadius: 24 },
   shown: { opacity: 1, transform: [{ translateY: 0 }, { scale: 1 }] },
   hover: { opacity: 1, transform: [{ translateY: -2 }, { scale: 1.06 }] },
   hidden: { opacity: 0, transform: [{ translateY: 16 }, { scale: 0.8 }] },

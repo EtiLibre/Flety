@@ -4,7 +4,6 @@ import { View } from 'react-native';
 import { RequireRole } from '@/components/Guards';
 import { BarraInferior } from '@/components/nav/BarraInferior';
 import { irGruista, RUTAS_GRUISTA, TABS_GRUISTA } from '@/modulos/gruas/nav';
-import { G } from '@/modulos/gruas/ui';
 import { colors } from '@/theme';
 
 // App del gruista (Grúas). Cualquier usuario puede darse de alta como gruista
@@ -31,7 +30,7 @@ export default function GruistaLayout() {
             activo={activo}
             onIr={irGruista}
             tema="oscuro"
-            acento={{ fondo: G.acento, icono: colors.white }}
+            acento={{ degrade: 'fuego', icono: colors.white }}
           />
         ) : null}
       </View>

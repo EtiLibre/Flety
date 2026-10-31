@@ -1,6 +1,8 @@
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Link, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Check, MapPin, Package, Route, ShieldCheck, Star, Tag, Truck } from 'lucide-react-native';
+import { ArrowRight, MapPin, ShieldCheck, Star, Tag } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import {
   Pressable,
@@ -14,20 +16,31 @@ import {
   type NativeSyntheticEvent,
 } from 'react-native';
 
-import { Button } from '@/components/Button';
 import { AnuncioPopup } from '@/components/AnuncioPopup';
 import { DotCanvas } from '@/components/DotCanvas';
 import { PublicOnly } from '@/components/Guards';
-import { FleterosSection } from '@/components/landing/FleterosSection';
 import { FloatingNav } from '@/components/landing/FloatingNav';
-import { HeroMap } from '@/components/landing/HeroMap';
 import { Reveal } from '@/components/landing/Reveal';
 import { ScrollFab } from '@/components/landing/ScrollFab';
 import { usePedidoDraft } from '@/lib/pedido-draft';
 import type { TipoServicio } from '@/lib/types';
-import { IconoGrua } from '@/plataforma/IconoGrua';
-import { servicio, SERVICIOS as UNIDADES } from '@/plataforma/servicios';
-import { colors, fonts, radius } from '@/theme';
+import {
+  CamionetaIlustracion,
+  Degrade,
+  FONDO_LIENZO,
+  GruaPlanchaIlustracion,
+  Resplandor,
+  SOMBRAS,
+  Vidrio,
+  type NombreDegrade,
+} from '@/plataforma/estilo';
+import { colors, fonts } from '@/theme';
+
+// Fotos generadas con IA para Flety (Mendoza).
+const FOTO_PORTADA = require('../../assets/images/landing/portada.jpg');
+const FOTO_GRUA = require('../../assets/images/landing/grua-ruta.jpg');
+const FOTO_FLETEROS = require('../../assets/images/landing/fleteros.jpg');
+const FOTO_GRUISTA = require('../../assets/images/landing/gruista.jpg');
 
 // Landing pública (solo web). En iOS/Android, "/" es la bienvenida (index.tsx).
 export default function Landing() {
@@ -38,87 +51,48 @@ export default function Landing() {
   );
 }
 
-type SectionKey = 'como' | 'servicios' | 'gruas' | 'empresas' | 'fleteros';
+type SectionKey = 'servicios' | 'como' | 'gruas' | 'sumate';
 
 const NAV_LINKS: { id: SectionKey; label: string }[] = [
-  { id: 'como', label: 'Mudanzas' },
-  { id: 'gruas', label: 'Grúas' },
-  { id: 'empresas', label: 'Para empresas' },
-  { id: 'fleteros', label: 'Sumate como fletero' },
+  { id: 'servicios', label: 'Mudanzas y fletes' },
+  { id: 'gruas', label: 'Grúas y auxilio' },
+  { id: 'como', label: 'Cómo funciona' },
+  { id: 'sumate', label: 'Sumate' },
 ];
 
-const PASOS = [
+const CONFIANZA = [
+  { titulo: 'Precio antes de confirmar', texto: 'Sin sorpresas al final', Icon: Tag, degrade: 'sol' as const },
+  { titulo: 'Seguimiento en vivo', texto: 'En el mapa, con chat', Icon: MapPin, degrade: 'fuego' as const },
   {
-    titulo: 'Contanos qué movés',
-    texto: 'Dirección de retiro y entrega, qué vas a llevar y cuándo. Si querés, sumá fotos de la carga.',
+    titulo: 'Prestadores verificados',
+    texto: 'Documentos y seguro al día',
+    Icon: ShieldCheck,
+    colores: ['#6EE7A0', '#16A34A'] as const,
   },
-  { titulo: 'Elegí el vehículo', texto: 'Utilitario, camioneta o camión. Ves el precio estimado antes de confirmar.' },
+];
+
+const PASOS: { titulo: string; texto: string; degrade: NombreDegrade; claro: boolean }[] = [
+  {
+    titulo: 'Contanos qué y a dónde',
+    texto: 'Retiro, entrega y tamaño de la carga. O dónde estás y qué le pasó a tu vehículo.',
+    degrade: 'sol',
+    claro: false,
+  },
+  {
+    titulo: 'Mirá el precio y confirmá',
+    texto: 'Tarifa clara antes de pedir. Sin efectivo ni vueltas.',
+    degrade: 'fuego',
+    claro: true,
+  },
   {
     titulo: 'Seguilo en vivo',
-    texto: 'Mirá al chofer en el mapa desde que sale a buscar tu carga hasta que la entrega.',
+    texto: 'En el mapa y con chat, hasta que llega. Después calificás.',
+    degrade: 'grafito',
+    claro: true,
   },
 ];
 
-const SERVICIOS: { tipo: TipoServicio; titulo: string; texto: string; Icon: typeof Truck; accent: boolean }[] = [
-  {
-    tipo: 'flete',
-    titulo: 'Flete',
-    texto: 'Para pocas cosas: un electrodoméstico, algunos muebles o una compra grande.',
-    Icon: Truck,
-    accent: true,
-  },
-  {
-    tipo: 'mudanza',
-    titulo: 'Mudanza',
-    texto: 'Tu casa o departamento, con ayudantes para cargar y descargar.',
-    Icon: Package,
-    accent: false,
-  },
-  {
-    tipo: 'larga_distancia',
-    titulo: 'Larga distancia',
-    texto: 'Traslados entre ciudades con empresas que hacen ese recorrido.',
-    Icon: Route,
-    accent: false,
-  },
-];
-
-const MOTIVOS = [
-  {
-    titulo: 'Solo empresas verificadas',
-    texto: 'Revisamos CUIT, documentación y seguro de carga antes de que una empresa pueda recibir pedidos.',
-    Icon: ShieldCheck,
-    bg: colors.successBg,
-    fg: colors.success,
-  },
-  {
-    titulo: 'Precio antes de confirmar',
-    texto: 'Ves un precio estimado según distancia y ayudantes antes de pedir.',
-    Icon: Tag,
-    bg: '#FFF3D6',
-    fg: '#7A4F00',
-  },
-  {
-    titulo: 'Seguimiento en tiempo real',
-    texto: 'La ubicación del chofer y el estado de tu pedido se actualizan al instante.',
-    Icon: MapPin,
-    bg: '#E8EEFF',
-    fg: '#2F45B5',
-  },
-  {
-    titulo: 'Calificaciones mutuas',
-    texto: 'Después de cada viaje, cliente y empresa se califican. La reputación cuenta.',
-    Icon: Star,
-    bg: colors.surface,
-    fg: colors.ink,
-  },
-];
-
-const BENEFICIOS_EMPRESA = [
-  'Pedidos de tu zona en una cola en tiempo real',
-  'Asigná choferes de tu flota en un clic',
-  'Fotos de la carga antes de aceptar',
-];
+const AUXILIOS = ['Traslado con grúa', 'Batería', 'Rueda pinchada', 'Moto y bici'];
 
 function LandingPage() {
   const { width } = useWindowDimensions();
@@ -141,6 +115,7 @@ function LandingPage() {
     if (tipo) update({ tipo });
     router.push('/registro');
   }
+  const registrarEmpresa = () => router.push({ pathname: '/registro', params: { next: '/registrar-empresa' } });
 
   function remember(key: SectionKey, e: LayoutChangeEvent) {
     offsets.current[key] = e.nativeEvent.layout.y;
@@ -152,7 +127,7 @@ function LandingPage() {
       animated: true,
     });
 
-  const h1Size = isWide ? 68 : isMid ? 52 : 40;
+  const h1Size = isWide ? 76 : isMid ? 56 : 42;
   const h2Size = isWide ? 44 : 32;
   const sectionPad = isWide ? 88 : 56;
 
@@ -160,286 +135,264 @@ function LandingPage() {
     <View style={styles.page}>
       <StatusBar style={scroll.scrolled ? 'dark' : 'light'} />
       <ScrollView ref={scrollRef} style={styles.page} onScroll={onScroll} scrollEventThrottle={32}>
-        {/* Hero */}
-        <View style={[styles.dark, styles.heroBand]}>
-          <DotCanvas id="hero-dots" color="#232A34" gap={26} />
-          <View style={styles.glow} pointerEvents="none" />
-          <View
-            style={[
-              styles.container,
-              styles.hero,
-              {
-                flexDirection: isWide ? 'row' : 'column',
-                paddingBottom: isWide ? 88 : 48,
-                paddingTop: isWide ? 128 : 104,
-              },
-            ]}>
-            <View style={[styles.heroCopy, isWide && { flex: 1.05 }]}>
+        {/* Portada con foto */}
+        <View style={[styles.hero, { minHeight: isWide ? 780 : 720 }]}>
+          <Image
+            source={FOTO_PORTADA}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            contentPosition={{ left: '72%', top: '55%' }}
+            accessibilityLabel="Camión de mudanza con fleteros bajando cajas en una calle arbolada de Mendoza"
+          />
+          <LinearGradient
+            colors={
+              isWide
+                ? ['rgba(11,14,18,0.94)', 'rgba(11,14,18,0.74)', 'rgba(11,14,18,0.18)', 'rgba(11,14,18,0.05)']
+                : ['rgba(11,14,18,0.86)', 'rgba(11,14,18,0.7)', 'rgba(11,14,18,0.55)', 'rgba(11,14,18,0.5)']
+            }
+            locations={[0, 0.4, 0.72, 1]}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <LinearGradient
+            colors={['rgba(11,14,18,0)', 'rgba(11,14,18,0.88)']}
+            style={styles.heroFade}
+            pointerEvents="none"
+          />
+          <View style={[styles.container, styles.heroInner, { paddingTop: isWide ? 150 : 120 }]}>
+            <View style={{ maxWidth: 620, gap: 22 }}>
               <Reveal>
-                <View style={styles.badge}>
-                  <View style={styles.heroLiveDot} />
-                  <Text style={styles.badgeText}>Mendoza · fletes, mudanzas y grúas</Text>
-                </View>
+                <Vidrio oscuro style={styles.badge}>
+                  <View style={styles.badgeDot} />
+                  <Text style={styles.badgeText}>Nuevo: grúas y auxilio en Gran Mendoza</Text>
+                </Vidrio>
               </Reveal>
               <Reveal delay={80}>
                 <Text style={[styles.h1, { fontSize: h1Size, lineHeight: h1Size * 1.02 }]} accessibilityRole="header">
-                  Una app para mover <Text style={{ color: colors.accent }}>lo que importa.</Text>
+                  Mudanzas, fletes y grúas. <Text style={styles.h1Acento}>En una app.</Text>
                 </Text>
               </Reveal>
               <Reveal delay={160}>
                 <Text style={styles.heroText}>
-                  Pedí un flete, una mudanza o una grúa con prestadores verificados. Precio antes de confirmar y todo en
-                  el mapa, en vivo.
+                  Mudanzas, fletes y viajes de larga distancia. Grúa o auxilio si te quedás sin batería o pinchás una
+                  rueda, en auto, moto o bici. Precio antes de confirmar y todo en vivo.
                 </Text>
               </Reveal>
               <Reveal delay={240}>
-                <View style={[styles.serviciosHero, isMid && { flexDirection: 'row' }]}>
-                  {UNIDADES.map((sv) => {
-                    const activo = sv.estado === 'activo';
-                    return (
-                      <Pressable
-                        key={sv.id}
-                        accessibilityRole={activo ? 'link' : undefined}
-                        disabled={!activo}
-                        onPress={() => (activo ? pedir() : goTo('gruas'))}
-                        style={({ hovered }: { hovered?: boolean }) => [
-                          styles.servicioHero,
-                          isMid && { flex: 1 },
-                          hovered && activo && { borderColor: sv.color.acento },
-                        ]}>
-                        <View style={styles.servicioHeroTop}>
-                          <View style={[styles.servicioHeroIcono, { backgroundColor: sv.color.acento }]}>
-                            <sv.Icon
-                              size={20}
-                              color={sv.id === 'gruas' ? colors.white : colors.ink}
-                              strokeWidth={2.2}
-                            />
-                          </View>
-                          {!activo ? (
-                            <Text
-                              style={[
-                                styles.servicioHeroSello,
-                                { color: sv.color.acento, borderColor: sv.color.acento },
-                              ]}>
-                              Muy pronto
-                            </Text>
-                          ) : null}
-                        </View>
-                        <Text style={styles.servicioHeroTitulo}>{sv.titulo}</Text>
-                        <Text style={styles.servicioHeroTexto}>{sv.descripcion}</Text>
-                      </Pressable>
-                    );
-                  })}
+                <View style={styles.heroBotones}>
+                  <BotonDegrade titulo="Pedir mudanza o flete" degrade="sol" onPress={() => pedir()} />
+                  <BotonDegrade titulo="Pedir grúa o auxilio" degrade="fuego" onPress={() => pedir()} />
                 </View>
               </Reveal>
               <Reveal delay={300}>
-                <View style={styles.heroButtons}>
-                  <Button title="Crear cuenta gratis" onPress={() => pedir()} style={styles.heroButton} />
-                  <Pressable
-                    accessibilityRole="link"
-                    onPress={() => router.push('/login')}
-                    style={({ hovered }: { hovered?: boolean }) => [
-                      styles.ghostButton,
-                      hovered && { backgroundColor: 'rgba(255,255,255,0.06)' },
-                    ]}>
-                    <Text style={styles.ghostButtonText}>Ya tengo cuenta</Text>
-                  </Pressable>
-                </View>
-              </Reveal>
-              <Reveal delay={320}>
-                <View style={styles.trustRow}>
-                  {['Empresas verificadas', 'Precio antes de confirmar', 'Seguimiento en vivo'].map((t) => (
-                    <View key={t} style={styles.trust}>
-                      <Check size={16} color={colors.accent} strokeWidth={2.6} />
-                      <Text style={styles.trustText}>{t}</Text>
-                    </View>
-                  ))}
-                  <Pressable accessibilityRole="link" onPress={() => goTo('empresas')}>
-                    <Text style={styles.trustLink}>Soy empresa de mudanzas →</Text>
-                  </Pressable>
-                </View>
+                <Pressable accessibilityRole="link" onPress={() => router.push('/login')}>
+                  <Text style={styles.yaTengo}>Ya tengo cuenta · Iniciar sesión</Text>
+                </Pressable>
               </Reveal>
             </View>
-            <Reveal delay={200} style={isWide ? { flex: 1 } : { width: '100%' }}>
-              <HeroMap height={isWide ? 540 : 400} />
+            <Reveal delay={340}>
+              <View style={[styles.confianza, isWide && { flexDirection: 'row' }]}>
+                {CONFIANZA.map(({ titulo, texto, Icon, ...c }) => (
+                  <Vidrio key={titulo} oscuro style={[styles.confianzaItem, isWide && { flex: 1 }]}>
+                    <Degrade
+                      nombre={'degrade' in c ? c.degrade : undefined}
+                      colores={'colores' in c ? c.colores : undefined}
+                      diagonal
+                      style={styles.confianzaIcono}>
+                      <Icon size={19} color={'degrade' in c && c.degrade === 'sol' ? colors.ink : colors.white} />
+                    </Degrade>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={styles.confianzaTitulo}>{titulo}</Text>
+                      <Text style={styles.confianzaTexto}>{texto}</Text>
+                    </View>
+                  </Vidrio>
+                ))}
+              </View>
             </Reveal>
-          </View>
-        </View>
-
-        {/* Cómo funciona */}
-        <View
-          onLayout={(e) => remember('como', e)}
-          style={[styles.container, { paddingVertical: sectionPad, gap: 40 }]}>
-          <Reveal>
-            <SectionTitle eyebrow="Mudanzas y fletes" title="Tres pasos y tu carga está en camino" size={h2Size} />
-          </Reveal>
-          <View style={styles.grid}>
-            {PASOS.map((paso, index) => (
-              <Reveal key={paso.titulo} delay={index * 110} style={styles.cardSlot}>
-                <View style={[styles.card, styles.cardGray]}>
-                  <View style={styles.stepNumber}>
-                    <Text style={styles.stepNumberText}>{index + 1}</Text>
-                  </View>
-                  <Text style={styles.cardTitle}>{paso.titulo}</Text>
-                  <Text style={styles.cardText}>{paso.texto}</Text>
-                </View>
-              </Reveal>
-            ))}
           </View>
         </View>
 
         {/* Servicios */}
-        <View onLayout={(e) => remember('servicios', e)} style={styles.grayBand}>
-          <View style={[styles.container, { paddingVertical: sectionPad, gap: 40 }]}>
+        <View onLayout={(e) => remember('servicios', e)} style={styles.lienzo}>
+          <DotCanvas id="servicios-dots" color="#DCE0E5" gap={22} />
+          <View style={[styles.container, { paddingVertical: sectionPad, gap: 34 }]}>
             <Reveal>
-              <SectionTitle eyebrow="Servicios" title="Desde una heladera hasta toda tu casa" size={h2Size} />
-            </Reveal>
-            <View style={styles.grid}>
-              {SERVICIOS.map(({ tipo, titulo, texto, Icon, accent }, index) => (
-                <Reveal key={titulo} delay={index * 110} style={styles.cardSlot}>
-                  <View style={[styles.card, styles.cardWhite]}>
-                    <View style={[styles.iconTile, { backgroundColor: accent ? colors.accent : colors.surface }]}>
-                      <Icon size={28} color={colors.ink} strokeWidth={1.9} />
-                    </View>
-                    <Text style={[styles.cardTitle, { fontSize: 22 }]}>{titulo}</Text>
-                    <Text style={styles.cardText}>{texto}</Text>
-                    <Pressable accessibilityRole="link" onPress={() => pedir(tipo)} style={styles.cardLinkWrap}>
-                      <Text style={styles.cardLink}>Pedir {titulo.toLowerCase()}</Text>
-                    </Pressable>
-                  </View>
-                </Reveal>
-              ))}
-            </View>
-          </View>
-        </View>
-
-        {/* Por qué Flety */}
-        <View
-          style={[
-            styles.container,
-            { paddingVertical: sectionPad, gap: 40, flexDirection: isWide ? 'row' : 'column' },
-          ]}>
-          <Reveal style={[{ gap: 12 }, isWide && { flex: 1 }]}>
-            <SectionTitle eyebrow="Por qué Flety" title="Una red curada, no una vidriera abierta" size={h2Size} />
-            <Text style={styles.lead}>Ninguna empresa opera en Flety sin pasar antes por una aprobación manual.</Text>
-          </Reveal>
-          <View style={[styles.grid, isWide && { flex: 2 }]}>
-            {MOTIVOS.map(({ titulo, texto, Icon, bg, fg }, index) => (
-              <Reveal key={titulo} delay={index * 90} style={styles.motivo}>
-                <View style={[styles.motivoIcon, { backgroundColor: bg }]}>
-                  <Icon size={22} color={fg} strokeWidth={2} />
-                </View>
-                <Text style={[styles.cardTitle, { fontSize: 18 }]}>{titulo}</Text>
-                <Text style={[styles.cardText, { fontSize: 15 }]}>{texto}</Text>
-              </Reveal>
-            ))}
-          </View>
-        </View>
-
-        {/* Para empresas */}
-        {/* Grúas */}
-        <View onLayout={(e) => remember('gruas', e)} style={styles.gruasBand}>
-          <View style={[styles.container, { paddingVertical: sectionPad, gap: 32 }]}>
-            <Reveal>
-              <View style={{ gap: 12 }}>
-                <View style={styles.gruasSello}>
-                  <IconoGrua size={16} color={servicio('gruas').color.acento} />
-                  <Text style={styles.gruasSelloTexto}>Grúas · nuevo en Mendoza</Text>
-                </View>
-                <Text style={[styles.h2Dark, { fontSize: h2Size, lineHeight: h2Size * 1.08 }]}>
-                  Auxilio para tu vehículo, sin llamadas ni vueltas
-                </Text>
-                <Text style={styles.gruasTexto}>
-                  Pedís la grúa desde el mapa, te asignamos la más cercana y la seguís en vivo hasta que llega. Sabés el
-                  precio antes de confirmar.
+              <View style={[styles.cabecera, isWide && styles.cabeceraAncha]}>
+                <SectionTitle eyebrow="Servicios" title="¿Qué necesitás mover?" size={h2Size} color="#993C1D" />
+                <Text style={[styles.lead, { maxWidth: 420 }]}>
+                  Dos servicios, una sola cuenta. Elegís, ves el precio y listo.
                 </Text>
               </View>
             </Reveal>
-            <View style={styles.grid}>
-              {PASOS_GRUAS.map((paso, index) => (
-                <Reveal key={paso.titulo} delay={index * 110} style={styles.cardSlot}>
-                  <View style={styles.gruasCard}>
-                    <View style={styles.gruasNum}>
-                      <Text style={styles.gruasNumText}>{index + 1}</Text>
+            <View style={[styles.grid, isWide && { flexDirection: 'row' }]}>
+              <Reveal style={isWide ? { flex: 1 } : undefined}>
+                <TarjetaServicio
+                  grua={false}
+                  titulo="Mudanzas y fletes"
+                  texto="Mudanzas completas, fletes chicos y viajes de larga distancia. Utilitario, camioneta o camión, con ayudantes."
+                  chips={['Mudanza', 'Flete', 'Larga distancia', 'Con ayudantes']}
+                  cta="Pedir mudanza o flete"
+                  onPress={() => pedir('mudanza')}
+                />
+              </Reveal>
+              <Reveal delay={120} style={isWide ? { flex: 1 } : undefined}>
+                <TarjetaServicio
+                  grua
+                  titulo="Grúas y auxilio"
+                  texto="Traslado con grúa de plancha o auxilio en el lugar: batería descargada o rueda pinchada. Te mandamos al prestador más cercano."
+                  chips={['Grúa', 'Batería', 'Rueda pinchada', 'Auto · moto · bici']}
+                  cta="Pedir grúa o auxilio"
+                  onPress={() => pedir()}
+                />
+              </Reveal>
+            </View>
+          </View>
+        </View>
+
+        {/* Cómo funciona */}
+        <View onLayout={(e) => remember('como', e)} style={{ backgroundColor: FONDO_LIENZO }}>
+          <View
+            style={[
+              styles.container,
+              { paddingBottom: sectionPad, gap: 40, flexDirection: isWide ? 'row' : 'column', alignItems: 'center' },
+            ]}>
+            <View style={[{ gap: 20 }, isWide && { flex: 1 }]}>
+              <Reveal>
+                <SectionTitle
+                  eyebrow="Cómo funciona"
+                  title="Tres pasos y ya está en camino"
+                  size={h2Size}
+                  color="#7A5A00"
+                />
+              </Reveal>
+              {PASOS.map((p, i) => (
+                <Reveal key={p.titulo} delay={i * 100}>
+                  <View style={styles.paso}>
+                    <Degrade nombre={p.degrade} diagonal style={styles.pasoNumero}>
+                      <Text style={[styles.pasoNumeroTexto, p.claro && { color: colors.white }]}>{i + 1}</Text>
+                    </Degrade>
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Text style={styles.pasoTitulo}>{p.titulo}</Text>
+                      <Text style={styles.pasoTexto}>{p.texto}</Text>
                     </View>
-                    <Text style={styles.gruasCardTitulo}>{paso.titulo}</Text>
-                    <Text style={styles.gruasCardTexto}>{paso.texto}</Text>
                   </View>
                 </Reveal>
               ))}
             </View>
-            <Text style={styles.gruasNota}>
-              ¿Sos gruista o tenés una empresa de auxilio? Creá tu cuenta y sumate desde la app para recibir pedidos de
-              tu zona.
-            </Text>
+            <Reveal delay={150} style={isWide ? { flex: 1, alignItems: 'center' } : { alignItems: 'center' }}>
+              <CelularMuestra />
+            </Reveal>
           </View>
         </View>
 
-        <View onLayout={(e) => remember('empresas', e)} style={[styles.container, { paddingBottom: sectionPad }]}>
-          <Reveal>
-            <View style={[styles.empresas, { flexDirection: isWide ? 'row' : 'column', padding: isWide ? 56 : 28 }]}>
-              <View style={[{ gap: 20 }, isWide && { flex: 1 }]}>
-                <Text style={[styles.eyebrow, { color: colors.accent }]}>Para empresas</Text>
-                <Text style={[styles.h2, { fontSize: isWide ? 40 : 30, color: colors.white }]}>
-                  ¿Tenés una empresa de fletes o mudanzas?
+        {/* Grúas y auxilio */}
+        <View onLayout={(e) => remember('gruas', e)} style={styles.banda}>
+          <Image
+            source={FOTO_GRUA}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            contentPosition={{ left: '60%', top: '50%' }}
+            accessibilityLabel="Grúa de plancha naranja llevando un auto por una ruta al anochecer"
+          />
+          <LinearGradient
+            colors={['rgba(30,10,3,0.95)', 'rgba(110,35,8,0.8)', 'rgba(240,82,15,0.18)', 'rgba(0,0,0,0)']}
+            locations={[0, 0.42, 0.78, 1]}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={[styles.container, { paddingVertical: isWide ? 110 : 72 }]}>
+            <Reveal>
+              <View style={{ maxWidth: 560, gap: 18 }}>
+                <Vidrio oscuro style={styles.badge}>
+                  <Text style={styles.badgeText}>Grúas y auxilio · nuevo en Mendoza</Text>
+                </Vidrio>
+                <Text style={[styles.h2Claro, { fontSize: isWide ? 48 : 34, lineHeight: (isWide ? 48 : 34) * 1.04 }]}>
+                  Grúa o auxilio, sin llamadas ni vueltas
                 </Text>
-                <Text style={[styles.lead, { color: colors.mutedOnInk }]}>
-                  Sumate a la red y recibí pedidos de tu zona sin salir a buscarlos.
+                <Text style={styles.bandaTexto}>
+                  ¿Te quedaste sin batería, pinchaste una rueda o necesitás un traslado? Marcás dónde estás, ves el
+                  precio y te mandamos al prestador más cercano. Lo seguís en el mapa hasta que llega.
                 </Text>
-                <View style={{ gap: 12 }}>
-                  {BENEFICIOS_EMPRESA.map((b) => (
-                    <View key={b} style={styles.beneficio}>
-                      <Check size={20} color={colors.accent} strokeWidth={2.4} />
-                      <Text style={styles.beneficioText}>{b}</Text>
-                    </View>
+                <View style={styles.chipsFila}>
+                  {AUXILIOS.map((a) => (
+                    <Vidrio key={a} oscuro style={styles.chipVidrio}>
+                      <Text style={styles.chipVidrioTexto}>{a}</Text>
+                    </Vidrio>
                   ))}
                 </View>
-                <Button
-                  title="Registrar mi empresa"
-                  onPress={() => router.push({ pathname: '/registro', params: { next: '/registrar-empresa' } })}
-                  style={styles.empresasButton}
-                />
-              </View>
-              <View style={[styles.queueCard, isWide && { flex: 1 }]}>
-                <View style={styles.queueHeader}>
-                  <Text style={styles.queueTitle}>Cola de pedidos</Text>
-                  <View style={styles.liveChip}>
-                    <View style={styles.liveDot} />
-                    <Text style={styles.liveText}>En vivo</Text>
-                  </View>
+                <View style={styles.heroBotones}>
+                  <BotonDegrade titulo="Pedir auxilio" degrade="fuego" onPress={() => pedir()} />
+                  <Pressable accessibilityRole="link" onPress={() => router.push('/registro')}>
+                    <Vidrio oscuro style={styles.botonVidrio}>
+                      <Text style={styles.botonVidrioTexto}>Soy prestador</Text>
+                    </Vidrio>
+                  </Pressable>
                 </View>
-                {[
-                  ['Mudanza · Mediano', 'Ahora · 1 ayudante'],
-                  ['Flete · Chico', 'Programado · sin ayudantes'],
-                  ['Larga distancia · Grande', 'Programado · 2 ayudantes'],
-                ].map(([titulo, detalle]) => (
-                  <View key={titulo} style={styles.queueRow}>
-                    <View style={{ flex: 1, gap: 2 }}>
-                      <Text style={styles.queueRowTitle}>{titulo}</Text>
-                      <Text style={styles.queueRowDetail}>{detalle}</Text>
-                    </View>
-                    <Text style={styles.queueAccept}>Aceptar</Text>
-                  </View>
-                ))}
               </View>
-            </View>
-          </Reveal>
-        </View>
-
-        {/* Sumate como fletero */}
-        <View onLayout={(e) => remember('fleteros', e)}>
-          <FleterosSection
-            isWide={isWide}
-            onEmpresas={() => router.push({ pathname: '/registro', params: { next: '/registrar-empresa' } })}
-          />
-        </View>
-
-        {/* CTA */}
-        <View style={{ backgroundColor: colors.accent }}>
-          <View style={[styles.container, styles.cta]}>
-            <Text style={[styles.h2, { fontSize: isWide ? 48 : 32 }]}>¿Qué movemos hoy?</Text>
-            <Button title="Pedir un flete" variant="dark" onPress={() => pedir()} style={styles.ctaButton} />
+            </Reveal>
           </View>
+        </View>
+
+        {/* Para prestadores */}
+        <View onLayout={(e) => remember('sumate', e)} style={styles.lienzo}>
+          <DotCanvas id="sumate-dots" color="#DCE0E5" gap={22} />
+          <View style={[styles.container, { paddingVertical: sectionPad, gap: 30 }]}>
+            <Reveal>
+              <SectionTitle eyebrow="Para prestadores" title="Trabajá con Flety" size={h2Size} color="#993C1D" />
+            </Reveal>
+            <View style={[styles.grid, isWide && { flexDirection: 'row' }]}>
+              <Reveal style={isWide ? { flex: 1 } : undefined}>
+                <TarjetaFoto
+                  foto={FOTO_FLETEROS}
+                  alt="Dos fleteros cargando un sillón y cajas en una camioneta amarilla"
+                  etiqueta="Empresas de mudanzas y fletes"
+                  colorEtiqueta="#FFD452"
+                  titulo="Sumá tu empresa: mudanzas, fletes y larga distancia en un solo panel"
+                  cta="Registrar mi empresa"
+                  degrade="sol"
+                  onPress={registrarEmpresa}
+                  extra={
+                    <Link href={{ pathname: '/registro', params: { next: '/unirse' } }} style={styles.linkChico}>
+                      Soy chofer y tengo un código →
+                    </Link>
+                  }
+                />
+              </Reveal>
+              <Reveal delay={120} style={isWide ? { flex: 1 } : undefined}>
+                <TarjetaFoto
+                  foto={FOTO_GRUISTA}
+                  alt="Gruista con chaleco naranja junto a su grúa, de noche"
+                  etiqueta="Gruistas y auxilio mecánico"
+                  colorEtiqueta="#FFB48A"
+                  titulo="Atendé servicios de grúa, batería y gomería cerca tuyo"
+                  cta="Sumarme como prestador"
+                  degrade="fuego"
+                  onPress={() => router.push('/registro')}
+                />
+              </Reveal>
+            </View>
+          </View>
+        </View>
+
+        {/* Cierre */}
+        <View style={{ backgroundColor: FONDO_LIENZO, paddingHorizontal: 16, paddingBottom: sectionPad }}>
+          <Reveal>
+            <Degrade nombre="grafito" diagonal style={[styles.cierre, { padding: isWide ? 56 : 28 }]}>
+              <Resplandor color="#FF6B1A" tamano={320} />
+              <Resplandor
+                color="#FFC233"
+                tamano={300}
+                style={{ right: undefined, top: undefined, left: -90, bottom: -110 }}
+              />
+              <View style={{ maxWidth: 560, gap: 10, flexGrow: 1, flexShrink: 1, flexBasis: 260 }}>
+                <Text style={[styles.h2Claro, { fontSize: isWide ? 40 : 30 }]}>¿Listo para mover algo?</Text>
+                <Text style={styles.cierreTexto}>Creá tu cuenta gratis y pedí tu primer servicio en minutos.</Text>
+              </View>
+              <BotonDegrade titulo="Crear mi cuenta" degrade="sol" onPress={() => pedir()} />
+            </Degrade>
+          </Reveal>
         </View>
 
         {/* Footer */}
@@ -448,16 +401,18 @@ function LandingPage() {
             <View style={[styles.footerTop, { flexDirection: isMid ? 'row' : 'column' }]}>
               <View style={{ gap: 12, maxWidth: 360, flexShrink: 1 }}>
                 <Text style={styles.footerBrand}>flety</Text>
-                <Text style={styles.footerText}>Fletes y mudanzas con empresas verificadas. Mendoza, Argentina.</Text>
+                <Text style={styles.footerText}>
+                  Mudanzas, fletes, grúas y auxilio con prestadores verificados. Mendoza, Argentina.
+                </Text>
               </View>
               <View style={styles.footerCols}>
                 <View style={{ gap: 10 }}>
                   <Text style={styles.footerHead}>Plataforma</Text>
                   <Link href="/registro" style={styles.footerLink}>
-                    Pedir un flete
+                    Pedir un servicio
                   </Link>
                   <Link href={{ pathname: '/registro', params: { next: '/unirse' } }} style={styles.footerLink}>
-                    Sumate como fletero
+                    Sumate como chofer
                   </Link>
                   <Link href="/login" style={styles.footerLink}>
                     Iniciar sesión
@@ -486,17 +441,180 @@ function LandingPage() {
   );
 }
 
-const PASOS_GRUAS = [
-  { titulo: 'Pedís desde el mapa', texto: 'Marcás dónde está el vehículo, a dónde va y qué le pasa.' },
-  { titulo: 'Te asignamos la más cercana', texto: 'La grúa disponible más cerca acepta y ves quién va.' },
-  { titulo: 'La seguís en vivo', texto: 'Ves la grúa en el mapa y cuánto falta, hasta la entrega.' },
-];
-
-function SectionTitle({ eyebrow, title, size }: { eyebrow: string; title: string; size: number }) {
+function BotonDegrade({ titulo, degrade, onPress }: { titulo: string; degrade: 'sol' | 'fuego'; onPress: () => void }) {
+  const claro = degrade === 'fuego';
   return (
-    <View style={{ gap: 12, maxWidth: 640 }}>
-      <Text style={styles.eyebrow}>{eyebrow}</Text>
-      <Text style={[styles.h2, { fontSize: size, lineHeight: size * 1.08 }]} accessibilityRole="header">
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ hovered, pressed }: { hovered?: boolean; pressed: boolean }) => [
+        { borderRadius: 18 },
+        hovered && { transform: [{ translateY: -2 }] },
+        pressed && { transform: [{ scale: 0.98 }] },
+      ]}>
+      <Degrade
+        nombre={degrade}
+        style={[
+          styles.boton,
+          {
+            boxShadow: `${claro ? SOMBRAS.fuego : SOMBRAS.sol}, inset 0px 1px 0px rgba(255,255,255,${claro ? 0.35 : 0.65})`,
+          },
+        ]}>
+        <Text style={[styles.botonTexto, claro && { color: colors.white }]}>{titulo}</Text>
+        <ArrowRight size={18} color={claro ? colors.white : colors.ink} strokeWidth={2.4} />
+      </Degrade>
+    </Pressable>
+  );
+}
+
+function TarjetaServicio({
+  grua,
+  titulo,
+  texto,
+  chips,
+  cta,
+  onPress,
+}: {
+  grua: boolean;
+  titulo: string;
+  texto: string;
+  chips: string[];
+  cta: string;
+  onPress: () => void;
+}) {
+  const tinta = grua ? '#4A1B0C' : '#3D2C00';
+  const suave = grua ? '#993C1D' : '#7A5A00';
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ hovered }: { hovered?: boolean }) => [{ flex: 1 }, hovered && { transform: [{ translateY: -3 }] }]}>
+      <Degrade
+        nombre={grua ? 'fuegoSuave' : 'solSuave'}
+        diagonal
+        style={[
+          styles.servicio,
+          { boxShadow: `${grua ? SOMBRAS.fuegoTarjeta : SOMBRAS.solTarjeta}, inset 0px 1px 0px rgba(255,255,255,0.8)` },
+        ]}>
+        <Resplandor color={grua ? '#FF6B1A' : '#FFC233'} tamano={260} />
+        <View style={{ alignSelf: 'flex-end' }}>
+          {grua ? <GruaPlanchaIlustracion ancho={210} /> : <CamionetaIlustracion ancho={210} />}
+        </View>
+        <Text style={[styles.servicioTitulo, { color: tinta }]}>{titulo}</Text>
+        <Text style={[styles.servicioTexto, { color: suave }]}>{texto}</Text>
+        <View style={styles.chipsFila}>
+          {chips.map((c) => (
+            <Text key={c} style={styles.chipClaro}>
+              {c}
+            </Text>
+          ))}
+        </View>
+        <Degrade
+          nombre={grua ? 'fuego' : 'grafito'}
+          style={[styles.servicioCta, { boxShadow: grua ? SOMBRAS.fuego : SOMBRAS.grafito }]}>
+          <Text style={styles.servicioCtaTexto}>{cta}</Text>
+          <ArrowRight size={17} color={colors.white} strokeWidth={2.4} />
+        </Degrade>
+      </Degrade>
+    </Pressable>
+  );
+}
+
+function TarjetaFoto({
+  foto,
+  alt,
+  etiqueta,
+  colorEtiqueta,
+  titulo,
+  cta,
+  degrade,
+  onPress,
+  extra,
+}: {
+  foto: number;
+  alt: string;
+  etiqueta: string;
+  colorEtiqueta: string;
+  titulo: string;
+  cta: string;
+  degrade: 'sol' | 'fuego';
+  onPress: () => void;
+  extra?: React.ReactNode;
+}) {
+  return (
+    <View style={styles.tarjetaFoto}>
+      <Image
+        source={foto}
+        style={StyleSheet.absoluteFill}
+        contentFit="cover"
+        contentPosition={{ left: '50%', top: '28%' }}
+        accessibilityLabel={alt}
+      />
+      <LinearGradient
+        colors={['rgba(18,22,28,0)', 'rgba(18,22,28,0.92)']}
+        locations={[0.35, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+      <Vidrio oscuro style={styles.tarjetaFotoPanel}>
+        <Text style={[styles.tarjetaFotoEtiqueta, { color: colorEtiqueta }]}>{etiqueta}</Text>
+        <Text style={styles.tarjetaFotoTitulo}>{titulo}</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 14 }}>
+          <BotonDegrade titulo={cta} degrade={degrade} onPress={onPress} />
+          {extra}
+        </View>
+      </Vidrio>
+    </View>
+  );
+}
+
+// Celular de muestra con el seguimiento en vivo (dibujado, no es una captura).
+function CelularMuestra() {
+  return (
+    <View style={styles.celularZona}>
+      <View style={styles.celular}>
+        <View style={[styles.calle, { top: '30%', height: 10, left: 0, right: 0 }]} />
+        <View style={[styles.calle, { top: 0, bottom: 0, left: '40%', width: 10 }]} />
+        <View style={[styles.calle, { top: '62%', height: 6, left: 0, right: 0 }]} />
+        <Degrade nombre="fuego" diagonal style={styles.marcadorGrua} />
+        <View style={styles.marcadorOrigen} />
+        <Vidrio style={styles.celularPanel}>
+          <Text style={styles.celularVivo}>EN VIVO</Text>
+          <Text style={styles.celularTitulo}>La grúa va en camino</Text>
+          <View style={styles.celularBarra}>
+            <Degrade nombre="fuego" style={{ width: '55%', height: '100%', borderRadius: 3 }} />
+          </View>
+          <Degrade nombre="grafito" style={styles.celularBoton}>
+            <Text style={styles.celularBotonTexto}>Chat con el gruista</Text>
+          </Degrade>
+        </Vidrio>
+      </View>
+      <Vidrio style={[styles.flotante, { left: 0, top: 70 }]}>
+        <Text style={styles.flotanteChico}>Precio final</Text>
+        <Text style={styles.flotanteGrande}>Antes de pedir</Text>
+      </Vidrio>
+      <Vidrio style={[styles.flotante, styles.flotanteFila, { right: 0, bottom: 100 }]}>
+        <Star size={15} color="#F59E0B" fill="#F59E0B" />
+        <Text style={styles.flotanteTexto}>Calificá tu servicio</Text>
+      </Vidrio>
+    </View>
+  );
+}
+
+function SectionTitle({
+  eyebrow,
+  title,
+  size,
+  color,
+}: {
+  eyebrow: string;
+  title: string;
+  size: number;
+  color: string;
+}) {
+  return (
+    <View style={{ gap: 6, maxWidth: 640 }}>
+      <Text style={[styles.eyebrow, { color }]}>{eyebrow}</Text>
+      <Text style={[styles.h2, { fontSize: size, lineHeight: size * 1.06 }]} accessibilityRole="header">
         {title}
       </Text>
     </View>
@@ -504,256 +622,182 @@ function SectionTitle({ eyebrow, title, size }: { eyebrow: string; title: string
 }
 
 const styles = StyleSheet.create({
-  serviciosHero: { gap: 12 },
-  servicioHero: {
-    gap: 6,
-    padding: 16,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#2A313B',
-    backgroundColor: 'rgba(26,31,38,0.85)',
-  },
-  servicioHeroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  servicioHeroIcono: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  servicioHeroSello: {
-    fontFamily: fonts.bold,
-    fontSize: 11,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
-    borderRadius: 999,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  servicioHeroTitulo: { fontFamily: fonts.bold, fontSize: 17, color: colors.white, marginTop: 4 },
-  servicioHeroTexto: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 20, color: colors.mutedOnInk },
-  gruasBand: { backgroundColor: '#1A0E08' },
-  gruasSello: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,107,26,0.12)',
-  },
-  gruasSelloTexto: { fontFamily: fonts.bold, fontSize: 13, color: '#FF8A4C' },
-  h2Dark: { fontFamily: fonts.display, letterSpacing: -0.8, color: colors.white, maxWidth: 760 },
-  gruasTexto: { fontFamily: fonts.regular, fontSize: 17, lineHeight: 26, color: '#E7C9B8', maxWidth: 640 },
-  gruasCard: {
-    flex: 1,
-    gap: 10,
-    padding: 22,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,107,26,0.25)',
-  },
-  gruasNum: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#FF6B1A',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  gruasNumText: { fontFamily: fonts.bold, fontSize: 15, color: colors.white },
-  gruasCardTitulo: { fontFamily: fonts.bold, fontSize: 18, color: colors.white },
-  gruasCardTexto: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 22, color: '#E7C9B8' },
-  gruasNota: { fontFamily: fonts.medium, fontSize: 15, lineHeight: 22, color: '#FFB48A' },
-  page: { flex: 1, backgroundColor: colors.white },
-  container: { width: '100%', maxWidth: 1200, alignSelf: 'center', paddingHorizontal: 24 },
-  dark: { backgroundColor: colors.ink },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 20,
-    gap: 16,
-  },
-  brand: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  brandMark: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  brandWord: { fontFamily: fonts.display, fontSize: 24, letterSpacing: -0.4, color: colors.white },
-  navLinks: { flexDirection: 'row', gap: 28 },
-  navLink: { fontFamily: fonts.medium, fontSize: 15, color: '#C5CBD3' },
-  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  loginLink: { fontFamily: fonts.semibold, fontSize: 15, color: colors.white },
-  headerButton: { height: 44, borderRadius: 12, paddingHorizontal: 18 },
-  hero: { gap: 48, paddingTop: 32, alignItems: 'center', zIndex: 1 },
-  heroCopy: { gap: 24, width: '100%' },
+  page: { flex: 1, backgroundColor: FONDO_LIENZO },
+  container: { width: '100%', maxWidth: 1180, alignSelf: 'center', paddingHorizontal: 20 },
+  hero: { backgroundColor: '#0B0E12', overflow: 'hidden' },
+  heroFade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 240 },
+  heroInner: { gap: 56, paddingBottom: 40 },
   badge: {
+    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    alignSelf: 'flex-start',
     paddingHorizontal: 14,
     paddingVertical: 7,
-    borderRadius: radius.pill,
-    backgroundColor: '#1E242C',
-    borderWidth: 1,
-    borderColor: '#2A313B',
+    borderRadius: 999,
   },
-  heroLiveDot: {
-    width: 8,
-    height: 8,
+  badgeDot: {
+    width: 7,
+    height: 7,
     borderRadius: 4,
-    backgroundColor: '#22C55E',
-    boxShadow: '0 0 0 4px rgba(34, 197, 94, 0.18)',
+    backgroundColor: '#FF6B1A',
+    boxShadow: '0px 0px 0px 4px rgba(255,107,26,0.3)',
   },
-  heroBand: { overflow: 'hidden' },
-  glow: {
-    position: 'absolute',
-    top: -160,
-    right: -120,
-    width: 620,
-    height: 620,
-    borderRadius: 310,
-    backgroundColor: 'rgba(255, 194, 51, 0.16)',
-    filter: 'blur(90px)',
-  } as object,
-  heroButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  heroButton: { paddingHorizontal: 28 },
-  pasosHero: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  pasoHero: {
+  badgeText: { fontFamily: fonts.bold, fontSize: 13, color: '#FFE4D3' },
+  h1: { fontFamily: fonts.display, letterSpacing: -2, color: colors.white },
+  h1Acento: { color: '#FFB21E' },
+  heroText: { fontFamily: fonts.regular, fontSize: 19, lineHeight: 29, color: '#D4D9DF' },
+  heroBotones: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  yaTengo: { fontFamily: fonts.bold, fontSize: 15, color: '#FFD452' },
+  boton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingVertical: 7,
-    paddingLeft: 7,
-    paddingRight: 14,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderWidth: 1,
-    borderColor: '#2A313B',
-  },
-  pasoHeroNum: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    overflow: 'hidden',
-    textAlign: 'center',
-    lineHeight: 22,
-    fontFamily: fonts.display,
-    fontSize: 12,
-    color: colors.ink,
-    backgroundColor: colors.accent,
-  },
-  pasoHeroText: { fontFamily: fonts.semibold, fontSize: 14, color: '#E4E8ED' },
-  trustRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 16 },
-  trust: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  trustText: { fontFamily: fonts.medium, fontSize: 14, color: '#C5CBD3' },
-  trustLink: { fontFamily: fonts.semibold, fontSize: 14, color: colors.white, textDecorationLine: 'underline' },
-  badgeText: { fontFamily: fonts.semibold, fontSize: 13, color: '#D5DBE3' },
-  h1: { fontFamily: fonts.display, letterSpacing: -1.5, color: colors.white },
-  heroText: { fontFamily: fonts.regular, fontSize: 18, lineHeight: 27, color: colors.mutedOnInk, maxWidth: 520 },
-  ghostButton: {
+    gap: 10,
+    paddingHorizontal: 22,
     height: 56,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: '#3A424D',
-    paddingHorizontal: 24,
-    justifyContent: 'center',
+    borderRadius: 18,
   },
-  ghostButtonText: { fontFamily: fonts.semibold, fontSize: 16, color: colors.white },
-  eyebrow: {
+  botonTexto: { fontFamily: fonts.extrabold, fontSize: 16, color: colors.ink },
+  confianza: { gap: 12 },
+  confianzaItem: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 20 },
+  confianzaIcono: { width: 40, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  confianzaTitulo: { fontFamily: fonts.bold, fontSize: 15, color: colors.white },
+  confianzaTexto: { fontFamily: fonts.regular, fontSize: 13, color: '#C5CBD3' },
+  lienzo: { backgroundColor: FONDO_LIENZO, overflow: 'hidden' },
+  cabecera: { gap: 12 },
+  cabeceraAncha: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
+  eyebrow: { fontFamily: fonts.extrabold, fontSize: 14 },
+  h2: { fontFamily: fonts.display, letterSpacing: -1, color: colors.ink },
+  h2Claro: { fontFamily: fonts.display, letterSpacing: -1, color: colors.white },
+  lead: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 24, color: colors.muted },
+  grid: { gap: 18 },
+  servicio: { flex: 1, gap: 14, padding: 28, borderRadius: 30, overflow: 'hidden' },
+  servicioTitulo: { fontFamily: fonts.display, fontSize: 30, letterSpacing: -0.6 },
+  servicioTexto: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 24 },
+  chipsFila: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chipClaro: {
     fontFamily: fonts.extrabold,
     fontSize: 13,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: '#7A4F00',
-  },
-  h2: { fontFamily: fonts.display, letterSpacing: -0.8, color: colors.ink },
-  lead: { fontFamily: fonts.regular, fontSize: 17, lineHeight: 26, color: colors.muted },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 20 },
-  cardSlot: { flexGrow: 1, flexBasis: 260 },
-  card: { flex: 1, gap: 14, padding: 28, borderRadius: 24 },
-  cardGray: { backgroundColor: '#F4F5F7' },
-  cardWhite: { backgroundColor: colors.white, borderWidth: 1, borderColor: '#E3E6EA' },
-  stepNumber: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepNumberText: { fontFamily: fonts.display, fontSize: 20, color: colors.accent },
-  cardTitle: { fontFamily: fonts.bold, fontSize: 20, color: colors.ink },
-  cardText: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 24, color: colors.muted },
-  cardLinkWrap: { marginTop: 'auto', alignSelf: 'flex-start' },
-  cardLink: { fontFamily: fonts.bold, fontSize: 15, color: colors.ink, textDecorationLine: 'underline' },
-  iconTile: { width: 56, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  grayBand: { backgroundColor: '#F4F5F7' },
-  motivo: { flexGrow: 1, flexBasis: 240, gap: 10 },
-  motivoIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  empresas: { gap: 40, borderRadius: 32, backgroundColor: colors.ink, alignItems: 'center' },
-  beneficio: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  beneficioText: { fontFamily: fonts.regular, fontSize: 16, color: '#E4E8ED' },
-  empresasButton: { alignSelf: 'flex-start', paddingHorizontal: 28 },
-  queueCard: { width: '100%', gap: 12, padding: 20, borderRadius: 24, backgroundColor: colors.white },
-  queueHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  queueTitle: { fontFamily: fonts.bold, fontSize: 16, color: colors.ink },
-  liveChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-    backgroundColor: colors.successBg,
-  },
-  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#22A06B' },
-  liveText: { fontFamily: fonts.bold, fontSize: 12, color: colors.success },
-  queueRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: colors.lineSoft,
-  },
-  queueRowTitle: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
-  queueRowDetail: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted },
-  queueAccept: {
-    fontFamily: fonts.bold,
-    fontSize: 14,
     color: colors.ink,
-    backgroundColor: colors.accent,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 10,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.72)',
     overflow: 'hidden',
   },
-  cta: {
+  servicioCta: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 18,
+    height: 48,
+    borderRadius: 15,
+  },
+  servicioCtaTexto: { fontFamily: fonts.extrabold, fontSize: 15, color: colors.white },
+  paso: { flexDirection: 'row', alignItems: 'flex-start', gap: 14 },
+  pasoNumero: {
+    width: 46,
+    height: 46,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0px 10px 18px -8px rgba(18,22,28,0.5)',
+  },
+  pasoNumeroTexto: { fontFamily: fonts.display, fontSize: 20, color: colors.ink },
+  pasoTitulo: { fontFamily: fonts.bold, fontSize: 18, color: colors.ink },
+  pasoTexto: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 22, color: colors.muted },
+  celularZona: { width: 340, maxWidth: '100%', height: 480, alignItems: 'center' },
+  celular: {
+    width: 270,
+    height: 470,
+    borderRadius: 42,
+    borderWidth: 9,
+    borderColor: colors.ink,
+    backgroundColor: '#ECEFF2',
+    overflow: 'hidden',
+    boxShadow: '0px 40px 80px -30px rgba(18,22,28,0.6)',
+  },
+  calle: { position: 'absolute', backgroundColor: colors.white },
+  marcadorGrua: {
+    position: 'absolute',
+    left: '58%',
+    top: '18%',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 3,
+    borderColor: colors.white,
+    boxShadow: '0px 0px 0px 10px rgba(255,107,26,0.2)',
+  },
+  marcadorOrigen: {
+    position: 'absolute',
+    left: '30%',
+    top: '46%',
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 4,
+    borderColor: colors.white,
+    backgroundColor: colors.ink,
+  },
+  celularPanel: { position: 'absolute', left: 8, right: 8, bottom: 8, padding: 14, borderRadius: 26, gap: 8 },
+  celularVivo: { fontFamily: fonts.extrabold, fontSize: 11, color: '#993C1D' },
+  celularTitulo: { fontFamily: fonts.display, fontSize: 18, color: colors.ink },
+  celularBarra: { height: 5, borderRadius: 3, backgroundColor: '#E5E7EB', overflow: 'hidden' },
+  celularBoton: { paddingVertical: 10, borderRadius: 13, alignItems: 'center' },
+  celularBotonTexto: { fontFamily: fonts.extrabold, fontSize: 13, color: colors.white },
+  flotante: {
+    position: 'absolute',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 18,
+    boxShadow: '0px 18px 34px -16px rgba(18,22,28,0.45)',
+  },
+  flotanteFila: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  flotanteChico: { fontFamily: fonts.bold, fontSize: 11, color: colors.muted },
+  flotanteGrande: { fontFamily: fonts.display, fontSize: 18, color: colors.ink },
+  flotanteTexto: { fontFamily: fonts.extrabold, fontSize: 13, color: colors.ink },
+  banda: { backgroundColor: '#1E0A03', overflow: 'hidden' },
+  bandaTexto: { fontFamily: fonts.regular, fontSize: 18, lineHeight: 27, color: '#FFE4D3' },
+  chipVidrio: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 14 },
+  chipVidrioTexto: { fontFamily: fonts.extrabold, fontSize: 14, color: colors.white },
+  botonVidrio: { height: 56, paddingHorizontal: 22, borderRadius: 18, justifyContent: 'center' },
+  botonVidrioTexto: { fontFamily: fonts.extrabold, fontSize: 16, color: colors.white },
+  tarjetaFoto: {
+    flex: 1,
+    minHeight: 460,
+    borderRadius: 32,
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
+    backgroundColor: colors.ink,
+    boxShadow: '0px 30px 60px -30px rgba(18,22,28,0.8)',
+  },
+  tarjetaFotoPanel: { margin: 16, padding: 22, borderRadius: 24, gap: 10 },
+  tarjetaFotoEtiqueta: { fontFamily: fonts.extrabold, fontSize: 14 },
+  tarjetaFotoTitulo: { fontFamily: fonts.display, fontSize: 26, lineHeight: 29, color: colors.white },
+  linkChico: { fontFamily: fonts.bold, fontSize: 14, color: '#FFE08A' },
+  cierre: {
+    width: '100%',
+    maxWidth: 1180,
+    alignSelf: 'center',
+    borderRadius: 34,
+    overflow: 'hidden',
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 24,
-    paddingVertical: 64,
+    boxShadow: '0px 36px 70px -34px rgba(15,19,24,0.9)',
   },
-  ctaButton: { paddingHorizontal: 28 },
-  footer: { paddingTop: 56, paddingBottom: 32, gap: 40 },
+  cierreTexto: { fontFamily: fonts.regular, fontSize: 17, color: '#C5CBD3' },
+  dark: { backgroundColor: '#0F1318' },
+  footer: { paddingVertical: 48, gap: 32 },
   footerTop: { justifyContent: 'space-between', gap: 32 },
-  footerBrand: { fontFamily: fonts.display, fontSize: 24, color: colors.white },
-  footerText: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 22, color: colors.mutedOnInk },
-  // Las columnas bajan de línea si no entran (antes "Legal" quedaba cortada en el celular).
-  footerCols: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 40, rowGap: 24, flexShrink: 1 },
-  footerHead: { fontFamily: fonts.bold, fontSize: 15, color: colors.white },
-  footerLink: { fontFamily: fonts.regular, fontSize: 15, color: colors.mutedOnInk },
-  copyright: {
-    fontFamily: fonts.regular,
-    fontSize: 13,
-    color: colors.faintOnInk,
-    paddingTop: 24,
-    borderTopWidth: 1,
-    borderTopColor: '#232A34',
-  },
+  footerBrand: { fontFamily: fonts.display, fontSize: 28, color: colors.white },
+  footerText: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 21, color: '#8B95A1' },
+  footerCols: { flexDirection: 'row', gap: 48, flexWrap: 'wrap' },
+  footerHead: { fontFamily: fonts.bold, fontSize: 14, color: colors.white },
+  footerLink: { fontFamily: fonts.regular, fontSize: 14, color: '#C5CBD3' },
+  copyright: { fontFamily: fonts.regular, fontSize: 13, color: '#6B7480' },
 });

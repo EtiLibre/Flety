@@ -1,6 +1,7 @@
 import type { Href } from 'expo-router';
-import { Truck, type LucideIcon } from 'lucide-react-native';
+import type { LucideIcon } from 'lucide-react-native';
 
+import { IconoCamioneta } from './estilo';
 import { IconoGrua } from './IconoGrua';
 import { RUTA_PEDIR_GRUA } from '@/modulos/gruas/nav';
 
@@ -24,7 +25,7 @@ export type Servicio = {
   sello: string;
   // activo: se puede usar; pronto: se muestra como "Muy pronto".
   estado: 'activo' | 'pronto';
-  Icon: LucideIcon | typeof IconoGrua;
+  Icon: LucideIcon | typeof IconoGrua | typeof IconoCamioneta;
   // Colores propios del servicio (el resto del diseño es compartido).
   color: {
     acento: string; // botones y detalles
@@ -42,20 +43,20 @@ export const SERVICIOS: Servicio[] = [
     id: 'mudanzas',
     nombre: 'Mudanzas',
     titulo: 'Mudanzas y fletes',
-    descripcion: 'Muebles, electrodomésticos o tu casa entera, con empresas verificadas.',
-    cta: 'Solicitar flete',
+    descripcion: 'Mudanzas, fletes y viajes de larga distancia, con empresas verificadas.',
+    cta: 'Pedir mudanza o flete',
     sello: 'Precio antes de confirmar',
     estado: 'activo',
-    Icon: Truck,
+    Icon: IconoCamioneta,
     color: { acento: '#FFC233', suave: '#FFF4D6', texto: '#3D2C00', textoSuave: '#7A5A00', tinta: '#12161C' },
     ruta: '/cliente/mudanzas',
   },
   {
     id: 'gruas',
     nombre: 'Grúas',
-    titulo: 'Grúas',
-    descripcion: 'Auxilio y traslado de tu vehículo. Seguís la grúa en vivo hasta que llega.',
-    cta: 'Solicitar grúa',
+    titulo: 'Grúas y auxilio',
+    descripcion: 'Traslado con grúa o auxilio por batería o rueda pinchada. Auto, moto o bici.',
+    cta: 'Pedir grúa o auxilio',
     sello: 'Seguimiento en vivo',
     estado: 'activo',
     Icon: IconoGrua,

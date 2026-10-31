@@ -1,6 +1,6 @@
 import Svg, { Circle, Path } from 'react-native-svg';
 
-// Ícono de grúa con el mismo trazo que los de Lucide (Lucide no trae uno).
+// Ícono de grúa de plancha llevando un auto, con el trazo de Lucide.
 export function IconoGrua({
   size = 24,
   color = '#12161C',
@@ -20,13 +20,12 @@ export function IconoGrua({
       strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round">
-      <Path d="M4 17H2v-3h11V9h4l3 3v5h-1" />
-      <Path d="M8 17h7" />
-      <Path d="M15 9v3h5" />
-      <Path d="M5 14l4-7h2v3" />
-      <Path d="M11 10a1 1 0 0 1-1 1" />
-      <Circle cx={6} cy={17} r={2} />
-      <Circle cx={17} cy={17} r={2} />
+      <Path d="M14 15.5V10h4l3.5 3.5v4H20" />
+      <Path d="M1.5 13H14" />
+      <Path d="M3 13l1.6-3h5.2l2 3" />
+      <Path d="M2.5 15.5H14" />
+      <Circle cx={6} cy={17.5} r={2} />
+      <Circle cx={17.5} cy={17.5} r={2} />
     </Svg>
   );
 }

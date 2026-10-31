@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
-import { Menu, Truck, X } from 'lucide-react-native';
+import { Menu, X } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 
+import { IconoCamioneta, SOMBRAS } from '@/plataforma/estilo';
 import { colors, fonts } from '@/theme';
 
 export type NavLink = { id: string; label: string };
@@ -12,8 +13,8 @@ const transition = {
   transitionDuration: '300ms',
 } as unknown as ViewStyle;
 
-// Barra flotante de la landing: transparente sobre el hero y, al bajar, una
-// cápsula blanca con sombra (estética de paneles flotantes).
+// Barra flotante de la landing: vidrio oscuro sobre la portada y, al bajar,
+// vidrio claro con sombra.
 export function FloatingNav({
   links,
   onGo,
@@ -40,7 +41,7 @@ export function FloatingNav({
           onPress={() => onGo('top')}
           style={styles.brand}>
           <View style={styles.brandMark}>
-            <Truck size={20} color={colors.ink} strokeWidth={2.1} />
+            <IconoCamioneta size={20} color={colors.ink} strokeWidth={2.1} />
           </View>
           <Text style={[styles.brandWord, { color: fg }]}>flety</Text>
         </Pressable>
@@ -72,7 +73,7 @@ export function FloatingNav({
             accessibilityRole="link"
             onPress={() => router.push('/registro')}
             style={({ pressed }) => [styles.cta, pressed && { transform: [{ scale: 0.97 }] }]}>
-            <Text style={styles.ctaText}>Pedir un flete</Text>
+            <Text style={styles.ctaText}>Pedir ahora</Text>
           </Pressable>
           {!isWide ? (
             <Pressable
@@ -136,12 +137,18 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
   },
-  barTop: { backgroundColor: 'rgba(18,22,28,0.55)', borderColor: 'rgba(255,255,255,0.08)' },
+  barTop: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(255,255,255,0.18)',
+    backdropFilter: 'blur(22px) saturate(160%)',
+    boxShadow: '0px 16px 40px -20px rgba(0,0,0,0.8)',
+  } as ViewStyle,
   barScrolled: {
-    backgroundColor: 'rgba(255,255,255,0.94)',
-    borderColor: '#E8E8E3',
-    boxShadow: '0 10px 30px rgba(18, 22, 28, 0.10)',
-  },
+    backgroundColor: 'rgba(255,255,255,0.72)',
+    borderColor: 'rgba(255,255,255,0.85)',
+    backdropFilter: 'blur(22px) saturate(180%)',
+    boxShadow: '0px 18px 40px -14px rgba(18,22,28,0.35)',
+  } as ViewStyle,
   barNarrow: { paddingLeft: 10 },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   brandMark: {
@@ -151,6 +158,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
+    boxShadow: SOMBRAS.sol,
   },
   brandWord: { fontFamily: fonts.display, fontSize: 22, letterSpacing: -0.4 },
   links: { flexDirection: 'row', gap: 2 },
@@ -163,8 +171,9 @@ const styles = StyleSheet.create({
     height: 42,
     paddingHorizontal: 18,
     borderRadius: 13,
-    backgroundColor: colors.accent,
+    backgroundColor: '#FFC233',
     justifyContent: 'center',
+    boxShadow: `${SOMBRAS.sol}, inset 0px 1px 0px rgba(255,255,255,0.6)`,
   },
   ctaText: { fontFamily: fonts.bold, fontSize: 15, color: colors.ink },
   menuBtn: { width: 42, height: 42, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
