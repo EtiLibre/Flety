@@ -4,7 +4,7 @@ import { supabase } from './supabase';
 // de preguntas frecuentes (por palabras clave, sin servicios externos) y, si no
 // la encuentra, ofrece escribirle a soporte (migración 0017).
 
-export type RolAyuda = 'cliente' | 'chofer' | 'empresa';
+export type RolAyuda = 'cliente' | 'chofer' | 'empresa' | 'gruista';
 
 // A dónde puede mandar una respuesta. Cada pantalla decide cómo navegar.
 export type Destino =
@@ -23,6 +23,10 @@ export type Destino =
   | 'seguro'
   | 'pagos'
   | 'cobros'
+  | 'grua'
+  | 'gruista'
+  | 'unidad'
+  | 'documentos'
   | `flete:${string}`;
 
 export type Accion = { label: string; destino: Destino };
@@ -548,16 +552,144 @@ const EMPRESA: Pregunta[] = [
   },
 ];
 
+// Grúas (cliente): servicio independiente de las mudanzas.
+const GRUAS_CLIENTE: Pregunta[] = [
+  {
+    id: 'grua-pedir',
+    categoria: 'Grúas',
+    pregunta: '¿Cómo pido una grúa?',
+    respuesta:
+      'En Inicio tocá “Grúas”. Marcá dónde está tu vehículo y a dónde hay que llevarlo, elegí el tipo de vehículo y qué le pasó. Te mostramos el precio antes de confirmar y te asignamos la grúa disponible más cercana.',
+    claves: [
+      'grua',
+      'gruas',
+      'auxilio',
+      'remolque',
+      'remolcar',
+      'acarreo',
+      'se rompio el auto',
+      'quede varado',
+      'pinche',
+    ],
+    acciones: [{ label: 'Pedir una grúa', destino: 'grua' }],
+  },
+  {
+    id: 'grua-precio',
+    categoria: 'Grúas',
+    pregunta: '¿Cómo se calcula el precio de la grúa?',
+    respuesta:
+      'Cada gruista o empresa pone su tarifa (salida, precio por km y adicionales como subsuelo o ruedas trabadas, con recargo nocturno o de fin de semana). Se le suma la comisión de la plataforma y ese total es el que ves antes de confirmar. Si la grúa disponible cobra más de lo que aceptaste, te preguntamos antes de seguir.',
+    claves: ['precio grua', 'cuanto sale la grua', 'tarifa grua', 'cuesta la grua', 'cobra la grua'],
+  },
+  {
+    id: 'grua-seguimiento',
+    categoria: 'Grúas',
+    pregunta: '¿Dónde está mi grúa?',
+    respuesta:
+      'Desde que un gruista acepta, lo ves en el mapa en vivo con el tiempo estimado de llegada, y le podés escribir por el chat del servicio. Lo encontrás en Inicio o en Actividad → Grúas.',
+    claves: ['donde esta la grua', 'grua en camino', 'cuanto tarda la grua', 'seguir la grua', 'llega la grua'],
+    acciones: [{ label: 'Ver mi actividad', destino: 'fletes' }],
+  },
+  {
+    id: 'grua-cancelar',
+    categoria: 'Grúas',
+    pregunta: '¿Puedo cancelar la grúa?',
+    respuesta:
+      'Sí. Mientras buscamos grúa o recién se asignó, cancelar no tiene costo. Si la grúa ya salió o llegó al lugar, puede corresponder un cargo por cancelación (te lo avisamos antes). Una vez que empezó el traslado ya no se puede cancelar.',
+    claves: ['cancelar grua', 'anular grua', 'ya no necesito la grua', 'cargo cancelacion'],
+  },
+  {
+    id: 'grua-sumarme',
+    categoria: 'Grúas',
+    pregunta: 'Tengo una grúa, ¿cómo me sumo?',
+    respuesta:
+      'En Cuenta tocá “Panel de gruista”. Te das de alta como gruista independiente, como empresa de auxilio o con el código que te pasó tu empresa. Cargás tu grúa, tus documentos y tus tarifas, y cuando lo verificamos empezás a recibir pedidos.',
+    claves: ['soy gruista', 'tengo una grua', 'sumarme con grua', 'trabajar con grua', 'empresa de auxilio'],
+    acciones: [{ label: 'Ir al panel de gruista', destino: 'gruista' }],
+  },
+];
+
+// Gruistas y empresas de auxilio.
+const GRUISTA: Pregunta[] = [
+  {
+    id: 'g-alta',
+    categoria: 'Empezar',
+    pregunta: '¿Qué necesito para empezar a recibir pedidos?',
+    respuesta:
+      'Cargar tu grúa (patente, modalidad y qué vehículos podés llevar), subir la licencia profesional y el seguro de la grúa, y poner tus tarifas. Cuando verificamos tu cuenta y tus documentos, activás “Disponible” y te empiezan a llegar pedidos cercanos.',
+    claves: ['empezar', 'alta', 'requisitos', 'verificar', 'aprobacion', 'aprobado', 'pendiente', 'habilitar'],
+    acciones: [
+      { label: 'Mi grúa', destino: 'unidad' },
+      { label: 'Mis documentos', destino: 'documentos' },
+    ],
+  },
+  {
+    id: 'g-no-llegan',
+    categoria: 'Pedidos',
+    pregunta: 'No me llegan pedidos',
+    respuesta:
+      'Revisá que estés en “Disponible”, que la app tenga permiso de ubicación, que tu cuenta esté aprobada, tus documentos obligatorios verificados y vigentes, y que tengas tarifa para el tipo de vehículo que piden. Los pedidos van primero a la grúa compatible más cercana.',
+    claves: ['no me llegan', 'no recibo', 'sin pedidos', 'no hay pedidos', 'disponible', 'ubicacion'],
+    acciones: [{ label: 'Ir al panel', destino: 'panel' }],
+  },
+  {
+    id: 'g-oferta',
+    categoria: 'Pedidos',
+    pregunta: '¿Cómo acepto un pedido?',
+    respuesta:
+      'Cuando te llega un pedido ves la distancia, el vehículo, la situación y lo que cobrás. Tenés unos segundos para aceptarlo; si no respondés, pasa a la siguiente grúa. Después seguís los pasos con el botón grande: salir, llegué, cargado y entregado.',
+    claves: ['aceptar', 'oferta', 'rechazar', 'segundos', 'pedido nuevo', 'como acepto'],
+  },
+  {
+    id: 'g-tarifas',
+    categoria: 'Cobros',
+    pregunta: '¿Cómo pongo mis precios?',
+    respuesta:
+      'En Cuenta → Mis tarifas definís, por tipo de vehículo, la salida, el precio por km, los km incluidos y el mínimo, más recargos nocturnos y de fin de semana y adicionales por situación. El cliente ve tu precio más la comisión de la plataforma. Si sos parte de una empresa, las tarifas las pone la empresa.',
+    claves: ['precio', 'precios', 'tarifa', 'tarifas', 'cobrar', 'cuanto cobro', 'comision', 'recargo'],
+    acciones: [{ label: 'Mis tarifas', destino: 'tarifas' }],
+  },
+  {
+    id: 'g-ganancias',
+    categoria: 'Cobros',
+    pregunta: '¿Dónde veo lo que gané?',
+    respuesta:
+      'En Historial ves cada servicio con lo que te corresponde (sin la comisión) y el total de la semana y del mes.',
+    claves: ['gane', 'ganancias', 'ganado', 'cobre', 'historial', 'cuanto llevo'],
+    acciones: [{ label: 'Ver historial', destino: 'viajes' }],
+  },
+  {
+    id: 'g-flota',
+    categoria: 'Empresa de auxilio',
+    pregunta: '¿Cómo sumo gruistas a mi empresa?',
+    respuesta:
+      'En Cuenta → Mi flota generás un código de invitación y se lo pasás a tu gruista. Lo canjea desde su panel de gruista y queda en tu empresa, con tus tarifas.',
+    claves: ['sumar', 'flota', 'invitar', 'codigo', 'empleado', 'mis gruistas', 'empresa'],
+    acciones: [{ label: 'Ir a mi cuenta', destino: 'cuenta' }],
+  },
+  {
+    id: 'problema',
+    categoria: 'Problemas',
+    pregunta: 'Tuve un problema con un servicio',
+    respuesta:
+      'Si no podés completar un servicio, cancelalo desde el panel y se vuelve a buscar otra grúa para el cliente. Para cualquier otro problema (daños, cobros, un cliente), escribinos a soporte con el detalle.',
+    claves: ['problema', 'reclamo', 'accidente', 'dano', 'queja', 'cliente', 'error', 'no puedo'],
+    acciones: [{ label: 'Escribir a soporte', destino: 'soporte' }],
+  },
+];
+
 export const PREGUNTAS: Record<RolAyuda, Pregunta[]> = {
-  cliente: [...CLIENTE, OLVIDE],
+  cliente: [...CLIENTE, ...GRUAS_CLIENTE, OLVIDE],
   chofer: [...CHOFER, OLVIDE],
   empresa: [...EMPRESA, OLVIDE],
+  gruista: [...GRUISTA, OLVIDE],
 };
 
 export const SUGERENCIAS: Record<RolAyuda, string[]> = {
   cliente: ['¿Dónde está mi flete?', '¿Cómo se calcula el precio?', 'Quiero cancelar', 'Tuve un problema'],
   chofer: ['No me llegan viajes', '¿Cómo cobro?', 'Cargar mi vehículo', 'Tuve un problema'],
   empresa: ['Sumar choferes', 'Poner mis precios', '¿Cuánto cobra Flety?', 'Aprobación de mi empresa'],
+  gruista: ['No me llegan pedidos', '¿Cómo pongo mis precios?', '¿Qué necesito para empezar?', 'Tuve un problema'],
 };
 
 export const normalizar = (s: string) =>

@@ -125,7 +125,7 @@ export function FilaCuenta({
   onPress,
 }: {
   tema: Tema;
-  Icon: typeof Mail;
+  Icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
   titulo: string;
   detalle?: string;
   onPress: () => void;

@@ -12,12 +12,21 @@ const MIN_MS = 8_000;
 const MIN_METROS = 15;
 const MAX_MS = 60_000;
 
-// Mientras `activo` sea true, sigue el GPS del chofer y lo publica en
-// drivers.ubicacion_actual. Por ahora solo con la app abierta (en primer plano).
-export function useCompartirUbicacion(driverId: string | null, activo: boolean) {
+// Mientras `activo` sea true, sigue el GPS y lo publica: por defecto en
+// drivers.ubicacion_actual (chofer de Flety); Grúas pasa su propia función.
+// Por ahora solo con la app abierta (en primer plano).
+export function useCompartirUbicacion(
+  driverId: string | null,
+  activo: boolean,
+  enviar?: (pos: LatLng) => void
+) {
   const [estado, setEstado] = useState<Estado>('apagado');
   const [posicion, setPosicion] = useState<LatLng | null>(null);
   const ultimoEnvio = useRef<{ at: number; pos: LatLng } | null>(null);
+  const enviarRef = useRef(enviar);
+  useEffect(() => {
+    enviarRef.current = enviar;
+  }, [enviar]);
 
   useEffect(() => {
     if (!driverId || !activo) return;
@@ -47,7 +56,8 @@ export function useCompartirUbicacion(driverId: string | null, activo: boolean) 
               (ahora - ultimo.at >= MIN_MS && metrosEntre(ultimo.pos, pos) >= MIN_METROS);
             if (toca) {
               ultimoEnvio.current = { at: ahora, pos };
-              enviarUbicacion(driverId, pos);
+              if (enviarRef.current) enviarRef.current(pos);
+              else enviarUbicacion(driverId, pos);
             }
           }
         );

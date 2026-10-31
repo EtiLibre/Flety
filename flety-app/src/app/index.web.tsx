@@ -188,8 +188,8 @@ function LandingPage() {
               </Reveal>
               <Reveal delay={160}>
                 <Text style={styles.heroText}>
-                  Pedí un flete o una mudanza con empresas verificadas, y muy pronto también una grúa. Precio antes de
-                  confirmar y todo en el mapa, en vivo.
+                  Pedí un flete, una mudanza o una grúa con prestadores verificados. Precio antes de confirmar y todo en
+                  el mapa, en vivo.
                 </Text>
               </Reveal>
               <Reveal delay={240}>
@@ -337,14 +337,14 @@ function LandingPage() {
         </View>
 
         {/* Para empresas */}
-        {/* Grúas (muy pronto) */}
+        {/* Grúas */}
         <View onLayout={(e) => remember('gruas', e)} style={styles.gruasBand}>
           <View style={[styles.container, { paddingVertical: sectionPad, gap: 32 }]}>
             <Reveal>
               <View style={{ gap: 12 }}>
                 <View style={styles.gruasSello}>
                   <IconoGrua size={16} color={servicio('gruas').color.acento} />
-                  <Text style={styles.gruasSelloTexto}>Grúas · muy pronto</Text>
+                  <Text style={styles.gruasSelloTexto}>Grúas · nuevo en Mendoza</Text>
                 </View>
                 <Text style={[styles.h2Dark, { fontSize: h2Size, lineHeight: h2Size * 1.08 }]}>
                   Auxilio para tu vehículo, sin llamadas ni vueltas
@@ -369,8 +369,8 @@ function LandingPage() {
               ))}
             </View>
             <Text style={styles.gruasNota}>
-              ¿Sos gruista o tenés una empresa de auxilio? Muy pronto vas a poder sumarte y recibir pedidos desde la
-              app.
+              ¿Sos gruista o tenés una empresa de auxilio? Creá tu cuenta y sumate desde la app para recibir pedidos de
+              tu zona.
             </Text>
           </View>
         </View>

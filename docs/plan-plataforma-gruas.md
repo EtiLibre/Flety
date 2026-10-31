@@ -287,9 +287,19 @@ En **cada** etapa:
 ## 9. Avance
 
 - [x] Etapa 1: base de la plataforma (registro de servicios, marca centralizada, ícono e ilustración de grúa).
-- [x] Etapa 2: nuevo inicio (selector), Actividad por servicio, landing con los dos servicios. Grúas aparece como "Muy pronto".
-- [ ] Etapa 3: datos y precios de Grúas.
-- [ ] Etapa 4: gruistas.
-- [ ] Etapa 5: pedir grúa y despacho en vivo.
-- [ ] Etapa 6: operación y reportes.
-- [ ] Etapa 7: pagos.
+- [x] Etapa 2: nuevo inicio (selector), Actividad por servicio, landing con los dos servicios.
+- [x] Etapa 3: datos y precios de Grúas (migraciones 0020 y 0021: esquema `gruas`, zonas, catálogos, tarifas por dueño, cotización con comisión).
+- [x] Etapa 4: gruistas (`/gruista`: alta independiente, empresa o código; grúa, documentos, tarifas, flota, historial y ganancias, ayuda, cuenta).
+- [x] Etapa 5: pedir grúa y despacho en vivo (`/gruas`, `/gruas/[id]`; oferta de a una a la grúa más cercana con cuenta regresiva; seguimiento, chat, cancelación con cargo, calificación; reloj automático en 0022).
+- [x] Etapa 6: operación y reportes (panel `/empresa/gruas/*` con selector Mudanzas | Grúas: operación en vivo, verificación de gruistas y documentos, reglas y zonas, reportes).
+- [ ] Etapa 7: pagos (ver 9.2). Requiere la cuenta de desarrollador de Mercado Pago.
+
+### 9.1 Para activar Grúas en producción
+
+1. Supabase → Settings → API → **Exposed schemas**: agregar `gruas`.
+2. Correr en el SQL Editor, en orden: `0020_gruas_base.sql`, `0021_gruas_logica.sql`, `0022_gruas_reloj.sql` (la 0022 es opcional: si pg_cron no está disponible, la app empuja el despacho sola mientras el cliente espera).
+3. Darse de alta como gruista de prueba desde Cuenta → Panel de gruista, aprobarlo en Grúas → Gruistas y cargar tarifas.
+
+### 9.2 Pagos (etapa 7, pendiente)
+
+Mismo esquema que Mudanzas: se cobra **al confirmar** con Mercado Pago (marketplace con split). Tarjeta de crédito: reserva y captura al finalizar; débito o dinero en cuenta: cobro inmediato retenido. Al finalizar se libera al gruista o a su empresa `precio_prestador`; la plataforma se queda `comision`. Si el cliente cancela, se cobra `cargo_cancelacion` y se devuelve el resto. Las credenciales van solo en una Edge Function de Supabase (nunca en la app). Se agregan las columnas de pago a `gruas.solicitudes` cuando se integre, para no cargar ahora una migración sin uso.

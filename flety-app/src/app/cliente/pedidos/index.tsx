@@ -13,7 +13,8 @@ import { useMisPedidos } from '@/hooks/use-mis-pedidos';
 import type { Pedido } from '@/lib/orders';
 import { usePedidoDraft } from '@/lib/pedido-draft';
 import { formatARS } from '@/lib/pricing';
-import { IconoGrua } from '@/plataforma/IconoGrua';
+import { HistorialGruas } from '@/modulos/gruas/Historial';
+import { RUTA_PEDIR_GRUA } from '@/modulos/gruas/nav';
 import { servicio, SERVICIOS, type ServicioId } from '@/plataforma/servicios';
 import { colors, fonts } from '@/theme';
 
@@ -24,7 +25,7 @@ const VACIO: Record<GrupoFlete, string> = {
 };
 
 // Actividad del cliente: el historial de cada servicio (Mudanzas: fletes en
-// curso, terminados y cancelados; Grúas: muy pronto).
+// curso, terminados y cancelados; Grúas: sus servicios de grúa).
 export default function MisFletes() {
   const isWide = useIsWide();
   const { pedidos, loading } = useMisPedidos();
@@ -118,23 +119,19 @@ export default function MisFletes() {
   const contenido = (
     <>
       <SelectorServicio valor={servicioTab} onCambio={setServicioTab} />
-      {servicioTab === 'mudanzas' ? (
-        mudanzas
-      ) : (
-        <View style={styles.vacio}>
-          <IconoGrua size={36} color={servicio('gruas').color.acento} />
-          <Text style={styles.vacioText}>
-            Muy pronto vas a poder pedir grúas desde la app. Tus servicios de grúa van a aparecer acá.
-          </Text>
-        </View>
-      )}
+      {servicioTab === 'mudanzas' ? mudanzas : <HistorialGruas />}
     </>
   );
 
+  const esGrua = servicioTab === 'gruas';
   const nuevo = (
-    <Pressable accessibilityRole="button" accessibilityLabel="Pedir un flete" onPress={pedir} style={styles.nuevo}>
-      <Plus size={18} color={colors.ink} strokeWidth={2.6} />
-      <Text style={styles.nuevoText}>Pedir</Text>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={esGrua ? 'Pedir una grúa' : 'Pedir un flete'}
+      onPress={esGrua ? () => router.push(RUTA_PEDIR_GRUA) : pedir}
+      style={[styles.nuevo, esGrua && { backgroundColor: servicio('gruas').color.acento }]}>
+      <Plus size={18} color={esGrua ? colors.white : colors.ink} strokeWidth={2.6} />
+      <Text style={[styles.nuevoText, esGrua && { color: colors.white }]}>Pedir</Text>
     </Pressable>
   );
 
@@ -148,7 +145,7 @@ export default function MisFletes() {
               <Text style={styles.title} accessibilityRole="header">
                 Actividad
               </Text>
-              {servicioTab === 'mudanzas' ? nuevo : null}
+              {nuevo}
             </View>
             {contenido}
           </>
@@ -158,11 +155,7 @@ export default function MisFletes() {
   }
 
   return (
-    <PantallaTab
-      titulo="Actividad"
-      subtitulo="Tus servicios, en curso y anteriores."
-      tema="claro"
-      derecha={servicioTab === 'mudanzas' ? nuevo : undefined}>
+    <PantallaTab titulo="Actividad" subtitulo="Tus servicios, en curso y anteriores." tema="claro" derecha={nuevo}>
       {contenido}
     </PantallaTab>
   );

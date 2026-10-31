@@ -2,7 +2,8 @@ import type { StyleProp, ViewStyle } from 'react-native';
 
 export type LatLng = { lat: number; lng: number };
 
-export type MapMarkerKind = 'user' | 'origen' | 'destino' | 'chofer';
+// grua: grúas disponibles y la grúa asignada (servicio Grúas).
+export type MapMarkerKind = 'user' | 'origen' | 'destino' | 'chofer' | 'grua';
 
 export type MapMarker = {
   id: string;

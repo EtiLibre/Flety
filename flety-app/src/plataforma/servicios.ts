@@ -2,6 +2,7 @@ import type { Href } from 'expo-router';
 import { Truck, type LucideIcon } from 'lucide-react-native';
 
 import { IconoGrua } from './IconoGrua';
+import { RUTA_PEDIR_GRUA } from '@/modulos/gruas/nav';
 
 // Registro de las unidades de negocio de la plataforma. Cada servicio declara
 // cómo se presenta (nombre, textos, color) y a dónde lleva. Comparten la
@@ -55,11 +56,11 @@ export const SERVICIOS: Servicio[] = [
     titulo: 'Grúas',
     descripcion: 'Auxilio y traslado de tu vehículo. Seguís la grúa en vivo hasta que llega.',
     cta: 'Solicitar grúa',
-    sello: 'Muy pronto',
-    estado: 'pronto',
+    sello: 'Seguimiento en vivo',
+    estado: 'activo',
     Icon: IconoGrua,
     color: { acento: '#FF6B1A', suave: '#FFE9DC', texto: '#4A1B0C', textoSuave: '#993C1D', tinta: '#2A1006' },
-    ruta: null,
+    ruta: RUTA_PEDIR_GRUA,
   },
 ];
 

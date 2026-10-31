@@ -19,11 +19,14 @@ export function BarraInferior<T extends string>({
   activo,
   onIr,
   tema,
+  acento,
 }: {
   items: TabItem<T>[];
   activo: T | null;
   onIr: (id: T) => void;
   tema: Tema;
+  // Color de la pestaña activa (por defecto, el amarillo de Flety).
+  acento?: { fondo: string; icono: string };
 }) {
   const insets = useSafeAreaInsets();
   const p = paleta(tema);
@@ -50,8 +53,8 @@ export function BarraInferior<T extends string>({
             accessibilityLabel={badge ? `${label}, ${badge} pendientes` : label}
             onPress={() => onIr(id)}
             style={({ pressed }) => [styles.item, pressed && { opacity: 0.7 }]}>
-            <View style={[styles.icono, on && styles.iconoOn]}>
-              <Icon size={22} color={on ? colors.ink : p.muted} strokeWidth={on ? 2.4 : 2} />
+            <View style={[styles.icono, on && (acento ? { backgroundColor: acento.fondo } : styles.iconoOn)]}>
+              <Icon size={22} color={on ? (acento?.icono ?? colors.ink) : p.muted} strokeWidth={on ? 2.4 : 2} />
               {badge ? (
                 <View style={[styles.badge, { borderColor: oscuro ? '#12161C' : colors.white }]}>
                   <Text style={styles.badgeText}>{badge > 9 ? '9+' : badge}</Text>

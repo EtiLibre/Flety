@@ -38,13 +38,16 @@ export function Segmented<T extends string>({
   options,
   value,
   onChange,
+  tema = 'claro',
 }: {
   options: { value: T; label: string }[];
   value: T;
   onChange: (value: T) => void;
+  tema?: 'claro' | 'oscuro';
 }) {
+  const oscuro = tema === 'oscuro';
   return (
-    <View style={styles.segmented}>
+    <View style={[styles.segmented, oscuro && { backgroundColor: colors.dark.chip }]}>
       {options.map((option) => {
         const active = option.value === value;
         return (
@@ -53,8 +56,15 @@ export function Segmented<T extends string>({
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
             onPress={() => onChange(option.value)}
-            style={[styles.segment, active && styles.segmentActive]}>
-            <Text style={[styles.segmentText, active && styles.segmentTextActive]}>{option.label}</Text>
+            style={[styles.segment, active && (oscuro ? { backgroundColor: colors.dark.text } : styles.segmentActive)]}>
+            <Text
+              style={[
+                styles.segmentText,
+                oscuro && { color: colors.dark.text },
+                active && (oscuro ? { color: colors.ink } : styles.segmentTextActive),
+              ]}>
+              {option.label}
+            </Text>
           </Pressable>
         );
       })}

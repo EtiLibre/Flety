@@ -2,7 +2,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, type StyleProp, type Vi
 
 import { colors, fonts, radius } from '@/theme';
 
-type Variant = 'accent' | 'dark' | 'light' | 'outline' | 'danger';
+type Variant = 'accent' | 'dark' | 'light' | 'outline' | 'danger' | 'grua' | 'oscuro';
 
 const VARIANTS: Record<Variant, { bg: string; fg: string; border?: string }> = {
   accent: { bg: colors.accent, fg: colors.ink },
@@ -10,6 +10,10 @@ const VARIANTS: Record<Variant, { bg: string; fg: string; border?: string }> = {
   light: { bg: colors.white, fg: colors.ink },
   outline: { bg: 'transparent', fg: colors.ink, border: colors.line },
   danger: { bg: colors.dangerBg, fg: colors.danger },
+  // Grúas: naranja del servicio.
+  grua: { bg: '#FF6B1A', fg: colors.white },
+  // Secundario sobre fondo oscuro.
+  oscuro: { bg: colors.dark.chip, fg: colors.dark.text },
 };
 
 export function Button({

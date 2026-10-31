@@ -9,6 +9,7 @@ import { useIsWide } from '@/hooks/use-is-wide';
 import { useMisPedidos } from '@/hooks/use-mis-pedidos';
 import type { Destino } from '@/lib/ayuda';
 import { ESTADO_LABELS } from '@/lib/state-machine';
+import { RUTA_GRUISTA, RUTA_PEDIR_GRUA } from '@/modulos/gruas/nav';
 import { colors, fonts } from '@/theme';
 
 export default function AyudaCliente() {
@@ -24,6 +25,8 @@ export default function AyudaCliente() {
     if (d === 'cuenta') return router.navigate('/cliente/cuenta');
     if (d === 'pagos') return router.push('/cliente/pagos');
     if (d === 'unirse') return router.push('/unirse');
+    if (d === 'grua') return router.push(RUTA_PEDIR_GRUA);
+    if (d === 'gruista') return router.push(RUTA_GRUISTA);
   }
 
   const ayuda = (

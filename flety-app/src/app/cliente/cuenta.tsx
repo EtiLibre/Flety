@@ -6,6 +6,8 @@ import { CuentaForm, FilaCuenta } from '@/components/cuenta/CuentaForm';
 import { PantallaTab } from '@/components/nav/PantallaTab';
 import { ClienteShell } from '@/components/web/ClienteShell';
 import { useIsWide } from '@/hooks/use-is-wide';
+import { RUTA_GRUISTA } from '@/modulos/gruas/nav';
+import { IconoGrua } from '@/plataforma/IconoGrua';
 import { colors, fonts } from '@/theme';
 
 export default function CuentaCliente() {
@@ -25,6 +27,13 @@ export default function CuentaCliente() {
         titulo="Soy chofer · tengo un código"
         detalle="Sumate a la flota de una empresa de Flety"
         onPress={() => router.push('/unirse')}
+      />
+      <FilaCuenta
+        tema="claro"
+        Icon={IconoGrua}
+        titulo="Panel de gruista"
+        detalle="Tenés una grúa o una empresa de auxilio: recibí pedidos"
+        onPress={() => router.push(RUTA_GRUISTA)}
       />
     </CuentaForm>
   );

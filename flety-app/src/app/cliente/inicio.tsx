@@ -13,6 +13,9 @@ import { VehiculoIlustracion } from '@/components/VehiculoIlustracion';
 import { ClienteShell } from '@/components/web/ClienteShell';
 import { useIsWide } from '@/hooks/use-is-wide';
 import { useMisPedidos } from '@/hooks/use-mis-pedidos';
+import { ESTADO_GRUA, ESTADOS_ACTIVOS } from '@/modulos/gruas/estados';
+import { useMisSolicitudesGrua } from '@/modulos/gruas/hooks';
+import { G } from '@/modulos/gruas/ui';
 import { useAuth } from '@/lib/auth';
 import { iniciales } from '@/lib/empresa';
 import { localidadDeCoordenadas } from '@/lib/geocoding';
@@ -23,7 +26,7 @@ import { SERVICIOS, type Servicio } from '@/plataforma/servicios';
 import { colors, fonts } from '@/theme';
 
 // Inicio de la plataforma: el cliente elige qué necesita resolver. Cada
-// servicio lleva a su propia experiencia (Mudanzas hoy, Grúas muy pronto).
+// servicio lleva a su propia experiencia (Mudanzas, Grúas).
 export default function InicioPlataforma() {
   const isWide = useIsWide();
   return (
@@ -73,6 +76,8 @@ function Contenido({ ancho }: { ancho?: boolean }) {
   const localidad = useLocalidad();
   const { pedidos } = useMisPedidos();
   const enCurso = pedidos.find((p) => grupoDe(p) === 'en_curso');
+  const { solicitudes } = useMisSolicitudesGrua();
+  const gruaEnCurso = solicitudes.find((s) => ESTADOS_ACTIVOS.includes(s.estado));
   const primerNombre = nombre?.split(' ')[0];
 
   return (
@@ -122,6 +127,21 @@ function Contenido({ ancho }: { ancho?: boolean }) {
             <Text style={styles.enCursoTitulo}>Tu flete en curso</Text>
             <Text style={styles.enCursoTexto} numberOfLines={1}>
               {ESTADO_LABELS[enCurso.estado]}
+            </Text>
+          </View>
+          <ChevronRight size={18} color={colors.white} />
+        </Pressable>
+      ) : null}
+      {gruaEnCurso ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push({ pathname: '/gruas/[id]', params: { id: gruaEnCurso.id } })}
+          style={({ pressed }) => [styles.enCurso, { backgroundColor: G.tinta }, pressed && { opacity: 0.85 }]}>
+          <View style={[styles.enCursoPunto, { backgroundColor: G.acento }]} />
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={styles.enCursoTitulo}>Tu grúa en curso</Text>
+            <Text style={styles.enCursoTexto} numberOfLines={1}>
+              {ESTADO_GRUA[gruaEnCurso.estado].titulo}
             </Text>
           </View>
           <ChevronRight size={18} color={colors.white} />

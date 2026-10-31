@@ -8,6 +8,8 @@ import {
   ChevronRight,
   ChevronUp,
   Clock,
+  Settings,
+  UserCheck,
   Eye,
   Headset,
   LayoutGrid,
@@ -31,6 +33,9 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { BarraInferior, type TabItem } from '@/components/nav/BarraInferior';
 
 import { useIsWide } from '@/hooks/use-is-wide';
+import { RUTA_GRUISTA } from '@/modulos/gruas/nav';
+import { IconoGrua } from '@/plataforma/IconoGrua';
+import { servicio } from '@/plataforma/servicios';
 import { useNavEmpresa } from '@/hooks/use-nav-empresa';
 import { useAuth } from '@/lib/auth';
 import type { Empresa } from '@/lib/empresa';
@@ -49,15 +54,25 @@ export type SeccionEmpresa =
   | 'cobros'
   | 'seguros'
   | 'soporte'
+  | 'gruasOperacion'
+  | 'gruasPrestadores'
+  | 'gruasAjustes'
+  | 'gruasReportes'
   | 'ayuda'
   | 'cuenta';
+
+// Unidades de negocio del panel: cada una con sus secciones (el superadmin
+// cambia entre ellas arriba de la barra lateral).
+type Negocio = 'mudanzas' | 'gruas';
 
 const SECCIONES: {
   id: SeccionEmpresa;
   label: string;
-  Icon: typeof Package;
+  Icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
   // Solo para estos roles (si no se indica, para todos los del panel).
   roles?: string[];
+  // Negocio al que pertenece (Mudanzas si no se indica).
+  negocio?: Negocio;
   // Ayuda y Mi cuenta: abajo del todo en la barra lateral y en "Más".
   extra?: boolean;
 }[] = [
@@ -72,6 +87,10 @@ const SECCIONES: {
   { id: 'marketing', label: 'Marketing', Icon: ChartBar, roles: ['marketing', 'superadmin'] },
   { id: 'anuncios', label: 'Anuncios', Icon: Megaphone, roles: ['marketing', 'superadmin'] },
   { id: 'soporte', label: 'Soporte', Icon: Headset, roles: ['superadmin'] },
+  { id: 'gruasOperacion', label: 'Operación', Icon: IconoGrua, roles: ['superadmin'], negocio: 'gruas' },
+  { id: 'gruasPrestadores', label: 'Gruistas', Icon: UserCheck, roles: ['superadmin'], negocio: 'gruas' },
+  { id: 'gruasAjustes', label: 'Ajustes', Icon: Settings, roles: ['superadmin'], negocio: 'gruas' },
+  { id: 'gruasReportes', label: 'Reportes', Icon: ChartBar, roles: ['superadmin'], negocio: 'gruas' },
   { id: 'ayuda', label: 'Ayuda', Icon: LifeBuoy, extra: true },
   { id: 'cuenta', label: 'Mi cuenta', Icon: UserRound, extra: true },
 ];
@@ -104,7 +123,8 @@ export function EmpresaShell({
   const { role } = useAuth();
   const nav = useNavEmpresa();
   const secciones = SECCIONES.filter((s) => !s.roles || (role && s.roles.includes(role)));
-  const principales = secciones.filter((s) => !s.extra);
+  const negocio: Negocio = SECCIONES.find((s) => s.id === active)?.negocio ?? 'mudanzas';
+  const principales = secciones.filter((s) => !s.extra && (s.negocio ?? 'mudanzas') === negocio);
   const extras = secciones.filter((s) => s.extra);
   const [mas, setMas] = useState(false);
 
@@ -128,6 +148,7 @@ export function EmpresaShell({
           {/* Con scroll: con muchas secciones (superadmin), Ayuda, Mi cuenta y Cerrar sesión no quedan fuera de la pantalla. */}
           <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.sidebar} showsVerticalScrollIndicator={false}>
             <Marca />
+            {role === 'superadmin' ? <SelectorNegocio negocio={negocio} onIr={nav.ir} /> : null}
             <View style={styles.nav}>
               {principales.map(({ id, label, Icon }) => {
                 const current = id === active;
@@ -200,6 +221,7 @@ export function EmpresaShell({
         <Marca />
       </View>
       <ScrollView style={styles.main} contentContainerStyle={styles.mainContentNarrow}>
+        {role === 'superadmin' ? <SelectorNegocio negocio={negocio} onIr={nav.ir} light /> : null}
         <EmpresaCard empresa={empresa} light />
         {role === 'superadmin' && active === 'panel' ? <VerComo light /> : null}
         {header}
@@ -290,7 +312,48 @@ const VISTAS: { label: string; detalle: string; href: Href }[] = [
   { label: 'Cliente', detalle: 'Pedir y seguir fletes', href: '/cliente/inicio' },
   { label: 'Chofer', detalle: 'Demo con datos de ejemplo', href: '/preview-chofer' },
   { label: 'Empresa', detalle: 'Demo con datos de ejemplo', href: '/preview-empresa' },
+  { label: 'Gruista', detalle: 'App del gruista (Grúas)', href: RUTA_GRUISTA },
 ];
+
+// Superadmin: Mudanzas | Grúas. Cada negocio tiene sus propias secciones.
+function SelectorNegocio({
+  negocio,
+  onIr,
+  light,
+}: {
+  negocio: Negocio;
+  onIr: (s: SeccionEmpresa) => void;
+  light?: boolean;
+}) {
+  const opciones: { id: Negocio; label: string; destino: SeccionEmpresa; acento: string }[] = [
+    { id: 'mudanzas', label: 'Mudanzas', destino: 'panel', acento: servicio('mudanzas').color.acento },
+    { id: 'gruas', label: 'Grúas', destino: 'gruasOperacion', acento: servicio('gruas').color.acento },
+  ];
+  return (
+    <View style={[styles.negocios, light && styles.negociosLight]} role="tablist" aria-label="Negocio">
+      {opciones.map((o) => {
+        const on = o.id === negocio;
+        return (
+          <Pressable
+            key={o.id}
+            role="tab"
+            aria-selected={on}
+            onPress={() => !on && onIr(o.destino)}
+            style={[styles.negocio, on && { backgroundColor: o.acento }]}>
+            <Text
+              style={[
+                styles.negocioTexto,
+                light && { color: colors.muted },
+                on && { color: o.id === 'gruas' ? colors.white : colors.ink, fontFamily: fonts.bold },
+              ]}>
+              {o.label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
 
 function VerComo({ light }: { light?: boolean }) {
   // En la barra lateral arranca plegado, para que Ayuda, Mi cuenta y Cerrar
@@ -417,6 +480,10 @@ function Salir() {
 }
 
 const styles = StyleSheet.create({
+  negocios: { flexDirection: 'row', gap: 4, padding: 4, borderRadius: 12, backgroundColor: '#1C2229' },
+  negociosLight: { backgroundColor: '#E9ECEF' },
+  negocio: { flex: 1, height: 34, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  negocioTexto: { fontFamily: fonts.semibold, fontSize: 13, color: '#C5CBD3' },
   screen: { flex: 1, flexDirection: 'row', backgroundColor: PANEL_BG },
   screenNarrow: { flex: 1, backgroundColor: colors.ink },
   sidebarWrap: { width: 248, backgroundColor: colors.ink },

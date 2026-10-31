@@ -38,6 +38,18 @@
   box-shadow: 0 2px 6px rgba(18, 22, 28, 0.25);
 }
 
+.flety-pin-grua {
+  width: 34px;
+  height: 34px;
+  border-radius: 17px;
+  background: #ff6b1a;
+  border: 3px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(18, 22, 28, 0.3);
+}
+
 .flety-pin-chofer {
   width: 64px;
   height: 64px;

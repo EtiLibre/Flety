@@ -3,6 +3,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
 import { metrosEntre, rumbo } from '@/lib/geo';
+import { IconoGrua } from '@/plataforma/IconoGrua';
 import { colors } from '@/theme';
 
 import { GOOGLE_MAP_STYLE, GOOGLE_MAP_STYLE_DARK } from './flety-style';
@@ -117,10 +118,26 @@ function MarkerView({ kind }: { kind: MapMarker['kind'] }) {
       return <View style={styles.destino} />;
     case 'chofer':
       return <TruckSprite />;
+    case 'grua':
+      return (
+        <View style={styles.grua}>
+          <IconoGrua size={18} color={colors.white} strokeWidth={2.2} />
+        </View>
+      );
   }
 }
 
 const styles = StyleSheet.create({
+  grua: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#FF6B1A',
+    borderWidth: 3,
+    borderColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   halo: {
     width: 64,
     height: 64,
