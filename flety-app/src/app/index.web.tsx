@@ -39,7 +39,7 @@ import { colors, fonts } from '@/theme';
 // Fotos generadas con IA para Flety (Mendoza).
 const FOTO_PORTADA = require('../../assets/images/landing/portada.jpg');
 const FOTO_GRUA = require('../../assets/images/landing/grua-ruta.jpg');
-const FOTO_FLETEROS = require('../../assets/images/landing/fleteros.jpg');
+const FOTO_EMPRESAS = require('../../assets/images/landing/empresas.jpg');
 const FOTO_GRUISTA = require('../../assets/images/landing/gruista.jpg');
 
 // Landing pública (solo web). En iOS/Android, "/" es la bienvenida (index.tsx).
@@ -345,8 +345,10 @@ function LandingPage() {
             <View style={[styles.grid, isWide && { flexDirection: 'row' }]}>
               <Reveal style={isWide ? { flex: 1 } : undefined}>
                 <TarjetaFoto
-                  foto={FOTO_FLETEROS}
-                  alt="Dos fleteros cargando un sillón y cajas en una camioneta amarilla"
+                  foto={FOTO_EMPRESAS}
+                  alt="Camión de mudanza con la rampa bajada y fleteros cargando muebles en una calle de Mendoza"
+                  posicion="88%"
+                  panelArriba
                   etiqueta="Empresas de mudanzas y fletes"
                   colorEtiqueta="#FFD452"
                   titulo="Sumá tu empresa: mudanzas, fletes y larga distancia en un solo panel"
@@ -530,9 +532,14 @@ function TarjetaFoto({
   degrade,
   onPress,
   extra,
+  posicion = '50%',
+  panelArriba = false,
 }: {
   foto: number;
   alt: string;
+  posicion?: string;
+  // Panel de texto arriba, para fotos con el motivo en la parte de abajo.
+  panelArriba?: boolean;
   etiqueta: string;
   colorEtiqueta: string;
   titulo: string;
@@ -542,17 +549,17 @@ function TarjetaFoto({
   extra?: React.ReactNode;
 }) {
   return (
-    <View style={styles.tarjetaFoto}>
+    <View style={[styles.tarjetaFoto, panelArriba && { justifyContent: 'flex-start' }]}>
       <Image
         source={foto}
         style={StyleSheet.absoluteFill}
         contentFit="cover"
-        contentPosition={{ left: '50%', top: '28%' }}
+        contentPosition={{ left: posicion, top: '28%' }}
         accessibilityLabel={alt}
       />
       <LinearGradient
-        colors={['rgba(18,22,28,0)', 'rgba(18,22,28,0.92)']}
-        locations={[0.35, 1]}
+        colors={panelArriba ? ['rgba(18,22,28,0.92)', 'rgba(18,22,28,0)'] : ['rgba(18,22,28,0)', 'rgba(18,22,28,0.92)']}
+        locations={panelArriba ? [0, 0.65] : [0.35, 1]}
         style={StyleSheet.absoluteFill}
       />
       <Vidrio oscuro style={styles.tarjetaFotoPanel}>
