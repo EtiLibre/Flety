@@ -19,6 +19,7 @@ export type Pedido = {
   ayudantes: number;
   programado_para: string | null;
   nota: string | null;
+  carga: string | null;
   vehiculo: Vehiculo | null;
   distancia_km: number | null;
   precio_estimado: number | null;
@@ -30,7 +31,7 @@ export type Pedido = {
 };
 
 export const PEDIDO_COLUMNS =
-  'id, cliente_id, company_id, driver_id, tipo, origen, destino, estado, tamano, ayudantes, programado_para, nota, vehiculo, distancia_km, precio_estimado, created_at, company_solicitada, driver_solicitado, solicitado_hasta';
+  'id, cliente_id, company_id, driver_id, tipo, origen, destino, estado, tamano, ayudantes, programado_para, nota, carga, vehiculo, distancia_km, precio_estimado, created_at, company_solicitada, driver_solicitado, solicitado_hasta';
 
 // Crea el pedido (queda en "pendiente") y sube las fotos. Si alguna foto falla,
 // el pedido igual queda creado: se informa cuántas no se pudieron subir.
@@ -56,6 +57,7 @@ export async function crearPedido(
       ayudantes: draft.ayudantes,
       programado_para: programadoPara(draft.cuando)?.toISOString() ?? null,
       nota: draft.nota.trim() || null,
+      carga: draft.carga.trim(),
       vehiculo,
       distancia_km: distanciaKm ?? distanciaEstimadaKm(draft.origen, draft.destino),
       driver_solicitado: driverSolicitado ?? null,

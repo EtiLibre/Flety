@@ -253,6 +253,12 @@ function Contenido({
         ) : null}
       </View>
 
+      {pedido.carga ? (
+        <View style={styles.nota}>
+          <Text style={styles.notaLabel}>Qué se transporta</Text>
+          <Text style={styles.notaText}>{pedido.carga}</Text>
+        </View>
+      ) : null}
       {pedido.nota ? (
         <View style={styles.nota}>
           <Text style={styles.notaLabel}>Tu nota</Text>

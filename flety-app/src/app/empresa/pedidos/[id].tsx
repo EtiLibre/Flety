@@ -166,11 +166,21 @@ export default function DetallePedidoEmpresa() {
       />
     ) : null;
 
-  const notaCard = pedido.nota ? (
-    <Card title="Nota del cliente">
-      <Text style={styles.texto}>{pedido.nota}</Text>
-    </Card>
-  ) : null;
+  const notaCard =
+    pedido.carga || pedido.nota ? (
+      <>
+        {pedido.carga ? (
+          <Card title="Qué se transporta">
+            <Text style={styles.texto}>{pedido.carga}</Text>
+          </Card>
+        ) : null}
+        {pedido.nota ? (
+          <Card title="Nota del cliente">
+            <Text style={styles.texto}>{pedido.nota}</Text>
+          </Card>
+        ) : null}
+      </>
+    ) : null;
 
   const detalleCard = (
     <Card title="Detalle">

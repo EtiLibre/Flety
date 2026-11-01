@@ -347,6 +347,7 @@ function Asignado({
       <Fotos pedidoId={pedido.id} fotos={fotos} />
       <Recorrido pedido={pedido} minutos={minutos} />
       <ChatPedido orderId={pedido.id} titulo={cliente?.split(' ')[0] ?? 'el cliente'} abierto tono="dark" />
+      {pedido.carga ? <Nota titulo="Qué se transporta" texto={pedido.carga} /> : null}
       {pedido.nota ? <Nota texto={pedido.nota} /> : null}
       {pedido.precio_estimado != null ? (
         <View style={styles.precio}>
@@ -405,6 +406,7 @@ function EnViaje({
           </Text>
         </View>
       </View>
+      {pedido.carga ? <Nota titulo="Qué se transporta" texto={pedido.carga} /> : null}
       {pedido.nota ? <Nota texto={pedido.nota} /> : null}
       <Fotos pedidoId={pedido.id} fotos={fotos} />
       <ChatPedido orderId={pedido.id} titulo={cliente?.split(' ')[0] ?? 'el cliente'} abierto tono="dark" />
@@ -533,10 +535,10 @@ function Fotos({ pedidoId, fotos }: { pedidoId: string; fotos: string[] }) {
   );
 }
 
-function Nota({ texto }: { texto: string }) {
+function Nota({ texto, titulo = 'Nota del cliente' }: { texto: string; titulo?: string }) {
   return (
     <View style={styles.nota}>
-      <Text style={styles.small}>Nota del cliente</Text>
+      <Text style={styles.small}>{titulo}</Text>
       <Text style={styles.notaText}>{texto}</Text>
     </View>
   );

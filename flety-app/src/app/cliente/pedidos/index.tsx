@@ -59,6 +59,7 @@ export default function MisFletes() {
       cuando: { modo: 'ahora' },
       nota: p.nota ?? '',
       fotos: [],
+      carga: p.carga ?? '',
       vehiculo: null,
     });
     pedir();

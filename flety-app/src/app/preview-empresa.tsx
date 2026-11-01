@@ -30,6 +30,7 @@ import TarifasEmpresa from './empresa/tarifas';
 const base = {
   cliente_id: 'cli-1',
   nota: null,
+  carga: 'Muebles de un departamento y cajas',
   vehiculo: 'camioneta' as const,
   created_at: new Date().toISOString(),
   company_solicitada: null,

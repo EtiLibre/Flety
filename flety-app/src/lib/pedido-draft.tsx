@@ -64,6 +64,8 @@ export type PedidoDraft = {
   cuando: Cuando;
   nota: string;
   fotos: FotoLocal[];
+  // Qué se va a transportar (obligatorio).
+  carga: string;
   vehiculo: Vehiculo | null;
 };
 
@@ -78,6 +80,7 @@ const INITIAL: PedidoDraft = {
   cuando: { modo: 'ahora' },
   nota: '',
   fotos: [],
+  carga: '',
   vehiculo: null,
 };
 

@@ -26,10 +26,14 @@ export function PedidoForm({ onContinue }: { onContinue: () => void }) {
   const { draft, update } = usePedidoDraft();
   const [error, setError] = useState<string | null>(null);
 
+  const [faltaCarga, setFaltaCarga] = useState(false);
+
   function continuar() {
+    const sinCarga = draft.carga.trim().length < 3;
+    setFaltaCarga(sinCarga);
     const problema = draftListoParaCotizar(draft);
     setError(problema);
-    if (!problema) onContinue();
+    if (!problema && !sinCarga) onContinue();
   }
 
   return (
@@ -156,6 +160,27 @@ export function PedidoForm({ onContinue }: { onContinue: () => void }) {
 
       <PhotoPicker fotos={draft.fotos} onChange={(fotos) => update({ fotos })} />
 
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle} nativeID="carga-label">
+          ¿Qué vas a transportar?
+        </Text>
+        <TextInput
+          value={draft.carga}
+          onChangeText={(carga) => {
+            update({ carga });
+            if (carga.trim().length >= 3) setFaltaCarga(false);
+          }}
+          placeholder="Ej.: heladera, lavarropas, cama de 2 plazas y unas 10 cajas"
+          placeholderTextColor={colors.muted}
+          multiline
+          maxLength={300}
+          accessibilityLabelledBy="carga-label"
+          accessibilityLabel="Qué vas a transportar"
+          style={[styles.nota, faltaCarga && styles.campoError]}
+        />
+        {faltaCarga ? <Text style={styles.campoErrorTexto}>Contanos qué vas a transportar.</Text> : null}
+      </View>
+
       {error ? (
         <View style={styles.errorBox} accessibilityLiveRegion="polite">
           <Text style={styles.errorText}>{error}</Text>
@@ -220,6 +245,8 @@ const styles = StyleSheet.create({
     color: colors.ink,
     textAlignVertical: 'top',
   },
+  campoError: { borderWidth: 1.5, borderColor: colors.danger },
+  campoErrorTexto: { fontFamily: fonts.medium, fontSize: 13, color: colors.danger },
   errorBox: { backgroundColor: colors.dangerBg, borderRadius: 14, padding: 14 },
   errorText: { fontFamily: fonts.medium, fontSize: 14, color: colors.danger },
 });

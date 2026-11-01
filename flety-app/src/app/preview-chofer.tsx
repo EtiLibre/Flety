@@ -40,7 +40,6 @@ const ESTADOS = [
   'seguro',
 ] as const;
 
-
 const ETIQUETAS: Record<(typeof ESTADOS)[number], string> = {
   solicitud: 'Solicitud',
   asignado: 'Asignado',
@@ -71,6 +70,7 @@ const PEDIDO: Pedido = {
   estado: 'asignado',
   programado_para: null,
   nota: 'Es un segundo piso por escalera. Hay que desarmar la cama.',
+  carga: 'Cama de 2 plazas, ropero desarmado y 12 cajas',
   vehiculo: 'camioneta',
   distancia_km: 2.1,
   precio_estimado: 39500,

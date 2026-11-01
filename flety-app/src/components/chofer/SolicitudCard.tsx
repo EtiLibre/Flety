@@ -70,6 +70,7 @@ export function SolicitudCard({
           </View>
         </View>
       </View>
+      {pedido.carga ? <Text style={styles.carga}>Lleva: {pedido.carga}</Text> : null}
       {pedido.nota ? <Text style={styles.nota}>“{pedido.nota}”</Text> : null}
       {pedido.precio_estimado != null ? (
         <View style={styles.precio}>
@@ -141,6 +142,7 @@ const styles = StyleSheet.create({
   dotB: { width: 12, height: 12, borderRadius: 3, backgroundColor: colors.accent },
   small: { fontFamily: fonts.regular, fontSize: 12, color: d.muted },
   dir: { fontFamily: fonts.semibold, fontSize: 15, color: d.text },
+  carga: { fontFamily: fonts.semibold, fontSize: 14, lineHeight: 20, color: '#F1F3F5' },
   nota: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 20, color: '#D5DBE3' },
   precio: {
     flexDirection: 'row',
