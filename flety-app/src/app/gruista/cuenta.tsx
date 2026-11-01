@@ -1,7 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { ArrowLeftRight, Camera, FileText, Tag, Truck, Users } from 'lucide-react-native';
+import { ArrowLeftRight, Camera, FileText, LayoutGrid, Tag, Truck, Users } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -110,6 +110,15 @@ export default function CuentaGruista() {
                 titulo={gruista.esDueno ? 'Tarifas de la empresa' : 'Mis tarifas'}
                 detalle="Salida, km, recargos y adicionales"
                 onPress={() => irGruista('tarifas')}
+              />
+            ) : null}
+            {gruista.esDueno ? (
+              <FilaCuenta
+                tema="oscuro"
+                Icon={LayoutGrid}
+                titulo="Panel de la empresa"
+                detalle="Servicios, gruistas y tarifas de tu empresa de grúas"
+                onPress={() => router.push('/empresa-gruas' as never)}
               />
             ) : null}
             {gruista.esDueno ? (

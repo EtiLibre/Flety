@@ -13,7 +13,13 @@ export function VolverAlAdmin() {
   const { role } = useAuth();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
-  if (role !== 'superadmin' || pathname.startsWith('/empresa') || pathname === '/restablecer') return null;
+  if (
+    role !== 'superadmin' ||
+    pathname === '/empresa' ||
+    pathname.startsWith('/empresa/') ||
+    pathname === '/restablecer'
+  )
+    return null;
 
   return (
     <View style={[styles.barra, { paddingTop: insets.top }]}>

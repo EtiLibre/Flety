@@ -597,3 +597,18 @@ export async function fotosDeSolicitud(solicitudId: string): Promise<{ path: str
   const { data } = await supabase.storage.from(FOTOS_BUCKET).createSignedUrls(paths, 3600);
   return (data ?? []).flatMap((d, i) => (d.signedUrl ? [{ path: paths[i], url: d.signedUrl }] : []));
 }
+
+// ── Panel de la empresa de grúas ────────────────────────────────────────
+// Servicios hechos (o en curso) por los gruistas de la empresa; RLS deja verlos
+// al dueño (gruas.es_parte).
+export async function serviciosDeEmpresa(prestadorIds: string[]): Promise<Solicitud[]> {
+  if (!prestadorIds.length) return [];
+  const { data, error } = await g()
+    .from('solicitudes')
+    .select(SOLICITUD_COLS)
+    .in('prestador_id', prestadorIds)
+    .order('created_at', { ascending: false })
+    .limit(200);
+  if (error) throw errorDe(error, 'No pudimos cargar los servicios de la empresa.');
+  return (data as Solicitud[]) ?? [];
+}

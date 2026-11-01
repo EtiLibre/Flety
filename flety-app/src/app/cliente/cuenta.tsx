@@ -32,12 +32,21 @@ export default function CuentaCliente() {
         detalle="Casa, Trabajo y tus lugares guardados (solo los ves vos)"
         onPress={() => router.push('/cliente/lugares')}
       />
+      {gruista?.esDueno ? (
+        <FilaCuenta
+          tema="claro"
+          Icon={IconoGrua}
+          titulo="Panel de mi empresa de grúas"
+          detalle={gruista.empresa?.nombre ?? 'Servicios, gruistas y tarifas'}
+          onPress={() => router.push('/empresa-gruas' as never)}
+        />
+      ) : null}
       {gruista ? (
         <FilaCuenta
           tema="claro"
           Icon={IconoGrua}
-          titulo="Panel de gruista"
-          detalle="Tus servicios de grúa y auxilio"
+          titulo="App del gruista"
+          detalle="Recibir y hacer servicios de grúa"
           onPress={() => router.push(RUTA_GRUISTA)}
         />
       ) : null}

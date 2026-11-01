@@ -35,7 +35,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { BarraInferior, type TabItem } from '@/components/nav/BarraInferior';
 
 import { useIsWide } from '@/hooks/use-is-wide';
-import { RUTA_GRUISTA } from '@/modulos/gruas/nav';
+import { RUTA_GRUISTA, RUTA_PEDIR_GRUA } from '@/modulos/gruas/nav';
 import { IconoGrua } from '@/plataforma/IconoGrua';
 import { servicio } from '@/plataforma/servicios';
 import { useNavEmpresa } from '@/hooks/use-nav-empresa';
@@ -312,13 +312,31 @@ function MenuMas({
   );
 }
 
-// Superadmin: recorrer la app como la ve cada tipo de usuario.
-const VISTAS: { label: string; detalle: string; href: Href }[] = [
-  { label: 'Visitante', detalle: 'Página pública', href: { pathname: '/', params: { vista: 'publica' } } },
-  { label: 'Cliente', detalle: 'Pedir y seguir fletes', href: '/cliente/inicio' },
-  { label: 'Chofer', detalle: 'Demo con datos de ejemplo', href: '/preview-chofer' },
-  { label: 'Empresa', detalle: 'Demo con datos de ejemplo', href: '/preview-empresa' },
-  { label: 'Gruista', detalle: 'App del gruista (Grúas)', href: RUTA_GRUISTA },
+// Superadmin: recorrer la app como la ve cada tipo de usuario, separado por
+// negocio (Mudanzas y Grúas son independientes: cada uno con su cliente, su
+// prestador y su panel de empresa).
+type Vista = { label: string; detalle: string; href: Href };
+const VISTAS: { grupo: string; vistas: Vista[] }[] = [
+  {
+    grupo: 'Plataforma',
+    vistas: [{ label: 'Visitante', detalle: 'Página pública', href: { pathname: '/', params: { vista: 'publica' } } }],
+  },
+  {
+    grupo: 'Mudanzas y fletes',
+    vistas: [
+      { label: 'Cliente', detalle: 'Pedir y seguir fletes', href: '/cliente/inicio' },
+      { label: 'Chofer', detalle: 'App del chofer (ejemplo)', href: '/preview-chofer' },
+      { label: 'Empresa de mudanzas', detalle: 'Panel de la empresa (ejemplo)', href: '/preview-empresa' },
+    ],
+  },
+  {
+    grupo: 'Grúas y auxilio',
+    vistas: [
+      { label: 'Cliente', detalle: 'Pedir y seguir una grúa', href: RUTA_PEDIR_GRUA },
+      { label: 'Gruista', detalle: 'App del gruista', href: RUTA_GRUISTA },
+      { label: 'Empresa de grúas', detalle: 'Panel de la empresa (ejemplo)', href: '/empresa-gruas' as Href },
+    ],
+  },
 ];
 
 // Superadmin: Mudanzas | Grúas. Cada negocio tiene sus propias secciones.
@@ -382,20 +400,27 @@ function VerComo({ light }: { light?: boolean }) {
         )}
       </Pressable>
       {abierto ? (
-        <View style={light ? styles.verComoChips : styles.verComoLista}>
-          {VISTAS.map((v) => (
-            <Pressable
-              key={v.label}
-              accessibilityRole="link"
-              accessibilityLabel={`Ver la app como ${v.label.toLowerCase()}: ${v.detalle}`}
-              onPress={() => router.push(v.href)}
-              style={({ hovered }: { hovered?: boolean }) => [
-                light ? styles.verComoChip : styles.verComoItem,
-                hovered && (light ? { backgroundColor: colors.surface } : { backgroundColor: '#232A34' }),
-              ]}>
-              <Text style={[styles.verComoLabel, light && { color: colors.ink }]}>{v.label}</Text>
-              {light ? null : <Text style={styles.verComoDetalle}>{v.detalle}</Text>}
-            </Pressable>
+        <View style={styles.verComoLista}>
+          {VISTAS.map((g) => (
+            <View key={g.grupo} style={{ gap: 2 }}>
+              <Text style={[styles.verComoGrupo, light && { color: colors.muted }]}>{g.grupo}</Text>
+              <View style={light ? styles.verComoChips : styles.verComoLista}>
+                {g.vistas.map((v) => (
+                  <Pressable
+                    key={`${g.grupo}-${v.label}`}
+                    accessibilityRole="link"
+                    accessibilityLabel={`Ver la app como ${v.label.toLowerCase()} (${g.grupo}): ${v.detalle}`}
+                    onPress={() => router.push(v.href)}
+                    style={({ hovered }: { hovered?: boolean }) => [
+                      light ? styles.verComoChip : styles.verComoItem,
+                      hovered && (light ? { backgroundColor: colors.surface } : { backgroundColor: '#232A34' }),
+                    ]}>
+                    <Text style={[styles.verComoLabel, light && { color: colors.ink }]}>{v.label}</Text>
+                    {light ? null : <Text style={styles.verComoDetalle}>{v.detalle}</Text>}
+                  </Pressable>
+                ))}
+              </View>
+            </View>
           ))}
         </View>
       ) : null}
@@ -531,6 +556,15 @@ const styles = StyleSheet.create({
   verComoHead: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12 },
   verComoTitulo: { fontFamily: fonts.semibold, fontSize: 12, color: '#A9B0BA' },
   verComoLista: { gap: 2 },
+  verComoGrupo: {
+    fontFamily: fonts.bold,
+    fontSize: 11,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: '#8B95A1',
+    paddingHorizontal: 12,
+    paddingTop: 8,
+  },
   verComoItem: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 10 },
   verComoLabel: { fontFamily: fonts.semibold, fontSize: 14, color: colors.white },
   verComoDetalle: { fontFamily: fonts.regular, fontSize: 11, color: '#8B95A1' },
