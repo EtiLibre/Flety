@@ -21,6 +21,7 @@ import { distanciaEstimadaKm } from '@/lib/distance';
 import { describirCuandoDraft, plural } from '@/lib/format';
 import { fleterosDeEjemplo, fleterosDisponibles, type Fletero } from '@/lib/marketplace';
 import { crearPedido } from '@/lib/orders';
+import { useVerificarTelefono } from '@/components/telefono/VerificarTelefono';
 import { draftListoParaCotizar, usePedidoDraft } from '@/lib/pedido-draft';
 import { fetchTarifas, formatARS, precioEstimado, type Tarifa } from '@/lib/pricing';
 import type { Ruta } from '@/lib/routing';
@@ -180,6 +181,8 @@ function OpcionesContenido({
     return tarifa ? formatARS(precioEstimado(tarifa, km, draft.ayudantes)) : null;
   }
 
+  const verificacion = useVerificarTelefono();
+
   async function confirmar() {
     if (!session) return;
     setEnviando(true);
@@ -207,6 +210,7 @@ function OpcionesContenido({
 
   return (
     <>
+      {verificacion.modal}
       <RouteSummary
         origen={draft.origen!.direccion}
         destino={draft.destino!.direccion}
@@ -332,7 +336,7 @@ function OpcionesContenido({
             : `Confirmar ${VEHICULO_LABEL[vehiculo].titulo.toLowerCase()}`
         }
         variant="dark"
-        onPress={confirmar}
+        onPress={() => verificacion.antesDe(confirmar)}
         loading={enviando}
         disabled={cargandoRuta || (modo === 'elegir' && (!fletero || !!fletero.demo))}
       />

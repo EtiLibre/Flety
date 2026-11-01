@@ -16,6 +16,7 @@ import {
   LayoutGrid,
   LifeBuoy,
   Megaphone,
+  MessageCircle,
   Menu,
   Wallet,
   LogOut,
@@ -56,6 +57,7 @@ export type SeccionEmpresa =
   | 'seguros'
   | 'soporte'
   | 'lugares'
+  | 'verificacion'
   | 'gruasOperacion'
   | 'gruasPrestadores'
   | 'gruasAjustes'
@@ -90,6 +92,7 @@ const SECCIONES: {
   { id: 'anuncios', label: 'Anuncios', Icon: Megaphone, roles: ['marketing', 'superadmin'] },
   { id: 'soporte', label: 'Soporte', Icon: Headset, roles: ['superadmin'] },
   { id: 'lugares', label: 'Lugares', Icon: MapPinned, roles: ['superadmin'] },
+  { id: 'verificacion', label: 'Teléfonos', Icon: MessageCircle, roles: ['superadmin'] },
   { id: 'gruasOperacion', label: 'Operación', Icon: IconoGrua, roles: ['superadmin'], negocio: 'gruas' },
   { id: 'gruasPrestadores', label: 'Gruistas', Icon: UserCheck, roles: ['superadmin'], negocio: 'gruas' },
   { id: 'gruasAjustes', label: 'Ajustes', Icon: Settings, roles: ['superadmin'], negocio: 'gruas' },

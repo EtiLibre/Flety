@@ -56,6 +56,7 @@ import { Campo, estilosGruista as eg, Tarjeta, Titulo } from '@/modulos/gruas/pa
 import type { Catalogo, Documento, Oferta, Solicitud, TipoDocumento } from '@/modulos/gruas/tipos';
 import { ChatGrua, Chips, CuentaEspera, Desglose, G } from '@/modulos/gruas/ui';
 import { IngresoPin } from '@/components/pin/PinViaje';
+import { useVerificarTelefono } from '@/components/telefono/VerificarTelefono';
 import { colors, fonts, radius } from '@/theme';
 
 const d = colors.dark;
@@ -423,6 +424,8 @@ function Panel({ g, recargar }: { g: MiGruista; recargar: () => void }) {
   const vencidos = docsVencidos(g.documentos);
   const hoy = gananciaDeHoy(servicios);
 
+  const verificacion = useVerificarTelefono();
+
   async function cambiarDisponible(v: boolean) {
     setCambiando(true);
     setError(null);
@@ -445,6 +448,7 @@ function Panel({ g, recargar }: { g: MiGruista; recargar: () => void }) {
         <ServicioActual s={servicio} posicion={posicion} catalogo={catalogo} onCambio={recargarServicios} />
       ) : (
         <>
+          {verificacion.modal}
           <Tarjeta style={disponible ? { borderColor: G.acento } : undefined}>
             <View style={styles.dispFila}>
               <View style={[styles.dispPunto, { backgroundColor: disponible ? '#4ADE80' : d.muted }]} />
@@ -460,7 +464,9 @@ function Panel({ g, recargar }: { g: MiGruista; recargar: () => void }) {
                 <Switch
                   accessibilityLabel="Disponible"
                   value={disponible}
-                  onValueChange={cambiarDisponible}
+                  onValueChange={(v) =>
+                    v ? verificacion.antesDe(() => cambiarDisponible(true)) : cambiarDisponible(false)
+                  }
                   trackColor={{ true: G.acento, false: d.line }}
                   thumbColor={colors.white}
                 />

@@ -19,6 +19,7 @@ import type { Solicitud } from '@/modulos/gruas/tipos';
 import { CalificarGrua, ChatGrua, CuentaEspera, Desglose, G, LineaTiempo, TarjetaGruista } from '@/modulos/gruas/ui';
 import { TarjetaPin, usePinViaje } from '@/components/pin/PinViaje';
 import { AccionesSeguridad } from '@/components/pin/AccionesSeguridad';
+import { useVerificarTelefono } from '@/components/telefono/VerificarTelefono';
 import { colors, fonts, radius } from '@/theme';
 
 const SUBTITULO: Partial<Record<Solicitud['estado'], string>> = {
@@ -38,6 +39,7 @@ export default function SeguimientoGrua() {
   const { solicitud: s, grua, noExiste, recargar } = useSolicitudGrua(id);
   const { catalogo } = useCatalogoGruas();
   const [accion, setAccion] = useState<string | null>(null);
+  const verificacion = useVerificarTelefono();
   // El PIN se muestra hasta que empieza el traslado.
   const pin = usePinViaje(
     'grua',
@@ -214,7 +216,7 @@ export default function SeguimientoGrua() {
           title="Volver a buscar una grúa"
           variant="dark"
           loading={accion === 'reintentar'}
-          onPress={reintentar}
+          onPress={() => verificacion.antesDe(reintentar)}
         />
       ) : null}
       {activa && s.estado !== 'trasladando' ? (
@@ -229,6 +231,7 @@ export default function SeguimientoGrua() {
   if (isWide) return <ClienteShell active="pedidos" panel={contenido} map={mapa} />;
   return (
     <MobileMapLayout map={mapa} mapHeight={300} onBack={() => router.replace('/cliente/inicio')}>
+      {verificacion.modal}
       {contenido}
     </MobileMapLayout>
   );

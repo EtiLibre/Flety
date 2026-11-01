@@ -23,6 +23,7 @@ import { useNavChofer } from '@/hooks/use-nav-chofer';
 import { usePedidoEnVivo } from '@/hooks/use-pedido-en-vivo';
 import { useRuta } from '@/hooks/use-ruta';
 import { IngresoPin } from '@/components/pin/PinViaje';
+import { useVerificarTelefono } from '@/components/telefono/VerificarTelefono';
 import { avanzarViaje, cambiarDisponibilidad, ETAPAS, iniciarCarga, PASOS_VIAJE, urlNavegacion } from '@/lib/chofer';
 import { confirmar } from '@/lib/confirm';
 import { describirCuando, plural } from '@/lib/format';
@@ -61,6 +62,8 @@ export default function PanelChofer() {
   const { ruta } = useRuta(actual?.estado === 'cargando' ? [actual.origen, actual.destino] : [yo, objetivo ?? null]);
 
   const { fotos: fotosActual } = usePedidoEnVivo(actual?.id);
+
+  const verificacion = useVerificarTelefono();
 
   async function toggleDisponible() {
     if (!chofer) return;
@@ -132,7 +135,7 @@ export default function PanelChofer() {
           accessibilityRole="switch"
           accessibilityState={{ checked: disponible }}
           accessibilityLabel="Disponible para recibir viajes"
-          onPress={toggleDisponible}
+          onPress={() => (disponible ? toggleDisponible() : verificacion.antesDe(toggleDisponible))}
           style={[styles.toggle, disponible && styles.toggleOn]}>
           <Text style={styles.toggleText}>{disponible ? 'Estás disponible' : 'No estás disponible'}</Text>
           <View style={[styles.switch, disponible && styles.switchOn]}>
@@ -210,6 +213,7 @@ export default function PanelChofer() {
 
   const extra = (
     <>
+      {verificacion.modal}
       <IngresoPin
         visible={pidiendoPin && !!actual}
         titulo="PIN para empezar la carga"

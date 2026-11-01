@@ -9,6 +9,7 @@ import { MENDOZA, type MapMarker } from '@/components/map/types';
 import { MobileMapLayout } from '@/components/MobileMapLayout';
 import { AddressField } from '@/components/pedido/AddressField';
 import { ClienteShell } from '@/components/web/ClienteShell';
+import { useVerificarTelefono } from '@/components/telefono/VerificarTelefono';
 import { useCurrentLocation } from '@/hooks/use-current-location';
 import { useIsWide } from '@/hooks/use-is-wide';
 import { useRuta } from '@/hooks/use-ruta';
@@ -79,6 +80,8 @@ export default function PedirGrua() {
   const recomendada = opciones[0] ?? null;
   const valido = listos && !!motivo && !!recomendada;
 
+  const verificacion = useVerificarTelefono();
+
   async function pedir() {
     if (!valido || !origen || !destino || !tipo || !motivo || !recomendada) return;
     setEnviando(true);
@@ -121,6 +124,7 @@ export default function PedirGrua() {
 
   const contenido = (
     <View style={{ gap: 16 }}>
+      {verificacion.modal}
       <View style={styles.cabecera}>
         <View style={styles.icono}>
           <IconoGrua size={22} color={colors.white} strokeWidth={2.2} />
@@ -274,7 +278,7 @@ export default function PedirGrua() {
       <Pressable
         accessibilityRole="button"
         disabled={!valido || enviando || !!activa}
-        onPress={pedir}
+        onPress={() => verificacion.antesDe(pedir)}
         style={[styles.boton, (!valido || !!activa) && { opacity: 0.45 }]}>
         {enviando ? (
           <ActivityIndicator color={colors.white} />
