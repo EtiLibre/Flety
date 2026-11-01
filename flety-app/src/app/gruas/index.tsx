@@ -26,7 +26,8 @@ import { ESTADOS_ACTIVOS } from '@/modulos/gruas/estados';
 import { useCatalogoGruas, useMisSolicitudesGrua } from '@/modulos/gruas/hooks';
 import type { ResultadoCotizar } from '@/modulos/gruas/tipos';
 import { GruaOption } from '@/modulos/gruas/GruaOption';
-import { Chips, Desglose, G } from '@/modulos/gruas/ui';
+import { OpcionesConMas } from '@/modulos/gruas/OpcionesConMas';
+import { Desglose, G } from '@/modulos/gruas/ui';
 import { Degrade, SOMBRAS } from '@/plataforma/estilo';
 import { IconoGrua } from '@/plataforma/IconoGrua';
 import { colors, fonts, radius } from '@/theme';
@@ -54,6 +55,10 @@ export default function PedirGrua() {
   const [modelo, setModelo] = useState('');
   const [patente, setPatente] = useState('');
   const [nota, setNota] = useState('');
+  // "Otro": el cliente escribe cuál es (va en la nota para la grúa).
+  const [tipoOtro, setTipoOtro] = useState('');
+  const [motivoOtro, setMotivoOtro] = useState('');
+  const [situacionOtra, setSituacionOtra] = useState('');
   const [modo, setModo] = useState<Modo>('cercana');
   const [elegido, setElegido] = useState<string | null>(null);
   const [verDesglose, setVerDesglose] = useState(false);
@@ -107,7 +112,10 @@ export default function PedirGrua() {
     !origen && 'dónde está el vehículo',
     !destino && !enLugar && 'a dónde lo llevamos',
     !tipo && 'el tipo de vehículo',
+    tipo === 'otro' && !tipoOtro.trim() && 'qué vehículo es',
     !motivo && 'qué le pasa',
+    motivo === 'otro' && !motivoOtro.trim() && 'contanos qué le pasa',
+    situaciones.includes(OTRA) && !situacionOtra.trim() && 'cuál es la situación',
     !fotos.length && 'una foto del vehículo',
     listos && modo === 'elegir' && !elegida && 'qué grúa querés',
   ].filter(Boolean) as string[];
@@ -128,8 +136,16 @@ export default function PedirGrua() {
         tipo,
         vehiculo: { marca: marca.trim(), modelo: modelo.trim(), patente: patente.trim().toUpperCase() },
         motivo,
-        situaciones,
-        nota,
+        situaciones: situaciones.filter((x) => x !== OTRA),
+        nota: [
+          tipo === 'otro' && `Vehículo: ${tipoOtro.trim()}`,
+          motivo === 'otro' && `Problema: ${motivoOtro.trim()}`,
+          situaciones.includes(OTRA) && `Situación: ${situacionOtra.trim()}`,
+          nota.trim(),
+        ]
+          .filter(Boolean)
+          .join('. ')
+          .slice(0, 500),
         precioMax: aPedir.total,
         fotos: paths,
         prestador: modo === 'elegir' ? aPedir.prestador_id : null,
@@ -219,10 +235,13 @@ export default function PedirGrua() {
 
       <Seccion titulo="¿Qué le pasa?" falta={intento && !motivo}>
         {catalogo ? (
-          <Chips
+          <OpcionesConMas
             opciones={catalogo.motivos.filter((t) => t.activo !== false)}
+            comunes={MOTIVOS_COMUNES}
             valor={motivo}
             onCambio={(v) => setMotivo(v)}
+            otro={{ id: 'otro', texto: motivoOtro, onTexto: setMotivoOtro, placeholder: 'Contanos qué le pasa' }}
+            falta={intento}
           />
         ) : (
           <ActivityIndicator color={G.acento} />
@@ -236,21 +255,32 @@ export default function PedirGrua() {
 
       <Seccion titulo="Tipo de vehículo" falta={intento && !tipo}>
         {catalogo ? (
-          <Chips
+          <OpcionesConMas
             opciones={catalogo.tipos.filter((t) => t.activo !== false)}
+            comunes={TIPOS_COMUNES}
             valor={tipo}
             onCambio={(v) => setTipo(v)}
+            otro={{ id: 'otro', texto: tipoOtro, onTexto: setTipoOtro, placeholder: '¿Qué vehículo es?' }}
+            falta={intento}
           />
         ) : null}
       </Seccion>
 
       {catalogo?.situaciones.length ? (
         <Seccion titulo="¿Alguna de estas situaciones? (opcional)">
-          <Chips
+          <OpcionesConMas
             multiple
-            opciones={catalogo.situaciones.filter((t) => t.activo !== false)}
+            opciones={[...catalogo.situaciones.filter((t) => t.activo !== false), { id: OTRA, nombre: 'Otra' }]}
+            comunes={SITUACIONES_COMUNES}
             valor={situaciones}
             onCambio={(v) => setSituaciones((a) => (a.includes(v) ? a.filter((x) => x !== v) : [...a, v]))}
+            otro={{
+              id: OTRA,
+              texto: situacionOtra,
+              onTexto: setSituacionOtra,
+              placeholder: 'Contanos la situación (ej.: está en un 2° piso de cochera)',
+            }}
+            falta={intento}
           />
         </Seccion>
       ) : null}
@@ -425,6 +455,13 @@ export default function PedirGrua() {
     </MobileMapLayout>
   );
 }
+
+// Opciones más comunes a la vista; el resto con "Ver más". "Otro" abre un campo
+// para escribir cuál es.
+const TIPOS_COMUNES = ['auto', 'camioneta', 'moto', 'utilitario'];
+const MOTIVOS_COMUNES = ['no_arranca', 'bateria', 'pinchadura', 'choque', 'sin_combustible'];
+const SITUACIONES_COMUNES = ['sin_llaves', 'ruedas_trabadas', 'volcado', 'subsuelo'];
+const OTRA = 'otra';
 
 function Seccion({ titulo, falta, children }: { titulo: string; falta?: boolean; children: React.ReactNode }) {
   return (
