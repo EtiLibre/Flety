@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Defs, Ellipse, G, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 
 import { COLORES, type ColorVehiculo } from '@/lib/vehiculos';
+import { useSvgId } from '@/plataforma/svg-id';
 import type { Vehiculo } from '@/lib/types';
 import { fonts } from '@/theme';
 
@@ -29,7 +30,7 @@ export function VehiculoIlustracion({
   ancho?: number;
 }) {
   const pintura = COLORES[color]?.hex ?? COLORES.blanco.hex;
-  const id = `veh-${tipo}-${color}`;
+  const id = useSvgId(`veh-${tipo}-${color}`);
   return (
     <Svg width={ancho} height={(ancho * VB.h) / VB.w} viewBox={`0 0 ${VB.w} ${VB.h}`} aria-hidden>
       <Defs>

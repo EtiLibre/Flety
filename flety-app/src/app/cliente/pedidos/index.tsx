@@ -20,6 +20,7 @@ import { colors, fonts } from '@/theme';
 
 const VACIO: Record<GrupoFlete, string> = {
   en_curso: 'No tenés fletes en curso.',
+  programados: 'No tenés mudanzas ni fletes programados.',
   terminados: 'Todavía no terminaste ningún flete.',
   cancelados: 'No tenés fletes cancelados.',
 };
@@ -32,11 +33,14 @@ export default function MisFletes() {
   const { update } = usePedidoDraft();
   const { porCalificar, porPagar } = useAvisosFletes(pedidos);
   const enCurso = pedidos.filter((p) => grupoDe(p) === 'en_curso');
+  const programados = pedidos.filter((p) => grupoDe(p) === 'programados');
   const [grupoElegido, setGrupo] = useState<GrupoFlete | null>(null);
   const [servicioTab, setServicioTab] = useState<ServicioId>('mudanzas');
-  // Si hay alguno en curso, se abre ahí; si no, en terminados.
-  const grupo = grupoElegido ?? (enCurso.length ? 'en_curso' : 'terminados');
+  // Se abre en curso si hay alguno; si no, en programados; si no, en terminados.
+  const grupo = grupoElegido ?? (enCurso.length ? 'en_curso' : programados.length ? 'programados' : 'terminados');
   const lista = pedidos.filter((p) => grupoDe(p) === grupo);
+  // Los programados, del más próximo al más lejano.
+  if (grupo === 'programados') lista.sort((a, b) => (a.programado_para ?? '').localeCompare(b.programado_para ?? ''));
   const terminados = pedidos.filter((p) => grupoDe(p) === 'terminados');
   const gastado = terminados.reduce((t, p) => t + (p.precio_estimado ?? 0), 0);
 
@@ -78,6 +82,7 @@ export default function MisFletes() {
       <Segmented
         options={[
           { value: 'en_curso', label: `En curso${enCurso.length ? ` · ${enCurso.length}` : ''}` },
+          { value: 'programados', label: 'Programados' },
           { value: 'terminados', label: 'Terminados' },
           { value: 'cancelados', label: 'Cancelados' },
         ]}
@@ -94,7 +99,9 @@ export default function MisFletes() {
               pedido={p}
               tema="claro"
               onPress={() => router.push(`/cliente/pedidos/${p.id}`)}
-              onRepetir={grupo !== 'en_curso' && p.origen && p.destino ? () => repetir(p) : undefined}
+              onRepetir={
+                grupo !== 'en_curso' && grupo !== 'programados' && p.origen && p.destino ? () => repetir(p) : undefined
+              }
               avisos={[
                 ...(porPagar.has(p.id) ? [{ label: 'Pago pendiente', bg: '#FEF3C7', fg: '#92400E' }] : []),
                 ...(porCalificar.has(p.id) ? [{ label: '★ Calificá a tu fletero', bg: '#FFF7D6', fg: '#7A5A00' }] : []),
@@ -105,9 +112,11 @@ export default function MisFletes() {
       ) : (
         <View style={styles.vacio}>
           <Text style={styles.vacioText}>{VACIO[grupo]}</Text>
-          {grupo === 'en_curso' ? (
+          {grupo === 'en_curso' || grupo === 'programados' ? (
             <Pressable accessibilityRole="button" onPress={pedir} style={styles.vacioBtn}>
-              <Text style={styles.vacioBtnText}>Pedir un flete</Text>
+              <Text style={styles.vacioBtnText}>
+                {grupo === 'programados' ? 'Programar una mudanza' : 'Pedir un flete'}
+              </Text>
             </Pressable>
           ) : null}
         </View>

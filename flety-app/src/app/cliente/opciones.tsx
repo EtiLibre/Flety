@@ -26,6 +26,7 @@ import { draftListoParaCotizar, usePedidoDraft } from '@/lib/pedido-draft';
 import { fetchTarifas, formatARS, precioEstimado, type Tarifa } from '@/lib/pricing';
 import type { Ruta } from '@/lib/routing';
 import { TAMANO_LABEL, TIPO_LABEL, VEHICULO_LABEL, type GeoPoint, type Tamano, type Vehiculo } from '@/lib/types';
+import { useFlotaAlrededor } from '@/lib/flota-ambiente';
 import { colors, fonts } from '@/theme';
 
 const VEHICULOS: Vehiculo[] = ['utilitario', 'camioneta', 'camion'];
@@ -78,6 +79,17 @@ export default function Opciones() {
     ruta?.distanciaKm ?? (draft.origen && draft.destino ? distanciaEstimadaKm(draft.origen, draft.destino) : 0);
   const vehiculo = draft.vehiculo ?? SUGERIDO[draft.tamano];
   const marketplace = useFleteros(draft.origen, km, draft.ayudantes, vehiculo);
+  // En "Elegir fletero" se ven los fleteros cerca, chicos y dando vueltas por su
+  // zona (es ilustrativo: no es su posición en tiempo real).
+  const fleterosEnMapa = useFlotaAlrededor(
+    marketplace.fleteros.map((f) => ({
+      id: `f-${f.driver_id}`,
+      kind: 'flotaFlete' as const,
+      position: f.posicion,
+      label: `${f.nombre}, ${f.empresa}`,
+    })),
+    modo === 'elegir'
+  );
 
   // Al recargar la página en web el borrador se pierde: volvemos al formulario.
   if (draftListoParaCotizar(draft)) {
@@ -90,17 +102,7 @@ export default function Opciones() {
     { id: 'origen', kind: 'origen', position: origen, label: 'Retiro' },
     { id: 'destino', kind: 'destino', position: destino, label: 'Entrega' },
   ];
-  // En "Elegir fletero" se ven los fleteros disponibles cerca (ubicación aproximada).
-  if (modo === 'elegir') {
-    for (const f of marketplace.fleteros) {
-      markers.push({
-        id: `f-${f.driver_id}`,
-        kind: 'chofer',
-        position: f.posicion,
-        label: `${f.nombre}, ${f.empresa}`,
-      });
-    }
-  }
+  if (modo === 'elegir') markers.push(...fleterosEnMapa);
   const map = (
     <AppMap center={origen} markers={markers} line={ruta?.coords} fitToMarkers style={StyleSheet.absoluteFill} />
   );

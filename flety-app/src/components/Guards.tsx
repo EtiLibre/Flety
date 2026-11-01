@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { useAuth } from '@/lib/auth';
 import { ROLE_HOME, type UserRole } from '@/lib/types';
+import { RUTA_GRUISTA } from '@/modulos/gruas/nav';
 import { colors } from '@/theme';
 
 function Loader({ dark }: { dark?: boolean }) {
@@ -26,10 +27,11 @@ export function PublicOnly({ children, dark }: { children: React.ReactNode; dark
 }
 
 // ?next= solo acepta destinos propios conocidos (no URLs externas): sumarse
-// como chofer con un código o registrar una empresa.
+// como chofer con un código, darse de alta como gruista o registrar una empresa.
 function destinoDespuesDeEntrar(role: UserRole, next: string | undefined): Href {
   if (next === '/unirse' && (role === 'cliente' || role === 'chofer')) return '/unirse';
   if (next === '/registrar-empresa' && role === 'cliente') return '/registrar-empresa';
+  if (next === '/gruista' && role === 'cliente') return RUTA_GRUISTA;
   return ROLE_HOME[role];
 }
 

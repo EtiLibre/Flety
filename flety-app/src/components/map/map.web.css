@@ -62,6 +62,16 @@
   box-shadow: 0 3px 10px rgba(240, 112, 15, 0.35);
 }
 
+/* Flota del inicio: camionetas y grúas chicas vistas desde arriba. */
+.flety-flota svg {
+  display: block;
+  width: 20px;
+  height: 36px;
+}
+.flety-flota-grua svg {
+  height: 42px;
+}
+
 .flety-pin-chofer {
   width: 64px;
   height: 64px;

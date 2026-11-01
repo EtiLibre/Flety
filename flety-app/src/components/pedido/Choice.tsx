@@ -61,8 +61,10 @@ export function Segmented<T extends string>({
             onPress={() => onChange(option.value)}
             style={[styles.segment, active && (oscuro ? styles.segmentActiveOscuro : styles.segmentActive)]}>
             <Text
+              numberOfLines={1}
               style={[
                 styles.segmentText,
+                options.length > 3 && { fontSize: 13 },
                 oscuro && { color: colors.dark.muted },
                 active &&
                   (oscuro ? { color: colors.dark.text, fontFamily: fonts.extrabold } : styles.segmentTextActive),
@@ -97,7 +99,17 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     backgroundColor: 'rgba(18,22,28,0.06)',
   },
-  segment: { flex: 1, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  // El ancho se reparte según el texto (con 4 opciones, las más largas no se cortan).
+  segment: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 'auto',
+    height: 40,
+    paddingHorizontal: 6,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   segmentActive: { backgroundColor: colors.white, boxShadow: '0px 4px 10px -4px rgba(18,22,28,0.3)' },
   segmentText: { fontFamily: fonts.semibold, fontSize: 14, color: colors.muted },
   segmentTextActive: { color: colors.ink, fontFamily: fonts.extrabold },

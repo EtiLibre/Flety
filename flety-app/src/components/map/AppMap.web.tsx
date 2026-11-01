@@ -9,8 +9,9 @@ import { metrosEntre, rumbo } from '@/lib/geo';
 import { colors } from '@/theme';
 
 import { applyFletyPalette, MAP_PALETTE, MAP_PALETTE_DARK, OPENFREEMAP_STYLE_URL } from './flety-style';
+import { GRUA_3D_SVG } from './grua-sprite';
 import { TRUCK_3D_SVG } from './truck-sprite';
-import type { AppMapProps, LatLng, MapMarker } from './types';
+import { GIRA_CON_RUMBO, type AppMapProps, type LatLng, type MapMarker } from './types';
 
 // En web: MapLibre + teselas vectoriales de OpenFreeMap (gratis, sin API key),
 // recoloreadas con la paleta de Flety. En iOS/Android se usa AppMap.tsx.
@@ -36,11 +37,17 @@ const MARKER_HTML: Record<MapMarker['kind'], string> = {
   chofer: `<div class="flety-truck"><div class="flety-truck-pulse"></div>${TRUCK_3D_SVG}</div>`,
   grua: `<div class="flety-pin flety-pin-grua">${GRUA_SVG}</div>`,
   fletero: `<div class="flety-pin flety-pin-fletero">${CAMIONETA_SVG}</div>`,
+  flotaFlete: `<div class="flety-flota">${TRUCK_3D_SVG}</div>`,
+  flotaGrua: `<div class="flety-flota flety-flota-grua">${GRUA_3D_SVG}</div>`,
 };
 
+// Cada marcador lleva sus propios ids de degradé (si no, todos usan los del
+// primero y, si ese queda oculto, no se pintan).
+let marcadorN = 0;
 function createMarkerElement(marker: MapMarker) {
   const el = document.createElement('div');
-  el.innerHTML = MARKER_HTML[marker.kind];
+  const n = ++marcadorN;
+  el.innerHTML = MARKER_HTML[marker.kind].replace(/\b(fl|gr)-([a-z]+)\b/g, `$1-$2-${n}`);
   if (marker.label) el.setAttribute('aria-label', marker.label);
   return el;
 }
@@ -56,14 +63,15 @@ type MarkerEntry = {
 const ROUTE_SOURCE = 'flety-ruta';
 const MOVE_MS = 1000;
 
-// Desliza el marcador hasta la nueva posición (en vez de "saltar").
-function animateTo(entry: MarkerEntry, target: LatLng) {
+// Desliza el marcador hasta la nueva posición (en vez de "saltar"). Lineal
+// para la flota del inicio, que se mueve sin parar.
+function animateTo(entry: MarkerEntry, target: LatLng, lineal = false) {
   if (entry.frame !== null) cancelAnimationFrame(entry.frame);
   const from = entry.marker.getLngLat();
   const start = performance.now();
   const step = (now: number) => {
     const t = Math.min(1, (now - start) / MOVE_MS);
-    const ease = t * (2 - t);
+    const ease = lineal ? t : t * (2 - t);
     entry.marker.setLngLat([from.lng + (target.lng - from.lng) * ease, from.lat + (target.lat - from.lat) * ease]);
     entry.frame = t < 1 ? requestAnimationFrame(step) : null;
   };
@@ -190,12 +198,12 @@ export function AppMap({
     for (const m of markers) {
       const existing = current.get(m.id);
       if (existing && existing.kind === m.kind) {
-        if (m.kind === 'chofer') {
+        if (GIRA_CON_RUMBO.has(m.kind)) {
           const moved = metrosEntre(existing.position, m.position) > 3;
           const heading = m.heading ?? (moved ? rumbo(existing.position, m.position) : existing.heading);
           existing.heading = heading;
           existing.marker.setRotation(heading);
-          if (moved) animateTo(existing, m.position);
+          if (moved) animateTo(existing, m.position, m.kind !== 'chofer');
         } else if (metrosEntre(existing.position, m.position) > 3) {
           // Los vehículos cercanos también se deslizan al moverse.
           animateTo(existing, m.position);
@@ -205,7 +213,7 @@ export function AppMap({
         existing.position = m.position;
       } else {
         existing?.marker.remove();
-        const isTruck = m.kind === 'chofer';
+        const isTruck = GIRA_CON_RUMBO.has(m.kind);
         const marker = new Marker({
           element: createMarkerElement(m),
           // El camión "apoya" sobre el mapa: gira con el rumbo y se inclina con la perspectiva.
@@ -246,9 +254,9 @@ export function AppMap({
   }, [lineKey, ready]);
 
   // Encuadre: se recalcula cuando cambian los puntos fijos (retiro/entrega) o
-  // aparece/desaparece el chofer, no con cada paso del camión.
+  // aparece/desaparece el chofer, no con cada paso del camión ni de la flota.
   const fitKey = markers
-    .map((m) => (m.kind === 'chofer' ? 'chofer' : `${m.id}:${m.position.lat},${m.position.lng}`))
+    .map((m) => (GIRA_CON_RUMBO.has(m.kind) ? m.id : `${m.id}:${m.position.lat},${m.position.lng}`))
     .join('|');
   useEffect(() => {
     const map = mapRef.current;

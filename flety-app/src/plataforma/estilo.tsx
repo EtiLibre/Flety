@@ -12,6 +12,8 @@ import Svg, {
   Stop,
 } from 'react-native-svg';
 
+import { useSvgId } from './svg-id';
+
 // Estética "color con volumen" (canvas Flety · Propuesta): degradés en botones
 // y tarjetas, sombras del mismo tono y vidrio con blur estilo Apple.
 
@@ -100,7 +102,7 @@ export function Vidrio({
 
 // Luz de color en la esquina de una tarjeta.
 export function Resplandor({ color, tamano = 190, style }: { color: string; tamano?: number; style?: ViewStyle }) {
-  const id = `resplandor-${color.replace(/[^a-z0-9]/gi, '')}`;
+  const id = useSvgId('resplandor');
   return (
     <View
       pointerEvents="none"
@@ -149,28 +151,29 @@ export function IconoCamioneta({ size = 24, color = '#12161C', strokeWidth = 2 }
 // ── Ilustraciones ──────────────────────────────────────────────────────────
 // Camioneta amarilla con la caja abierta llena de cajas de cartón (Mudanzas).
 export function CamionetaIlustracion({ ancho = 120 }: { ancho?: number }) {
+  const uid = useSvgId('cam');
   return (
     <Svg width={ancho} height={(ancho * 74) / 120} viewBox="0 0 120 74" aria-hidden>
       <Defs>
-        <SvgGradient id="cam-pintura" x1="0" y1="0" x2="0" y2="1">
+        <SvgGradient id={`${uid}-cam-pintura`} x1="0" y1="0" x2="0" y2="1">
           <Stop offset="0" stopColor="#FFD452" />
           <Stop offset="1" stopColor="#FFA41B" />
         </SvgGradient>
-        <SvgGradient id="cam-carton" x1="0" y1="0" x2="0" y2="1">
+        <SvgGradient id={`${uid}-cam-carton`} x1="0" y1="0" x2="0" y2="1">
           <Stop offset="0" stopColor="#E2B07A" />
           <Stop offset="1" stopColor="#C98E52" />
         </SvgGradient>
       </Defs>
       <Ellipse cx={58} cy={68} rx={52} ry={4} fill="rgba(122,90,0,0.18)" />
-      <Rect x={10} y={17} width={24} height={22} rx={2} fill="url(#cam-carton)" />
+      <Rect x={10} y={17} width={24} height={22} rx={2} fill={`url(#${uid}-cam-carton)`} />
       <Rect x={19} y={17} width={6} height={22} fill="#F1D3A8" opacity={0.7} />
-      <Rect x={36} y={24} width={20} height={15} rx={2} fill="url(#cam-carton)" />
+      <Rect x={36} y={24} width={20} height={15} rx={2} fill={`url(#${uid}-cam-carton)`} />
       <Rect x={43} y={24} width={6} height={15} fill="#F1D3A8" opacity={0.7} />
-      <Rect x={14} y={5} width={16} height={13} rx={2} fill="url(#cam-carton)" />
+      <Rect x={14} y={5} width={16} height={13} rx={2} fill={`url(#${uid}-cam-carton)`} />
       <Rect x={20} y={5} width={4} height={13} fill="#F1D3A8" opacity={0.7} />
-      <Path d="M5 36h59v18H5z" fill="url(#cam-pintura)" />
+      <Path d="M5 36h59v18H5z" fill={`url(#${uid}-cam-pintura)`} />
       <Path d="M5 36h59" stroke="#C98500" strokeWidth={2.5} />
-      <Path d="M62 54V31a4 4 0 0 1 4-4h17l13 13v14z" fill="url(#cam-pintura)" />
+      <Path d="M62 54V31a4 4 0 0 1 4-4h17l13 13v14z" fill={`url(#${uid}-cam-pintura)`} />
       <Path d="M68 31h14l9 9H68z" fill="#12161C" />
       <Rect x={94} y={46} width={10} height={7} rx={2} fill="#12161C" />
       <Rect x={96} y={41} width={5} height={3} rx={1} fill="#FFF4D6" />
@@ -186,20 +189,21 @@ export function CamionetaIlustracion({ ancho = 120 }: { ancho?: number }) {
 // Grúa de plancha naranja llevando un auto (Grúas y auxilio).
 export function GruaPlanchaIlustracion({ ancho = 120, cabina }: { ancho?: number; cabina?: [string, string] }) {
   const [c1, c2] = cabina ?? ['#FF9A4D', '#E8430F'];
+  const uid = useSvgId('grua');
   return (
     <Svg width={ancho} height={(ancho * 74) / 120} viewBox="0 0 120 74" aria-hidden>
       <Defs>
-        <SvgGradient id="grua-cabina" x1="0" y1="0" x2="0" y2="1">
+        <SvgGradient id={`${uid}-grua-cabina`} x1="0" y1="0" x2="0" y2="1">
           <Stop offset="0" stopColor={c1} />
           <Stop offset="1" stopColor={c2} />
         </SvgGradient>
-        <SvgGradient id="grua-auto" x1="0" y1="0" x2="0" y2="1">
+        <SvgGradient id={`${uid}-grua-auto`} x1="0" y1="0" x2="0" y2="1">
           <Stop offset="0" stopColor="#6B7682" />
           <Stop offset="1" stopColor="#3E4752" />
         </SvgGradient>
       </Defs>
       <Ellipse cx={60} cy={68} rx={54} ry={4} fill="rgba(74,27,12,0.18)" />
-      <Path d="M10 43v-6a3 3 0 0 1 3-3h8l8-7h20l8 7h6a4 4 0 0 1 4 4v5z" fill="url(#grua-auto)" />
+      <Path d="M10 43v-6a3 3 0 0 1 3-3h8l8-7h20l8 7h6a4 4 0 0 1 4 4v5z" fill={`url(#${uid}-grua-auto)`} />
       <Path d="M25 33l6-5h8v5z" fill="#DCE3EA" />
       <Path d="M41 28h7l6 5H41z" fill="#DCE3EA" />
       <Circle cx={21} cy={43} r={5} fill="#12161C" />
@@ -208,7 +212,7 @@ export function GruaPlanchaIlustracion({ ancho = 120, cabina }: { ancho?: number
       <Circle cx={56} cy={43} r={2} fill="#C5CBD3" />
       <Path d="M2 51l5-4h72v4z" fill="#2A1006" />
       <Path d="M14 47l4-6M60 47l-3-6" stroke="#FFC233" strokeWidth={1.5} />
-      <Path d="M79 55V30a4 4 0 0 1 4-4h15l13 13v16z" fill="url(#grua-cabina)" />
+      <Path d="M79 55V30a4 4 0 0 1 4-4h15l13 13v16z" fill={`url(#${uid}-grua-cabina)`} />
       <Path d="M85 30h12l9 9H85z" fill="#2A1006" />
       <Rect x={86} y={22} width={9} height={4} rx={1.5} fill="#FFC233" />
       <Rect x={108} y={47} width={6} height={6} rx={2} fill="#2A1006" />

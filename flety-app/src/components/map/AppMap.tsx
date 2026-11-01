@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
+import { SvgXml } from 'react-native-svg';
 
 import { metrosEntre, rumbo } from '@/lib/geo';
 import { IconoCamioneta } from '@/plataforma/estilo';
@@ -8,8 +9,9 @@ import { IconoGrua } from '@/plataforma/IconoGrua';
 import { colors } from '@/theme';
 
 import { GOOGLE_MAP_STYLE, GOOGLE_MAP_STYLE_DARK } from './flety-style';
+import { GRUA_3D_SVG, GRUA_SIZE } from './grua-sprite';
 import { TruckSprite } from './TruckSprite';
-import type { AppMapProps, LatLng, MapMarker } from './types';
+import { GIRA_CON_RUMBO, type AppMapProps, type LatLng, type MapMarker } from './types';
 
 const DELTA = 0.012;
 
@@ -48,7 +50,7 @@ export function AppMap({
   const truckHeading = chofer?.heading ?? truck.heading;
 
   const fitKey = markers
-    .map((m) => (m.kind === 'chofer' ? 'chofer' : `${m.id}:${m.position.lat},${m.position.lng}`))
+    .map((m) => (GIRA_CON_RUMBO.has(m.kind) ? m.id : `${m.id}:${m.position.lat},${m.position.lng}`))
     .join('|');
 
   useEffect(() => {
@@ -99,8 +101,8 @@ export function AppMap({
           coordinate={{ latitude: marker.position.lat, longitude: marker.position.lng }}
           anchor={{ x: 0.5, y: 0.5 }}
           // El camión "apoya" sobre el mapa y gira con el rumbo del chofer.
-          flat={marker.kind === 'chofer'}
-          rotation={marker.kind === 'chofer' ? truckHeading : 0}
+          flat={GIRA_CON_RUMBO.has(marker.kind)}
+          rotation={marker.kind === 'chofer' ? truckHeading : (marker.heading ?? 0)}
           tracksViewChanges={false}
           accessibilityLabel={marker.label}>
           <MarkerView kind={marker.kind} />
@@ -124,6 +126,10 @@ function MarkerView({ kind }: { kind: MapMarker['kind'] }) {
       return <View style={styles.destino} />;
     case 'chofer':
       return <TruckSprite />;
+    case 'flotaFlete':
+      return <TruckSprite ancho={20} />;
+    case 'flotaGrua':
+      return <SvgXml xml={GRUA_3D_SVG} width={20} height={(20 * GRUA_SIZE.height) / GRUA_SIZE.width} />;
     case 'fletero':
       return (
         <View style={styles.fletero}>

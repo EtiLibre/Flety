@@ -5,15 +5,17 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { FormScreen } from '@/components/FormScreen';
+import { Segmented } from '@/components/pedido/Choice';
 import { TextField } from '@/components/TextField';
 import { authErrorMessage } from '@/lib/auth-errors';
 import { supabase } from '@/lib/supabase';
 import { colors, fonts } from '@/theme';
 
 export default function Registro() {
-  // ?next=/unirse: viene de "Quiero ser fletero".
+  // ?next=/unirse: viene de "Quiero ser fletero"; /gruista: "Sumarme como prestador".
   const { next } = useLocalSearchParams<{ next?: string }>();
   const fletero = next === '/unirse';
+  const gruista = next === '/gruista';
   const empresa = next === '/registrar-empresa';
   const conNext = next ? { next } : undefined;
   const [nombre, setNombre] = useState('');
@@ -80,15 +82,42 @@ export default function Registro() {
 
   return (
     <FormScreen
-      title={fletero ? 'Sumate como fletero' : empresa ? 'Registrá tu empresa' : 'Crear cuenta'}
+      title={
+        fletero
+          ? 'Sumate como chofer'
+          : gruista
+            ? 'Sumate con tu grúa'
+            : empresa
+              ? 'Registrá tu empresa'
+              : 'Crear cuenta'
+      }
       subtitle={
         fletero
           ? 'Creá tu cuenta y después escribí el código que te dio tu empresa.'
-          : empresa
-            ? 'Primero creá tu cuenta (la vas a usar para entrar al panel); después cargás los datos de la empresa.'
-            : 'En un minuto estás pidiendo tu primer flete.'
+          : gruista
+            ? 'Creá tu cuenta y después cargás tu grúa y tu documentación para empezar a recibir servicios.'
+            : empresa
+              ? 'Primero creá tu cuenta (la vas a usar para entrar al panel); después cargás los datos de la empresa.'
+              : 'En un minuto estás pidiendo tu mudanza, flete o grúa.'
       }
       footer={<Button title="Crear cuenta" onPress={handleRegistro} loading={loading} />}>
+      {empresa ? null : (
+        <View style={{ gap: 8 }}>
+          <Text style={styles.perfilTitulo}>¿Cómo vas a usar Flety?</Text>
+          <Segmented
+            options={[
+              { value: 'cliente', label: 'Pedir servicios' },
+              { value: '/unirse', label: 'Soy chofer' },
+              { value: '/gruista', label: 'Tengo grúa' },
+            ]}
+            value={fletero ? '/unirse' : gruista ? '/gruista' : 'cliente'}
+            onChange={(v) => router.setParams({ next: v === 'cliente' ? undefined : v })}
+          />
+          {fletero ? (
+            <Text style={styles.perfilAyuda}>Para choferes de una empresa de Flety: vas a necesitar su código.</Text>
+          ) : null}
+        </View>
+      )}
       <TextField
         label="Nombre"
         value={nombre}
@@ -152,6 +181,8 @@ export default function Registro() {
 const styles = StyleSheet.create({
   errorBox: { backgroundColor: colors.dangerBg, borderRadius: 14, padding: 14 },
   errorText: { fontFamily: fonts.medium, fontSize: 14, color: colors.danger },
+  perfilTitulo: { fontFamily: fonts.bold, fontSize: 14, color: colors.ink },
+  perfilAyuda: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted },
   footnote: { fontFamily: fonts.regular, fontSize: 15, color: colors.muted, textAlign: 'center' },
   link: { fontFamily: fonts.semibold, color: colors.ink, textDecorationLine: 'underline' },
   sentCard: { backgroundColor: colors.surface, borderRadius: 18, padding: 20, gap: 12 },

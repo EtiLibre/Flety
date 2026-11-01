@@ -3,15 +3,20 @@ import type { StyleProp, ViewStyle } from 'react-native';
 export type LatLng = { lat: number; lng: number };
 
 // grua: grúas disponibles y la grúa asignada (servicio Grúas).
-// fletero: fletes disponibles cerca (mapa del inicio), sin rumbo.
-export type MapMarkerKind = 'user' | 'origen' | 'destino' | 'chofer' | 'grua' | 'fletero';
+// fletero: fletes disponibles cerca, sin rumbo.
+// flotaFlete / flotaGrua: vehículos chicos vistos desde arriba que giran con
+// el rumbo (mapa del inicio).
+export type MapMarkerKind = 'user' | 'origen' | 'destino' | 'chofer' | 'grua' | 'fletero' | 'flotaFlete' | 'flotaGrua';
+
+// Marcadores que se dibujan vistos desde arriba y giran según el rumbo.
+export const GIRA_CON_RUMBO: ReadonlySet<MapMarkerKind> = new Set(['chofer', 'flotaFlete', 'flotaGrua']);
 
 export type MapMarker = {
   id: string;
   position: LatLng;
   kind: MapMarkerKind;
   label?: string;
-  // Rumbo en grados (solo chofer). Si falta, se calcula a partir del movimiento.
+  // Rumbo en grados (chofer y flota). Si falta, se calcula a partir del movimiento.
   heading?: number;
 };
 

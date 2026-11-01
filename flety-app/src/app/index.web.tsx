@@ -371,7 +371,7 @@ function LandingPage() {
                   titulo="Atendé servicios de grúa, batería y gomería cerca tuyo"
                   cta="Sumarme como prestador"
                   degrade="fuego"
-                  onPress={() => router.push('/registro')}
+                  onPress={() => router.push({ pathname: '/registro', params: { next: '/gruista' } })}
                 />
               </Reveal>
             </View>

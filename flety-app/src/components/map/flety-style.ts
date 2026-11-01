@@ -69,7 +69,9 @@ const overrides = (p: MapPalette): Record<string, Paint> => ({
   highway_path: { 'line-color': p.path },
   highway_minor: { 'line-color': p.road, 'line-opacity': 1 },
   // Avenidas principales (primary/trunk) en ámbar suave, como en el canvas.
-  highway_major_casing: { 'line-color': ['match', ['get', 'class'], ['primary', 'trunk'], p.avenueCasing, p.roadCasing] },
+  highway_major_casing: {
+    'line-color': ['match', ['get', 'class'], ['primary', 'trunk'], p.avenueCasing, p.roadCasing],
+  },
   highway_major_inner: { 'line-color': ['match', ['get', 'class'], ['primary', 'trunk'], p.avenue, p.road] },
   highway_major_subtle: { 'line-color': p.road },
   highway_motorway_casing: { 'line-color': p.avenueCasing },

@@ -37,6 +37,13 @@ import { SERVICIOS, type Servicio } from '@/plataforma/servicios';
 import { colors, fonts } from '@/theme';
 
 const fechaCorta = new Intl.DateTimeFormat('es-AR', { day: 'numeric', month: 'short' });
+const fechaHora = new Intl.DateTimeFormat('es-AR', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  hour: '2-digit',
+  minute: '2-digit',
+});
 
 // Inicio de la plataforma: el cliente elige qué necesita resolver. Cada
 // servicio lleva a su propia experiencia (Mudanzas, Grúas y auxilio).
@@ -100,6 +107,9 @@ function Contenido({ ancho }: { ancho?: boolean }) {
   const localidad = useLocalidad();
   const { pedidos } = useMisPedidos();
   const enCurso = pedidos.find((p) => grupoDe(p) === 'en_curso');
+  const proxima = pedidos
+    .filter((p) => grupoDe(p) === 'programados')
+    .sort((a, b) => (a.programado_para ?? '').localeCompare(b.programado_para ?? ''))[0];
   const { solicitudes } = useMisSolicitudesGrua();
   const gruaEnCurso = solicitudes.find((s) => ESTADOS_ACTIVOS.includes(s.estado));
   const primerNombre = nombre?.split(' ')[0];
@@ -181,6 +191,15 @@ function Contenido({ ancho }: { ancho?: boolean }) {
           titulo="Tu flete en curso"
           detalle={ESTADO_LABELS[enCurso.estado]}
           onPress={() => router.push(`/cliente/pedidos/${enCurso.id}`)}
+        />
+      ) : null}
+      {proxima?.programado_para ? (
+        <BannerEnCurso
+          degrade="grafito"
+          punto="#FFC233"
+          titulo={`${proxima.tipo === 'mudanza' ? 'Mudanza' : proxima.tipo === 'larga_distancia' ? 'Viaje de larga distancia' : 'Flete'} programado`}
+          detalle={`${fechaHora.format(new Date(proxima.programado_para))} · ${ESTADO_LABELS[proxima.estado]}`}
+          onPress={() => router.push(`/cliente/pedidos/${proxima.id}`)}
         />
       ) : null}
       {gruaEnCurso ? (

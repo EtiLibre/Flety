@@ -3,21 +3,28 @@ import { StyleSheet, Text, View } from 'react-native';
 import { AppMap } from '@/components/map/AppMap';
 import { MENDOZA, type MapMarker } from '@/components/map/types';
 import { useUltimaPosicion, useVehiculosCerca } from '@/lib/cercanos';
+import { useFlotaAmbiente } from '@/lib/flota-ambiente';
 import { colors, fonts } from '@/theme';
 
-// Mapa del inicio con los fletes y grúas que están disponibles cerca, antes de
-// pedir. Solo vehículos reales conectados: si no hay, se dice.
+// Mapa del inicio, como el de DiDi: camionetas y grúas circulando alrededor
+// antes de pedir. Si hay choferes o gruistas reales disponibles cerca se
+// muestran esos (con cuántos hay); si no, vehículos de ambiente que solo
+// decoran (la leyenda no promete disponibilidad).
 export function MapaCercanos({ grande }: { grande?: boolean }) {
   const pos = useUltimaPosicion();
   const centro = pos ?? MENDOZA;
   const vehiculos = useVehiculosCerca(centro);
+  const hayReales = !!vehiculos?.length;
+  const ambiente = useFlotaAmbiente(centro, !hayReales);
 
-  const markers: MapMarker[] = (vehiculos ?? []).map((v, i) => ({
-    id: `${v.servicio}-${i}`,
-    kind: v.servicio === 'gruas' ? 'grua' : 'fletero',
-    position: { lat: v.lat, lng: v.lng },
-    label: v.servicio === 'gruas' ? 'Grúa disponible' : 'Flete disponible',
-  }));
+  const markers: MapMarker[] = hayReales
+    ? vehiculos.map((v, i) => ({
+        id: `${v.servicio}-${i}`,
+        kind: v.servicio === 'gruas' ? 'flotaGrua' : 'flotaFlete',
+        position: { lat: v.lat, lng: v.lng },
+        label: v.servicio === 'gruas' ? 'Grúa disponible' : 'Flete disponible',
+      }))
+    : ambiente;
   if (pos) markers.push({ id: 'yo', kind: 'user', position: pos, label: 'Vos' });
 
   const fletes = vehiculos?.filter((v) => v.servicio === 'mudanzas').length ?? 0;
@@ -30,10 +37,8 @@ export function MapaCercanos({ grande }: { grande?: boolean }) {
         style={[styles.leyenda, grande && styles.leyendaGrande]}
         pointerEvents="none"
         accessibilityLiveRegion="polite">
-        {vehiculos == null ? (
-          <Text style={styles.leyendaTexto}>Buscando móviles cerca…</Text>
-        ) : fletes + gruas === 0 ? (
-          <Text style={styles.leyendaTexto}>Ahora no hay móviles conectados cerca</Text>
+        {!hayReales ? (
+          <Text style={styles.leyendaTexto}>Fletes, mudanzas y grúas en un toque</Text>
         ) : (
           <>
             {fletes ? (
@@ -63,7 +68,7 @@ export function MapaCercanos({ grande }: { grande?: boolean }) {
 const styles = StyleSheet.create({
   marco: { overflow: 'hidden', backgroundColor: '#E9ECEF' },
   tarjeta: {
-    height: 180,
+    height: 210,
     borderRadius: 24,
     borderWidth: 3,
     borderColor: colors.white,

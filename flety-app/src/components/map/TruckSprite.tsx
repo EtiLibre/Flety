@@ -1,25 +1,28 @@
 import Svg, { Defs, Ellipse, G, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 
+import { useSvgId } from '@/plataforma/svg-id';
+
 import { CAJAS, TRUCK_SIZE } from './truck-sprite';
 
 // Versión iOS/Android de la camioneta de flete (misma figura que TRUCK_3D_SVG).
 // Sombra sin desenfoque (react-native-svg no soporta bien los filtros): dos capas suaves.
-export function TruckSprite() {
+export function TruckSprite({ ancho = TRUCK_SIZE.width }: { ancho?: number }) {
+  const uid = useSvgId('truck');
   return (
-    <Svg width={TRUCK_SIZE.width} height={TRUCK_SIZE.height} viewBox="0 0 44 80">
+    <Svg width={ancho} height={(ancho * TRUCK_SIZE.height) / TRUCK_SIZE.width} viewBox="0 0 44 80">
       <Defs>
-        <LinearGradient id="cab" x1="0" y1="0" x2="1" y2="0">
+        <LinearGradient id={`${uid}-cab`} x1="0" y1="0" x2="1" y2="0">
           <Stop offset="0" stopColor="#D99B00" />
           <Stop offset="0.22" stopColor="#FFC233" />
           <Stop offset="0.5" stopColor="#FFD873" />
           <Stop offset="0.78" stopColor="#FFC233" />
           <Stop offset="1" stopColor="#D99B00" />
         </LinearGradient>
-        <LinearGradient id="carton" x1="0" y1="0" x2="1" y2="1">
+        <LinearGradient id={`${uid}-carton`} x1="0" y1="0" x2="1" y2="1">
           <Stop offset="0" stopColor="#D9A86C" />
           <Stop offset="1" stopColor="#B9844B" />
         </LinearGradient>
-        <LinearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+        <LinearGradient id={`${uid}-glass`} x1="0" y1="0" x2="0" y2="1">
           <Stop offset="0" stopColor="#3A4450" />
           <Stop offset="1" stopColor="#12161C" />
         </LinearGradient>
@@ -34,7 +37,16 @@ export function TruckSprite() {
       <Rect x={8.6} y={28.6} width={26.8} height={45.8} rx={2.4} fill="#2E353F" />
       {CAJAS.map(([x, y, w, h]) => (
         <G key={`${x}-${y}`}>
-          <Rect x={x} y={y} width={w} height={h} rx={1.4} fill="url(#carton)" stroke="#8C5E2E" strokeWidth={0.7} />
+          <Rect
+            x={x}
+            y={y}
+            width={w}
+            height={h}
+            rx={1.4}
+            fill={`url(#${uid}-carton)`}
+            stroke="#8C5E2E"
+            strokeWidth={0.7}
+          />
           <Path d={`M${x + w / 2} ${y + 0.6}v${h - 1.2}`} stroke="#E9C48F" strokeWidth={1.6} />
         </G>
       ))}
@@ -43,11 +55,11 @@ export function TruckSprite() {
       <Rect x={13} y={23} width={18} height={5} fill="#2A313B" />
       <Path
         d="M9 11Q9 3 17 3H27Q35 3 35 11V22.5Q35 25 32.5 25H11.5Q9 25 9 22.5Z"
-        fill="url(#cab)"
+        fill={`url(#${uid}-cab)`}
         stroke="rgba(18,22,28,0.25)"
         strokeWidth={0.8}
       />
-      <Path d="M12.2 8.2Q22 5.8 31.8 8.2L30.2 14.2Q22 13.2 13.8 14.2Z" fill="url(#glass)" />
+      <Path d="M12.2 8.2Q22 5.8 31.8 8.2L30.2 14.2Q22 13.2 13.8 14.2Z" fill={`url(#${uid}-glass)`} />
       <Path d="M15 8.6Q18.5 7.6 22 7.4L20.6 13.4Q17.8 13.5 15.4 13.9Z" fill="rgba(255,255,255,0.16)" />
       <Rect x={12.5} y={15.5} width={19} height={7.5} rx={2.5} fill="rgba(255,255,255,0.2)" />
       <Ellipse cx={7.2} cy={10.5} rx={2.2} ry={1.4} fill="#232A33" />

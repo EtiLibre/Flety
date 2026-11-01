@@ -20,18 +20,28 @@ const mayuscula = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
 const ICONO: Record<TipoServicio, typeof Truck> = { flete: Truck, mudanza: Package, larga_distancia: Route };
 
-export type GrupoFlete = 'en_curso' | 'terminados' | 'cancelados';
+export type GrupoFlete = 'en_curso' | 'programados' | 'terminados' | 'cancelados';
 
 const CANCELADOS = ['cancelado_cliente', 'cancelado_empresa', 'reembolsado'];
+// Estados en los que el viaje todavía no arrancó.
+const SIN_ARRANCAR = ['pendiente', 'pagado', 'buscando_asignacion', 'asignado'];
+
+// Programado = con fecha y hora futuras y sin arrancar. Cuando llega la hora
+// (o el chofer sale antes), pasa a "en curso".
+export function esProgramado(p: Pedido, ahora = Date.now()) {
+  return !!p.programado_para && SIN_ARRANCAR.includes(p.estado) && new Date(p.programado_para).getTime() > ahora;
+}
 
 export function grupoDe(p: Pedido): GrupoFlete {
   if (CANCELADOS.includes(p.estado)) return 'cancelados';
   if (TERMINAL_ESTADOS.includes(p.estado) || p.estado === 'entregado') return 'terminados';
+  if (esProgramado(p)) return 'programados';
   return 'en_curso';
 }
 
 const TONO: Record<GrupoFlete, { bg: string; fg: string }> = {
   en_curso: { bg: '#FEF3C7', fg: '#92400E' },
+  programados: { bg: '#E0F2FE', fg: '#075985' },
   terminados: { bg: '#DCFCE7', fg: '#166534' },
   cancelados: { bg: '#F3F4F6', fg: '#4B5563' },
 };

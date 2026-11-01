@@ -71,10 +71,6 @@ export function ClienteShell({
                   <UserRound size={18} color={colors.ink} strokeWidth={2} />
                   <Text style={[styles.menuItemText, { color: colors.ink }]}>Mi cuenta</Text>
                 </Link>
-                <Link href="/unirse" style={styles.menuItem}>
-                  <Truck size={18} color={colors.ink} strokeWidth={2} />
-                  <Text style={[styles.menuItemText, { color: colors.ink }]}>Soy chofer · tengo un código</Text>
-                </Link>
                 <Pressable accessibilityRole="button" onPress={() => supabase.auth.signOut()} style={styles.menuItem}>
                   <LogOut size={18} color={colors.danger} strokeWidth={2} />
                   <Text style={styles.menuItemText}>Cerrar sesión</Text>
