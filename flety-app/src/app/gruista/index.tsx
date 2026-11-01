@@ -56,6 +56,7 @@ import { Campo, estilosGruista as eg, Tarjeta, Titulo } from '@/modulos/gruas/pa
 import type { Catalogo, Documento, Oferta, Solicitud, TipoDocumento } from '@/modulos/gruas/tipos';
 import { ChatGrua, Chips, CuentaEspera, Desglose, G } from '@/modulos/gruas/ui';
 import { IngresoPin } from '@/components/pin/PinViaje';
+import { FotosSolicitud } from '@/modulos/gruas/FotosSolicitud';
 import { useVerificarTelefono } from '@/components/telefono/VerificarTelefono';
 import { colors, fonts, radius } from '@/theme';
 
@@ -660,6 +661,7 @@ function OfertaEntrante({
               <Linea label="Motivo" valor={nombreDe(catalogo?.motivos ?? [], s.motivo)} />
               {situaciones.length ? <Linea label="Situación" valor={situaciones.join(', ')} /> : null}
               {s.nota ? <Linea label="Nota" valor={s.nota} /> : null}
+              <FotosSolicitud solicitudId={s.id} oscuro />
             </View>
           ) : (
             <ActivityIndicator color={G.acento} style={{ alignSelf: 'flex-start' }} />
@@ -780,6 +782,7 @@ function ServicioActual({
         <Linea label="Destino" valor={s.destino?.direccion ?? '—'} />
         {situaciones.length ? <Linea label="Situación" valor={situaciones.join(', ')} /> : null}
         {s.nota ? <Linea label="Nota" valor={s.nota} /> : null}
+        <FotosSolicitud solicitudId={s.id} oscuro />
         <Pressable
           accessibilityRole="link"
           onPress={() => Linking.openURL(urlNavegacion(objetivo))}

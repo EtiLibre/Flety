@@ -45,7 +45,7 @@ export async function catalogo(forzar = false): Promise<Catalogo> {
   if (catalogoCache && !forzar) return catalogoCache;
   const [tipos, motivos, situaciones, modalidades, zonas] = await Promise.all([
     g().from('tipos_vehiculo').select('id, nombre, orden, activo').order('orden'),
-    g().from('motivos').select('id, nombre, orden, activo').order('orden'),
+    g().from('motivos').select('id, nombre, orden, activo, en_el_lugar').order('orden'),
     g().from('situaciones').select('id, nombre, orden, activo').order('orden'),
     g().from('modalidades').select('id, nombre, descripcion'),
     g()
@@ -98,6 +98,10 @@ export async function solicitar(p: {
   situaciones: string[];
   nota: string;
   precioMax: number | null;
+  // Rutas en el bucket gruas-fotos (subirFotosGrua); al menos una.
+  fotos: string[];
+  // Grúa elegida por el cliente (si no, la más cercana).
+  prestador?: string | null;
 }): Promise<string> {
   const { data, error } = await g().rpc('solicitar', {
     p_origen: p.origen,
@@ -109,6 +113,8 @@ export async function solicitar(p: {
     p_situaciones: p.situaciones,
     p_nota: p.nota,
     p_precio_max: p.precioMax,
+    p_fotos: p.fotos,
+    p_prestador: p.prestador ?? null,
   });
   if (error) throw errorDe(error, 'No pudimos pedir la grúa. Probá de nuevo.');
   return data as string;
@@ -310,6 +316,7 @@ export async function guardarUnidad(
 
 const DOCS_BUCKET = 'gruas-documentos';
 const PERFILES_BUCKET = 'gruas-perfiles';
+const FOTOS_BUCKET = 'gruas-fotos';
 
 async function subir(bucket: string, path: string, foto: FotoLocal) {
   const body = foto.file ?? (await (await fetch(foto.uri)).arrayBuffer());
@@ -568,4 +575,25 @@ export async function reporte(desde: Date): Promise<Record<string, unknown>> {
   const { data, error } = await g().rpc('reporte', { p_desde: desde.toISOString() });
   if (error) throw errorDe(error, 'No pudimos cargar el reporte.');
   return (data as Record<string, unknown>) ?? {};
+}
+
+// ── Fotos del vehículo (migración 0029) ─────────────────────────────────
+// Se suben a <cliente_id>/… antes de pedir; solicitar() las asocia al pedido.
+export async function subirFotosGrua(clienteId: string, fotos: FotoLocal[]): Promise<string[]> {
+  const paths: string[] = [];
+  for (const [i, foto] of fotos.entries()) {
+    const ext = foto.mimeType.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg';
+    const path = `${clienteId}/${Date.now()}-${i}.${ext}`;
+    await subir(FOTOS_BUCKET, path, foto);
+    paths.push(path);
+  }
+  return paths;
+}
+
+export async function fotosDeSolicitud(solicitudId: string): Promise<{ path: string; url: string }[]> {
+  const { data: filas } = await g().from('fotos').select('path').eq('solicitud_id', solicitudId).order('created_at');
+  if (!filas?.length) return [];
+  const paths = filas.map((f) => f.path as string);
+  const { data } = await supabase.storage.from(FOTOS_BUCKET).createSignedUrls(paths, 3600);
+  return (data ?? []).flatMap((d, i) => (d.signedUrl ? [{ path: paths[i], url: d.signedUrl }] : []));
 }

@@ -16,6 +16,9 @@ export type EstadoSolicitud =
 
 export type Item = { id: string; nombre: string; orden?: number; activo?: boolean };
 
+// Problemas que se resuelven en el lugar (batería, rueda, combustible…): sin destino.
+export type Motivo = Item & { en_el_lugar?: boolean };
+
 export type Zona = {
   id: string;
   provincia: string;
@@ -30,7 +33,7 @@ export type Zona = {
 
 export type Catalogo = {
   tipos: Item[];
-  motivos: Item[];
+  motivos: Motivo[];
   situaciones: Item[];
   modalidades: (Item & { descripcion: string | null })[];
   zonas: Zona[];
@@ -54,6 +57,17 @@ export type Cotizacion = {
 };
 
 export type OpcionGrua = {
+  // Quién es (migración 0029): para poder elegir la grúa.
+  prestador_id: string;
+  nombre: string;
+  empresa: string | null;
+  foto: string | null;
+  modalidad: string | null;
+  unidad: { marca: string | null; modelo: string | null } | null;
+  estrellas: number | null;
+  calificaciones: number;
+  // Grúas de ejemplo (solo las ve el superadmin si no hay reales): no se pueden pedir.
+  demo?: boolean;
   distancia_km: number;
   eta_min: number;
   lat: number;
@@ -81,6 +95,7 @@ export type Solicitud = {
   situaciones: string[];
   nota: string | null;
   estado: EstadoSolicitud;
+  prestador_solicitado: string | null;
   precio_max: number | null;
   precio_sugerido: number | null;
   prestador_id: string | null;
@@ -101,7 +116,7 @@ export type Solicitud = {
 };
 
 export const SOLICITUD_COLS =
-  'id, cliente_id, zona_id, origen, destino, distancia_km, tipo_vehiculo, vehiculo, motivo, situaciones, nota, estado, precio_max, precio_sugerido, prestador_id, unidad_id, cotizacion, precio_total, precio_prestador, comision, cargo_cancelacion, motivo_cancelacion, created_at, asignada_at, en_camino_at, en_origen_at, trasladando_at, finalizada_at, cancelada_at';
+  'id, cliente_id, zona_id, origen, destino, distancia_km, tipo_vehiculo, vehiculo, motivo, situaciones, nota, estado, prestador_solicitado, precio_max, precio_sugerido, prestador_id, unidad_id, cotizacion, precio_total, precio_prestador, comision, cargo_cancelacion, motivo_cancelacion, created_at, asignada_at, en_camino_at, en_origen_at, trasladando_at, finalizada_at, cancelada_at';
 
 export type GruaAsignada = {
   nombre: string;

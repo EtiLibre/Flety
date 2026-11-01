@@ -12,7 +12,8 @@ import { useRuta } from '@/hooks/use-ruta';
 import { confirmar } from '@/lib/confirm';
 import { metrosEntre } from '@/lib/geo';
 import { formatARS } from '@/lib/pricing';
-import { cancelar, confirmarPrecio, solicitar } from '@/modulos/gruas/api';
+import { cancelar, confirmarPrecio, fotosDeSolicitud, solicitar } from '@/modulos/gruas/api';
+import { FotosSolicitud } from '@/modulos/gruas/FotosSolicitud';
 import { ESTADO_GRUA, ESTADOS_ACTIVOS, ESTADOS_EN_SERVICIO } from '@/modulos/gruas/estados';
 import { useCatalogoGruas, useSolicitudGrua } from '@/modulos/gruas/hooks';
 import type { Solicitud } from '@/modulos/gruas/tipos';
@@ -100,6 +101,8 @@ export default function SeguimientoGrua() {
   async function reintentar() {
     if (!s) return;
     ejecutar('reintentar', async () => {
+      // Las mismas fotos del pedido anterior (siguen en su carpeta).
+      const fotos = (await fotosDeSolicitud(s.id)).map((f) => f.path);
       const nuevo = await solicitar({
         origen: s.origen,
         destino: s.destino,
@@ -110,6 +113,7 @@ export default function SeguimientoGrua() {
         situaciones: s.situaciones,
         nota: s.nota ?? '',
         precioMax: s.precio_max,
+        fotos,
       });
       router.replace({ pathname: '/gruas/[id]', params: { id: nuevo } });
     });
@@ -188,6 +192,7 @@ export default function SeguimientoGrua() {
 
       {s.estado === 'finalizada' && grua ? <CalificarGrua solicitudId={s.id} nombre={grua.nombre} /> : null}
 
+      <FotosSolicitud solicitudId={s.id} />
       <View style={styles.detalle}>
         <Fila
           label="Vehículo"

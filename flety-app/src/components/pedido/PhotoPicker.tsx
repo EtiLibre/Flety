@@ -1,20 +1,45 @@
 import * as ImagePicker from 'expo-image-picker';
-import { Camera, X } from 'lucide-react-native';
+import { Camera, ImagePlus, X } from 'lucide-react-native';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { MAX_FOTOS, type FotoLocal } from '@/lib/pedido-draft';
 import { colors, fonts, radius } from '@/theme';
 
-export function PhotoPicker({ fotos, onChange }: { fotos: FotoLocal[]; onChange: (fotos: FotoLocal[]) => void }) {
-  const restantes = MAX_FOTOS - fotos.length;
+export function PhotoPicker({
+  fotos,
+  onChange,
+  titulo = 'Fotos de la carga',
+  ayuda = 'Opcional. La empresa y el chofer las ven para cotizar y preparar el viaje.',
+  max = MAX_FOTOS,
+  error,
+  camara,
+}: {
+  fotos: FotoLocal[];
+  onChange: (fotos: FotoLocal[]) => void;
+  titulo?: string;
+  ayuda?: string;
+  max?: number;
+  // Marca en rojo (p. ej. fotos obligatorias que faltan).
+  error?: string | null;
+  // Además de la galería, sacar la foto en el momento (p. ej. el vehículo accidentado).
+  camara?: boolean;
+}) {
+  const restantes = max - fotos.length;
 
-  async function agregar() {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsMultipleSelection: true,
-      selectionLimit: restantes,
-      quality: 0.6,
-    });
+  async function agregar(desde: 'galeria' | 'camara' = 'galeria') {
+    if (desde === 'camara') {
+      const permiso = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permiso.granted) return agregar('galeria');
+    }
+    const result =
+      desde === 'camara'
+        ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.6 })
+        : await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsMultipleSelection: true,
+            selectionLimit: restantes,
+            quality: 0.6,
+          });
     if (result.canceled) return;
     const nuevas: FotoLocal[] = result.assets.slice(0, restantes).map((asset, i) => ({
       uri: asset.uri,
@@ -28,19 +53,19 @@ export function PhotoPicker({ fotos, onChange }: { fotos: FotoLocal[]; onChange:
   return (
     <View style={styles.wrapper}>
       <View style={styles.header}>
-        <Text style={styles.title}>Fotos de la carga</Text>
+        <Text style={styles.title}>{titulo}</Text>
         <Text style={styles.count}>
-          {fotos.length}/{MAX_FOTOS}
+          {fotos.length}/{max}
         </Text>
       </View>
-      <Text style={styles.hint}>Opcional. La empresa y el chofer las ven para cotizar y preparar el viaje.</Text>
+      <Text style={styles.hint}>{ayuda}</Text>
       <View style={styles.grid}>
         {fotos.map((foto, index) => (
           <View key={foto.uri} style={styles.thumb}>
             <Image
               source={{ uri: foto.uri }}
               style={styles.image}
-              accessibilityLabel={`Foto ${index + 1} de la carga`}
+              accessibilityLabel={`${titulo}: foto ${index + 1}`}
             />
             <Pressable
               accessibilityRole="button"
@@ -52,21 +77,42 @@ export function PhotoPicker({ fotos, onChange }: { fotos: FotoLocal[]; onChange:
             </Pressable>
           </View>
         ))}
+        {restantes > 0 && camara ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Sacar una foto"
+            onPress={() => agregar('camara')}
+            style={[styles.add, !!error && styles.addError]}>
+            <Camera size={22} color={colors.ink} strokeWidth={2} />
+            <Text style={styles.addTexto}>Sacar</Text>
+          </Pressable>
+        ) : null}
         {restantes > 0 ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Agregar fotos de la carga"
-            onPress={agregar}
-            style={styles.add}>
-            <Camera size={24} color={colors.ink} strokeWidth={2} />
+            accessibilityLabel={`Agregar ${titulo.toLowerCase()}`}
+            onPress={() => agregar('galeria')}
+            style={[styles.add, !!error && styles.addError]}>
+            {camara ? (
+              <>
+                <ImagePlus size={22} color={colors.ink} strokeWidth={2} />
+                <Text style={styles.addTexto}>Galería</Text>
+              </>
+            ) : (
+              <Camera size={24} color={colors.ink} strokeWidth={2} />
+            )}
           </Pressable>
         ) : null}
       </View>
+      {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  addError: { borderColor: colors.danger },
+  addTexto: { fontFamily: fonts.semibold, fontSize: 11, color: colors.ink, marginTop: 2 },
+  error: { fontFamily: fonts.medium, fontSize: 13, color: colors.danger },
   wrapper: { gap: 6 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   title: { fontFamily: fonts.bold, fontSize: 16, color: colors.ink },
