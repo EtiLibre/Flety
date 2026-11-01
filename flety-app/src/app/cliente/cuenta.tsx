@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Wallet } from 'lucide-react-native';
+import { MapPinned, Wallet } from 'lucide-react-native';
 import { StyleSheet, Text } from 'react-native';
 
 import { CuentaForm, FilaCuenta } from '@/components/cuenta/CuentaForm';
@@ -24,6 +24,13 @@ export default function CuentaCliente() {
         titulo="Mis pagos"
         detalle="Historial, pendientes y comprobantes"
         onPress={() => router.push('/cliente/pagos')}
+      />
+      <FilaCuenta
+        tema="claro"
+        Icon={MapPinned}
+        titulo="Mis lugares"
+        detalle="Casa, Trabajo y tus lugares guardados (solo los ves vos)"
+        onPress={() => router.push('/cliente/lugares')}
       />
       {gruista ? (
         <FilaCuenta

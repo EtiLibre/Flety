@@ -420,6 +420,16 @@ export default function PedirGrua() {
       </View>
 
       {intento && faltan.length ? <Text style={styles.error}>Falta: {faltan.join(', ')}.</Text> : null}
+      {!faltan.length && listos && !cotizando && res?.cobertura && !aPedir ? (
+        <Text style={styles.error}>
+          {modo === 'elegir'
+            ? 'Elegí una grúa de la lista.'
+            : 'Ahora no hay grúas disponibles cerca, así que todavía no se puede pedir. Probá en unos minutos.'}
+        </Text>
+      ) : null}
+      {!faltan.length && aPedir?.demo ? (
+        <Text style={styles.error}>Es una grúa de ejemplo (solo para que veas cómo queda): no se le puede pedir.</Text>
+      ) : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <Pressable
         accessibilityRole="button"

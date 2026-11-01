@@ -47,9 +47,71 @@ export async function sugerirLugar(nombre: string, punto: GeoPoint) {
   });
   if (error) {
     throw new Error(
-      error.message.includes('máximo') ? error.message : 'No pudimos guardar el lugar. Probá de nuevo más tarde.'
+      /máximo|personal/.test(error.message) ? error.message : 'No pudimos guardar el lugar. Probá de nuevo más tarde.'
     );
   }
+}
+
+// ¿Nombre de un lugar personal? (mismo criterio que public.es_nombre_personal, 0031)
+const normalizar = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+const PARIENTES = 'mama|papa|abuela|abuelo|abuelos|suegra|suegro|suegros|novia|novio|tia|tio|hermana|hermano';
+const PERSONALES = [
+  /^(casa|hogar|trabajo|laburo|oficina|depto|dpto|departamento|domicilio|aca|aqui|home|work)$/,
+  /^(mi|mis) (casa|hogar|trabajo|laburo|oficina|depto|dpto|departamento|lugar|domicilio)/,
+  new RegExp(
+    `^(la )?(casa|depto|dpto|departamento|lo) (de|del) (mi |mis |la |el )?(${PARIENTES}|hijo|hija|amiga|amigo)( |$)`
+  ),
+  new RegExp(`^(${PARIENTES})$`),
+  /^[0-9 ]+$/,
+];
+export function esNombrePersonal(nombre: string) {
+  const t = normalizar(nombre);
+  return PERSONALES.some((re) => re.test(t));
+}
+
+// ── Lugares guardados (privados: Casa, Trabajo…), migración 0031 ──
+export type LugarGuardado = { id: string; etiqueta: string; direccion: string | null; lat: number; lng: number };
+
+export async function misLugares(): Promise<LugarGuardado[]> {
+  const { data, error } = await supabase
+    .from('lugares_guardados')
+    .select('id, etiqueta, direccion, lat, lng')
+    .order('created_at');
+  if (error) return [];
+  return (data as LugarGuardado[]) ?? [];
+}
+
+export function puntoDeGuardado(g: LugarGuardado): GeoPoint {
+  return { lat: g.lat, lng: g.lng, direccion: g.direccion ?? g.etiqueta };
+}
+
+export function coincideGuardado(g: LugarGuardado, q: string) {
+  const t = normalizar(q);
+  return !t || normalizar(g.etiqueta).includes(t) || normalizar(g.direccion ?? '').includes(t);
+}
+
+// Guarda (o reemplaza, si ya había uno con ese nombre) un lugar propio.
+export async function guardarLugar(etiqueta: string, punto: GeoPoint) {
+  const nombre = etiqueta.trim();
+  const fila = { etiqueta: nombre, direccion: punto.direccion?.slice(0, 200) ?? null, lat: punto.lat, lng: punto.lng };
+  const existente = (await misLugares()).find((g) => normalizar(g.etiqueta) === normalizar(nombre));
+  const { error } = existente
+    ? await supabase.from('lugares_guardados').update(fila).eq('id', existente.id)
+    : await supabase.from('lugares_guardados').insert(fila);
+  if (error) {
+    throw new Error(error.message.includes('15 lugares') ? error.message : 'No pudimos guardar el lugar.');
+  }
+}
+
+export async function borrarLugar(id: string) {
+  const { error } = await supabase.from('lugares_guardados').delete().eq('id', id);
+  if (error) throw new Error('No pudimos borrar el lugar.');
 }
 
 // ── Superadmin ──────────────────────────────────────────────────────────
