@@ -54,7 +54,8 @@ import { useCatalogoGruas, useMiGruista, useOfertasGruista, useServiciosGruista 
 import { irGruista, type DestinoGruista } from '@/modulos/gruas/nav';
 import { Campo, estilosGruista as eg, Tarjeta, Titulo } from '@/modulos/gruas/pantalla';
 import type { Catalogo, Documento, Oferta, Solicitud, TipoDocumento } from '@/modulos/gruas/tipos';
-import { ChatGrua, Chips, Desglose, G } from '@/modulos/gruas/ui';
+import { ChatGrua, Chips, CuentaEspera, Desglose, G } from '@/modulos/gruas/ui';
+import { IngresoPin } from '@/components/pin/PinViaje';
 import { colors, fonts, radius } from '@/theme';
 
 const d = colors.dark;
@@ -705,6 +706,7 @@ function ServicioActual({
   const { ruta } = useRuta(haciaOrigen && posicion ? [posicion, s.origen] : [s.origen, s.destino]);
   const [accion, setAccion] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pidiendoPin, setPidiendoPin] = useState(false);
 
   async function ejecutar(nombre: string, fn: () => Promise<unknown>) {
     setAccion(nombre);
@@ -742,6 +744,18 @@ function ServicioActual({
         />
       </View>
 
+      {s.estado === 'en_origen' && s.en_origen_at ? <CuentaEspera desde={s.en_origen_at} oscuro /> : null}
+      <IngresoPin
+        visible={pidiendoPin}
+        grua
+        titulo="PIN para empezar el traslado"
+        onCancelar={() => setPidiendoPin(false)}
+        onConfirmar={async (pin) => {
+          await avanzar(s.id, 'trasladando', pin);
+          setPidiendoPin(false);
+          onCambio();
+        }}
+      />
       <Tarjeta>
         <Text style={[styles.dispTitulo, { color: G.acento }]}>{ESTADO_GRUA[s.estado].titulo}</Text>
         <Linea
@@ -778,7 +792,9 @@ function ServicioActual({
           variant="grua"
           loading={accion === 'avanzar'}
           disabled={!!accion}
-          onPress={() => ejecutar('avanzar', () => avanzar(s.id, paso.hacia))}
+          onPress={() =>
+            paso.hacia === 'trasladando' ? setPidiendoPin(true) : ejecutar('avanzar', () => avanzar(s.id, paso.hacia))
+          }
           style={{ height: 60 }}
         />
       ) : null}

@@ -17,6 +17,8 @@ export default function Registro() {
   const empresa = next === '/registrar-empresa';
   const conNext = next ? { next } : undefined;
   const [nombre, setNombre] = useState('');
+  const [apellido, setApellido] = useState('');
+  const [telefono, setTelefono] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -25,8 +27,12 @@ export default function Registro() {
 
   async function handleRegistro() {
     setError(null);
-    if (!nombre.trim() || !email.trim() || !password) {
+    if (!nombre.trim() || !apellido.trim() || !email.trim() || !telefono.trim() || !password) {
       setError('Completá todos los campos.');
+      return;
+    }
+    if (telefono.replace(/\D/g, '').length < 8) {
+      setError('Revisá el teléfono: con código de área, por ejemplo 261 555 1234.');
       return;
     }
     if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
@@ -37,8 +43,8 @@ export default function Registro() {
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      // El trigger handle_new_user copia este nombre a public.users (migración 0006).
-      options: { data: { nombre: nombre.trim() } },
+      // El trigger handle_new_user copia nombre, apellido y teléfono a public.users (migración 0025).
+      options: { data: { nombre: nombre.trim(), apellido: apellido.trim(), telefono: telefono.trim() } },
     });
     setLoading(false);
 
@@ -88,8 +94,25 @@ export default function Registro() {
         value={nombre}
         onChangeText={setNombre}
         placeholder="Cómo te llamás"
-        autoComplete="name"
-        textContentType="name"
+        autoComplete="given-name"
+        textContentType="givenName"
+      />
+      <TextField
+        label="Apellido"
+        value={apellido}
+        onChangeText={setApellido}
+        placeholder="Tu apellido"
+        autoComplete="family-name"
+        textContentType="familyName"
+      />
+      <TextField
+        label="Teléfono"
+        value={telefono}
+        onChangeText={setTelefono}
+        placeholder="261 555 1234"
+        keyboardType="phone-pad"
+        autoComplete="tel"
+        textContentType="telephoneNumber"
       />
       <TextField
         label="Email"

@@ -16,7 +16,9 @@ import { cancelar, confirmarPrecio, solicitar } from '@/modulos/gruas/api';
 import { ESTADO_GRUA, ESTADOS_ACTIVOS, ESTADOS_EN_SERVICIO } from '@/modulos/gruas/estados';
 import { useCatalogoGruas, useSolicitudGrua } from '@/modulos/gruas/hooks';
 import type { Solicitud } from '@/modulos/gruas/tipos';
-import { CalificarGrua, ChatGrua, Desglose, G, LineaTiempo, TarjetaGruista } from '@/modulos/gruas/ui';
+import { CalificarGrua, ChatGrua, CuentaEspera, Desglose, G, LineaTiempo, TarjetaGruista } from '@/modulos/gruas/ui';
+import { TarjetaPin, usePinViaje } from '@/components/pin/PinViaje';
+import { AccionesSeguridad } from '@/components/pin/AccionesSeguridad';
 import { colors, fonts, radius } from '@/theme';
 
 const SUBTITULO: Partial<Record<Solicitud['estado'], string>> = {
@@ -36,6 +38,12 @@ export default function SeguimientoGrua() {
   const { solicitud: s, grua, noExiste, recargar } = useSolicitudGrua(id);
   const { catalogo } = useCatalogoGruas();
   const [accion, setAccion] = useState<string | null>(null);
+  // El PIN se muestra hasta que empieza el traslado.
+  const pin = usePinViaje(
+    'grua',
+    s?.id ?? null,
+    !!s && ['buscando', 'asignada', 'en_camino', 'en_origen'].includes(s.estado)
+  );
   const [error, setError] = useState<string | null>(null);
 
   const posGrua = grua?.lat != null && grua?.lng != null ? { lat: grua.lat, lng: grua.lng } : null;
@@ -164,7 +172,14 @@ export default function SeguimientoGrua() {
         </View>
       ) : null}
 
+      {s.estado === 'en_origen' && s.en_origen_at ? <CuentaEspera desde={s.en_origen_at} /> : null}
+      {pin && s.estado !== 'buscando' ? <TarjetaPin pin={pin} quien="el gruista" grua /> : null}
       {grua && ESTADOS_EN_SERVICIO.includes(s.estado) ? <TarjetaGruista g={grua} eta={eta} /> : null}
+      {ESTADOS_EN_SERVICIO.includes(s.estado) ? (
+        <AccionesSeguridad
+          texto={`Estoy usando Flety: grúa${grua?.unidad.patente ? ` patente ${grua.unidad.patente}` : ''}${grua ? `, gruista ${grua.nombre}` : ''}. De ${s.origen.direccion ?? 'mi ubicación'} a ${s.destino?.direccion ?? 'destino'}.`}
+        />
+      ) : null}
       {ESTADOS_EN_SERVICIO.includes(s.estado) || s.estado === 'finalizada' ? (
         <ChatGrua solicitudId={s.id} abierto={ESTADOS_EN_SERVICIO.includes(s.estado)} />
       ) : null}

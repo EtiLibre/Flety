@@ -12,6 +12,8 @@ import { ChatPedido } from '@/components/pedido/ChatPedido';
 import { FleteroAsignado } from '@/components/pedido/FleteroAsignado';
 import { PagoCard } from '@/components/pedido/PagoCard';
 import { Timeline } from '@/components/pedido/Timeline';
+import { TarjetaPin, usePinViaje } from '@/components/pin/PinViaje';
+import { AccionesSeguridad } from '@/components/pin/AccionesSeguridad';
 import { ClienteShell } from '@/components/web/ClienteShell';
 import { useAhora } from '@/hooks/use-ahora';
 import { useIsWide } from '@/hooks/use-is-wide';
@@ -124,6 +126,7 @@ function Contenido({
   // Nombre del fletero asignado (o del elegido en el marketplace mientras espera).
   const fletero = useFleteroElegido(pedido.driver_id ?? pedido.driver_solicitado);
   const esperandoElegido = pedido.estado === 'buscando_asignacion' && !!pedido.company_solicitada;
+  const pin = usePinViaje('pedido', pedido.id, ['asignado', 'en_camino_origen'].includes(pedido.estado));
   const ahora = useAhora(esperandoElegido);
   const reservado = reservaVigente(pedido, ahora);
   const actions = getAvailableActions(pedido.estado, {
@@ -183,8 +186,16 @@ function Contenido({
 
       {activo ? <Timeline estado={pedido.estado} /> : null}
 
+      {pin && (pedido.estado === 'asignado' || pedido.estado === 'en_camino_origen') ? (
+        <TarjetaPin pin={pin} quien={fletero ?? 'el fletero'} />
+      ) : null}
       {pedido.driver_id && ESTADOS_CHAT.includes(pedido.estado) ? (
         <FleteroAsignado driverId={pedido.driver_id} />
+      ) : null}
+      {pedido.driver_id && ESTADOS_CHAT.includes(pedido.estado) ? (
+        <AccionesSeguridad
+          texto={`Estoy usando Flety: ${TIPO_LABEL[pedido.tipo].toLowerCase()} con ${fletero ?? 'un fletero verificado'}. De ${pedido.origen?.direccion ?? 'retiro'} a ${pedido.destino?.direccion ?? 'entrega'}.`}
+        />
       ) : null}
 
       {ESTADOS_CHAT.includes(pedido.estado) ||

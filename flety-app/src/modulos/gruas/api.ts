@@ -282,8 +282,8 @@ export async function responderOferta(ofertaId: string, acepta: boolean) {
   if (error) throw errorDe(error, 'No pudimos responder la oferta.');
 }
 
-export async function avanzar(solicitudId: string, estado: string) {
-  const { error } = await g().rpc('avanzar', { p_solicitud: solicitudId, p_estado: estado });
+export async function avanzar(solicitudId: string, estado: string, pin?: string) {
+  const { error } = await g().rpc('avanzar', { p_solicitud: solicitudId, p_estado: estado, p_pin: pin ?? null });
   if (error) throw errorDe(error, 'No pudimos avanzar el servicio.');
 }
 

@@ -143,6 +143,18 @@ export async function avanzarViaje(orderId: string, hacia: OrderEstado) {
   }
 }
 
+// Llegó al retiro: el cliente le dice el PIN del viaje y empieza la carga.
+export async function iniciarCarga(orderId: string, pin: string) {
+  const { error } = await supabase.rpc('iniciar_carga', { p_order: orderId, p_pin: pin });
+  if (error) {
+    throw new Error(
+      /PIN|intentos|Solo |esperando/.test(error.message)
+        ? error.message
+        : 'No pudimos verificar el PIN. Probá de nuevo.'
+    );
+  }
+}
+
 export async function enviarUbicacion(driverId: string, position: LatLng) {
   // Redondeo a ~1 m: alcanza para el mapa y no guarda más precisión de la necesaria.
   const ubicacion = { lat: Number(position.lat.toFixed(5)), lng: Number(position.lng.toFixed(5)) };

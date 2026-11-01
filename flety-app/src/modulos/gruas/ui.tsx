@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { useAhora } from '@/hooks/use-ahora';
 import { useAuth } from '@/lib/auth';
 import { iniciales } from '@/lib/empresa';
 import { formatARS } from '@/lib/pricing';
@@ -362,6 +363,18 @@ export function EstadoBadge({ estado }: { estado: EstadoSolicitud }) {
 }
 
 const s = StyleSheet.create({
+  espera: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    padding: 14,
+    borderRadius: 18,
+    backgroundColor: G.suave,
+  },
+  esperaOscuro: { backgroundColor: 'rgba(255,107,26,0.12)', borderWidth: 1, borderColor: 'rgba(255,107,26,0.3)' },
+  esperaTexto: { flex: 1, fontFamily: fonts.bold, fontSize: 15, color: G.texto },
+  esperaReloj: { fontFamily: fonts.display, fontSize: 24, color: G.acento },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     paddingHorizontal: 14,
@@ -479,3 +492,24 @@ const s = StyleSheet.create({
     overflow: 'hidden',
   },
 });
+
+// ── Espera en el lugar ──────────────────────────────────────────────────
+// Desde que la grúa llega, espera al cliente unos minutos (solo informativo).
+export const MINUTOS_ESPERA = 10;
+
+export function CuentaEspera({ desde, oscuro }: { desde: string; oscuro?: boolean }) {
+  const ahora = useAhora(true);
+  const resto = Math.max(0, Math.round((new Date(desde).getTime() + MINUTOS_ESPERA * 60000 - ahora) / 1000));
+  const mm = String(Math.floor(resto / 60)).padStart(2, '0');
+  const ss = String(resto % 60).padStart(2, '0');
+  return (
+    <View style={[s.espera, oscuro && s.esperaOscuro]} accessibilityLiveRegion="polite">
+      <Text style={[s.esperaTexto, oscuro && { color: colors.dark.text }]}>
+        {oscuro ? 'Esperando al cliente' : 'La grúa llegó. Te espera'}
+      </Text>
+      <Text style={[s.esperaReloj, resto === 0 && { color: colors.danger }]}>
+        {mm}:{ss}
+      </Text>
+    </View>
+  );
+}

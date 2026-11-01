@@ -22,7 +22,8 @@ import { useIsWide } from '@/hooks/use-is-wide';
 import { useNavChofer } from '@/hooks/use-nav-chofer';
 import { usePedidoEnVivo } from '@/hooks/use-pedido-en-vivo';
 import { useRuta } from '@/hooks/use-ruta';
-import { avanzarViaje, cambiarDisponibilidad, ETAPAS, PASOS_VIAJE, urlNavegacion } from '@/lib/chofer';
+import { IngresoPin } from '@/components/pin/PinViaje';
+import { avanzarViaje, cambiarDisponibilidad, ETAPAS, iniciarCarga, PASOS_VIAJE, urlNavegacion } from '@/lib/chofer';
 import { confirmar } from '@/lib/confirm';
 import { describirCuando, plural } from '@/lib/format';
 import { aceptarComoChofer, liberarSolicitud } from '@/lib/marketplace';
@@ -75,9 +76,13 @@ export default function PanelChofer() {
     });
   }
 
+  const [pidiendoPin, setPidiendoPin] = useState(false);
+
   async function avanzar() {
     if (!actual || !paso) return;
     if (paso.hacia === 'entregado' && !(await confirmar('¿Confirmás que entregaste toda la carga?'))) return;
+    // Empezar la carga exige el PIN que ve el cliente en su app.
+    if (paso.hacia === 'cargando') return setPidiendoPin(true);
     accion.ejecutar('avanzar', () => avanzarViaje(actual.id, paso.hacia));
   }
 
@@ -205,6 +210,17 @@ export default function PanelChofer() {
 
   const extra = (
     <>
+      <IngresoPin
+        visible={pidiendoPin && !!actual}
+        titulo="PIN para empezar la carga"
+        onCancelar={() => setPidiendoPin(false)}
+        onConfirmar={async (pin) => {
+          if (!actual) return;
+          await iniciarCarga(actual.id, pin);
+          setPidiendoPin(false);
+          recargar();
+        }}
+      />
       {accion.error ? <Text style={styles.error}>{accion.error}</Text> : null}
       {proximos.length ? (
         <View style={styles.card}>
