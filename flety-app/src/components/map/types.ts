@@ -3,7 +3,8 @@ import type { StyleProp, ViewStyle } from 'react-native';
 export type LatLng = { lat: number; lng: number };
 
 // grua: grúas disponibles y la grúa asignada (servicio Grúas).
-export type MapMarkerKind = 'user' | 'origen' | 'destino' | 'chofer' | 'grua';
+// fletero: fletes disponibles cerca (mapa del inicio), sin rumbo.
+export type MapMarkerKind = 'user' | 'origen' | 'destino' | 'chofer' | 'grua' | 'fletero';
 
 export type MapMarker = {
   id: string;
@@ -27,6 +28,8 @@ export type AppMapProps = {
   tone?: 'light' | 'dark';
   // Zoom inicial (14 por defecto; más alto = más cerca).
   initialZoom?: number;
+  // Solo para mirar (no se arrastra ni se hace zoom): mapas dentro de una lista.
+  estatico?: boolean;
   // Selector de punto: el usuario empieza a mover el mapa / dónde quedó el centro al soltarlo.
   onMoveStart?: () => void;
   onCenterChange?: (center: LatLng) => void;

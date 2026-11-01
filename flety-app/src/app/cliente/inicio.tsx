@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnuncioPopup } from '@/components/AnuncioPopup';
 import { DotCanvas } from '@/components/DotCanvas';
 import { grupoDe } from '@/components/historial/FleteCard';
+import { MapaCercanos } from '@/components/map/MapaCercanos';
 import { AvisoPendiente } from '@/components/pedido/AvisoPendiente';
 import { ClienteShell } from '@/components/web/ClienteShell';
 import { useIsWide } from '@/hooks/use-is-wide';
@@ -44,7 +45,7 @@ export default function InicioPlataforma() {
   return (
     <>
       {isWide ? (
-        <ClienteShell active="inicio" panel={<Contenido ancho />} />
+        <ClienteShell active="inicio" panel={<Contenido ancho />} map={<MapaCercanos grande />} />
       ) : (
         <SafeAreaView style={styles.screen} edges={['top']}>
           <StatusBar style="dark" />
@@ -170,6 +171,8 @@ function Contenido({ ancho }: { ancho?: boolean }) {
           ¿Qué necesitás <Text style={styles.tituloAcento}>resolver hoy?</Text>
         </Text>
       </View>
+
+      {ancho ? null : <MapaCercanos />}
 
       {enCurso ? (
         <BannerEnCurso

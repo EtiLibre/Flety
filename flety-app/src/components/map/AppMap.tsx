@@ -3,6 +3,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
 import { metrosEntre, rumbo } from '@/lib/geo';
+import { IconoCamioneta } from '@/plataforma/estilo';
 import { IconoGrua } from '@/plataforma/IconoGrua';
 import { colors } from '@/theme';
 
@@ -20,6 +21,7 @@ export function AppMap({
   padding,
   tone = 'light',
   initialZoom = 14,
+  estatico,
   onMoveStart,
   onCenterChange,
   style,
@@ -79,6 +81,10 @@ export function AppMap({
       userInterfaceStyle={tone}
       mapType={Platform.OS === 'ios' ? 'mutedStandard' : 'standard'}
       showsPointsOfInterests={false}
+      scrollEnabled={!estatico}
+      zoomEnabled={!estatico}
+      pitchEnabled={!estatico}
+      rotateEnabled={false}
       toolbarEnabled={false}>
       {line && line.length > 1 ? (
         <Polyline
@@ -118,6 +124,12 @@ function MarkerView({ kind }: { kind: MapMarker['kind'] }) {
       return <View style={styles.destino} />;
     case 'chofer':
       return <TruckSprite />;
+    case 'fletero':
+      return (
+        <View style={styles.fletero}>
+          <IconoCamioneta size={17} color={colors.ink} strokeWidth={2.3} />
+        </View>
+      );
     case 'grua':
       return (
         <View style={styles.grua}>
@@ -128,6 +140,16 @@ function MarkerView({ kind }: { kind: MapMarker['kind'] }) {
 }
 
 const styles = StyleSheet.create({
+  fletero: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFC233',
+    borderWidth: 3,
+    borderColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   grua: {
     width: 34,
     height: 34,

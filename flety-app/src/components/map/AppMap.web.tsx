@@ -26,12 +26,16 @@ function loadStyle(tone: 'light' | 'dark') {
 // Mismo dibujo que plataforma/IconoGrua, en blanco.
 const GRUA_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17H2v-3h11V9h4l3 3v5h-1"/><path d="M8 17h7"/><path d="M15 9v3h5"/><path d="M5 14l4-7h2v3"/><circle cx="6" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>`;
 
+// Mismo dibujo que IconoCamioneta (plataforma/estilo).
+const CAMIONETA_SVG = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#12161C" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M2 17v-5h11v5"/><path d="M13 17V9h4l4 4v4h-1.5"/><path d="M4.5 12V7.5h5V12"/><path d="M8 17h3"/><circle cx="5.5" cy="17.5" r="2"/><circle cx="17.5" cy="17.5" r="2"/></svg>`;
+
 const MARKER_HTML: Record<MapMarker['kind'], string> = {
   user: `<div class="flety-pin flety-pin-user"><div></div></div>`,
   origen: `<div class="flety-pin flety-pin-origen"></div>`,
   destino: `<div class="flety-pin flety-pin-destino"></div>`,
   chofer: `<div class="flety-truck"><div class="flety-truck-pulse"></div>${TRUCK_3D_SVG}</div>`,
   grua: `<div class="flety-pin flety-pin-grua">${GRUA_SVG}</div>`,
+  fletero: `<div class="flety-pin flety-pin-fletero">${CAMIONETA_SVG}</div>`,
 };
 
 function createMarkerElement(marker: MapMarker) {
@@ -74,6 +78,7 @@ export function AppMap({
   padding,
   tone = 'light',
   initialZoom = 14,
+  estatico,
   onMoveStart,
   onCenterChange,
   style,
@@ -86,6 +91,7 @@ export function AppMap({
   // El tono se fija al crear el mapa.
   const initialTone = useRef(tone);
   const initialZoomRef = useRef(initialZoom);
+  const estaticoRef = useRef(estatico);
   // Callbacks en refs: el mapa se crea una sola vez y siempre llama a la versión actual.
   const moveStartRef = useRef(onMoveStart);
   const centerChangeRef = useRef(onCenterChange);
@@ -110,8 +116,19 @@ export function AppMap({
         zoom: initialZoomRef.current,
         attributionControl: { compact: true },
         dragRotate: false,
+        interactive: !estaticoRef.current,
       });
       map.touchZoomRotate.disableRotation();
+      // En los mapas chicos la atribución queda plegada en el botón (i); MapLibre
+      // la vuelve a abrir al cambiar de tamaño.
+      if (estaticoRef.current) {
+        const plegar = () =>
+          setTimeout(() =>
+            container.querySelector('.maplibregl-compact-show')?.classList.remove('maplibregl-compact-show')
+          );
+        map.on('load', plegar);
+        map.on('resize', plegar);
+      }
       map.on('movestart', () => moveStartRef.current?.());
       map.on('moveend', () => {
         const c = map.getCenter();
@@ -179,6 +196,9 @@ export function AppMap({
           existing.heading = heading;
           existing.marker.setRotation(heading);
           if (moved) animateTo(existing, m.position);
+        } else if (metrosEntre(existing.position, m.position) > 3) {
+          // Los vehículos cercanos también se deslizan al moverse.
+          animateTo(existing, m.position);
         } else {
           existing.marker.setLngLat([m.position.lng, m.position.lat]);
         }

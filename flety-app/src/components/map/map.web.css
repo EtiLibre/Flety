@@ -50,6 +50,18 @@
   box-shadow: 0 3px 10px rgba(18, 22, 28, 0.3);
 }
 
+.flety-pin-fletero {
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #ffd452, #ffb020);
+  border: 3px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(240, 112, 15, 0.35);
+}
+
 .flety-pin-chofer {
   width: 64px;
   height: 64px;
