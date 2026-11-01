@@ -12,6 +12,7 @@ import {
   UserCheck,
   Eye,
   Headset,
+  MapPinned,
   LayoutGrid,
   LifeBuoy,
   Megaphone,
@@ -54,6 +55,7 @@ export type SeccionEmpresa =
   | 'cobros'
   | 'seguros'
   | 'soporte'
+  | 'lugares'
   | 'gruasOperacion'
   | 'gruasPrestadores'
   | 'gruasAjustes'
@@ -87,6 +89,7 @@ const SECCIONES: {
   { id: 'marketing', label: 'Marketing', Icon: ChartBar, roles: ['marketing', 'superadmin'] },
   { id: 'anuncios', label: 'Anuncios', Icon: Megaphone, roles: ['marketing', 'superadmin'] },
   { id: 'soporte', label: 'Soporte', Icon: Headset, roles: ['superadmin'] },
+  { id: 'lugares', label: 'Lugares', Icon: MapPinned, roles: ['superadmin'] },
   { id: 'gruasOperacion', label: 'Operación', Icon: IconoGrua, roles: ['superadmin'], negocio: 'gruas' },
   { id: 'gruasPrestadores', label: 'Gruistas', Icon: UserCheck, roles: ['superadmin'], negocio: 'gruas' },
   { id: 'gruasAjustes', label: 'Ajustes', Icon: Settings, roles: ['superadmin'], negocio: 'gruas' },
