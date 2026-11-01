@@ -94,10 +94,20 @@ function useSimulacion(clave: string, activo: boolean, crear: () => Vehiculo[]):
 
 const RADIO_INICIO_M = 1400;
 
-export function useFlotaAmbiente(centro: LatLng, activo: boolean): MapMarker[] {
-  const clave = `${centro.lat.toFixed(4)},${centro.lng.toFixed(4)}`;
+// mezcla: el inicio muestra los dos servicios; Mudanzas solo camionetas y Grúas solo grúas.
+export function useFlotaAmbiente(
+  centro: LatLng,
+  activo: boolean,
+  mezcla: 'todos' | 'fletes' | 'gruas' = 'todos'
+): MapMarker[] {
+  const clave = `${mezcla}:${centro.lat.toFixed(4)},${centro.lng.toFixed(4)}`;
   return useSimulacion(clave, activo, () => {
-    const tipos: Kind[] = [...Array(7).fill('flotaFlete'), ...Array(4).fill('flotaGrua')];
+    const tipos: Kind[] =
+      mezcla === 'fletes'
+        ? Array(9).fill('flotaFlete')
+        : mezcla === 'gruas'
+          ? Array(8).fill('flotaGrua')
+          : [...Array(7).fill('flotaFlete'), ...Array(4).fill('flotaGrua')];
     return tipos.map((kind, i) => {
       const dist = 200 + Math.random() * (RADIO_INICIO_M - 200);
       const p = mover(centro.lat, centro.lng, Math.random() * 360, dist);

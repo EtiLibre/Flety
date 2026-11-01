@@ -256,14 +256,17 @@ export function AppMap({
   // Encuadre: se recalcula cuando cambian los puntos fijos (retiro/entrega) o
   // aparece/desaparece el chofer, no con cada paso del camión ni de la flota.
   const fitKey = markers
+    .filter((m) => !m.id.startsWith('amb-'))
     .map((m) => (GIRA_CON_RUMBO.has(m.kind) ? m.id : `${m.id}:${m.position.lat},${m.position.lng}`))
     .join('|');
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    if (fitToMarkers && markers.length > 1) {
+    // Los vehículos de ambiente (amb-*) no cuentan para el encuadre.
+    const aEncuadrar = markers.filter((m) => !m.id.startsWith('amb-'));
+    if (fitToMarkers && aEncuadrar.length > 1) {
       const bounds = new LngLatBounds();
-      markers.forEach((m) => bounds.extend([m.position.lng, m.position.lat]));
+      aEncuadrar.forEach((m) => bounds.extend([m.position.lng, m.position.lat]));
       map.fitBounds(bounds, {
         padding: padding ?? { top: 80, right: 80, bottom: 80, left: 80 },
         maxZoom: 15.5,

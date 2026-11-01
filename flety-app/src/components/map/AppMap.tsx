@@ -50,15 +50,18 @@ export function AppMap({
   const truckHeading = chofer?.heading ?? truck.heading;
 
   const fitKey = markers
+    .filter((m) => !m.id.startsWith('amb-'))
     .map((m) => (GIRA_CON_RUMBO.has(m.kind) ? m.id : `${m.id}:${m.position.lat},${m.position.lng}`))
     .join('|');
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    if (fitToMarkers && markers.length > 1) {
+    // Los vehículos de ambiente (amb-*) no cuentan para el encuadre.
+    const aEncuadrar = markers.filter((m) => !m.id.startsWith('amb-'));
+    if (fitToMarkers && aEncuadrar.length > 1) {
       map.fitToCoordinates(
-        markers.map((m) => ({ latitude: m.position.lat, longitude: m.position.lng })),
+        aEncuadrar.map((m) => ({ latitude: m.position.lat, longitude: m.position.lng })),
         { edgePadding: padding ?? { top: 80, right: 60, bottom: 80, left: 60 }, animated: true }
       );
     } else {

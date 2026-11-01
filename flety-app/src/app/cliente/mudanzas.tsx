@@ -16,6 +16,7 @@ import { useIsWide } from '@/hooks/use-is-wide';
 import { useMisPedidos } from '@/hooks/use-mis-pedidos';
 import { useRuta } from '@/hooks/use-ruta';
 import { useAuth } from '@/lib/auth';
+import { useFlotaAmbiente } from '@/lib/flota-ambiente';
 import { usePedidoDraft } from '@/lib/pedido-draft';
 import { TERMINAL_ESTADOS } from '@/lib/state-machine';
 import type { TipoServicio } from '@/lib/types';
@@ -43,7 +44,9 @@ function useMapMarkers() {
   if (draft.origen) markers.push({ id: 'origen', kind: 'origen', position: draft.origen, label: 'Retiro' });
   if (draft.destino) markers.push({ id: 'destino', kind: 'destino', position: draft.destino, label: 'Entrega' });
   const { ruta } = useRuta([draft.origen, draft.destino]);
-  return { location, markers, line: ruta?.coords };
+  // Camionetas de ambiente dando vueltas (ilustrativo, como en DiDi).
+  const ambiente = useFlotaAmbiente(draft.origen ?? location.position, true, 'fletes');
+  return { location, markers: [...ambiente, ...markers], line: ruta?.coords };
 }
 
 function InicioDesktop() {
@@ -72,7 +75,7 @@ function InicioDesktop() {
           center={location.position}
           markers={markers}
           line={line}
-          fitToMarkers={markers.some((m) => m.kind !== 'user')}
+          fitToMarkers={markers.some((m) => m.kind !== 'user' && !m.id.startsWith('amb-'))}
           style={StyleSheet.absoluteFill}
         />
       }
@@ -97,7 +100,7 @@ function InicioMovil() {
       <StatusBar style="dark" />
       <AppMap
         center={location.position}
-        markers={markers.filter((m) => m.kind === 'user')}
+        markers={markers.filter((m) => m.kind === 'user' || m.id.startsWith('amb-'))}
         style={StyleSheet.absoluteFill}
       />
 
