@@ -348,7 +348,7 @@ function LandingPage() {
                   foto={FOTO_EMPRESAS}
                   alt="Camión de mudanza con la rampa bajada y fleteros cargando muebles en una calle de Mendoza"
                   posicion="88%"
-                  panelArriba
+                  encuadre={{ top: '-70%', height: '172%' }}
                   etiqueta="Empresas de mudanzas y fletes"
                   colorEtiqueta="#FFD452"
                   titulo="Sumá tu empresa: mudanzas, fletes y larga distancia en un solo panel"
@@ -533,13 +533,14 @@ function TarjetaFoto({
   onPress,
   extra,
   posicion = '50%',
-  panelArriba = false,
+  encuadre,
 }: {
   foto: number;
   alt: string;
   posicion?: string;
-  // Panel de texto arriba, para fotos con el motivo en la parte de abajo.
-  panelArriba?: boolean;
+  // Agranda y corre la foto (en % de la tarjeta) para que el motivo quede
+  // arriba del panel de texto.
+  encuadre?: { top: `${number}%`; height: `${number}%` };
   etiqueta: string;
   colorEtiqueta: string;
   titulo: string;
@@ -549,17 +550,17 @@ function TarjetaFoto({
   extra?: React.ReactNode;
 }) {
   return (
-    <View style={[styles.tarjetaFoto, panelArriba && { justifyContent: 'flex-start' }]}>
+    <View style={styles.tarjetaFoto}>
       <Image
         source={foto}
-        style={StyleSheet.absoluteFill}
+        style={encuadre ? { position: 'absolute', left: 0, right: 0, ...encuadre } : StyleSheet.absoluteFill}
         contentFit="cover"
         contentPosition={{ left: posicion, top: '28%' }}
         accessibilityLabel={alt}
       />
       <LinearGradient
-        colors={panelArriba ? ['rgba(18,22,28,0.92)', 'rgba(18,22,28,0)'] : ['rgba(18,22,28,0)', 'rgba(18,22,28,0.92)']}
-        locations={panelArriba ? [0, 0.65] : [0.35, 1]}
+        colors={['rgba(18,22,28,0)', 'rgba(18,22,28,0.92)']}
+        locations={[0.35, 1]}
         style={StyleSheet.absoluteFill}
       />
       <Vidrio oscuro style={styles.tarjetaFotoPanel}>

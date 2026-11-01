@@ -1,5 +1,5 @@
 import { ArrowUp } from 'lucide-react-native';
-import { Pressable, StyleSheet, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { Degrade, SOMBRAS } from '@/plataforma/estilo';
 import { colors } from '@/theme';
@@ -27,7 +27,10 @@ export function ScrollFab({ visible, onPress }: { visible: boolean; onPress: () 
         visible ? (hovered ? styles.hover : styles.shown) : styles.hidden,
       ]}>
       <Degrade nombre="sol" style={[StyleSheet.absoluteFill, styles.fondo]} />
-      <ArrowUp size={22} color={colors.ink} strokeWidth={2.6} />
+      {/* En la web el ícono necesita su propia capa para quedar sobre el degradé. */}
+      <View style={styles.icono}>
+        <ArrowUp size={24} color={colors.ink} strokeWidth={2.8} />
+      </View>
     </Pressable>
   );
 }
@@ -48,6 +51,7 @@ const styles = StyleSheet.create({
     boxShadow: `${SOMBRAS.sol}, inset 0px 1px 0px rgba(255,255,255,0.65)`,
   },
   fondo: { borderRadius: 24 },
+  icono: { position: 'relative', zIndex: 1 },
   shown: { opacity: 1, transform: [{ translateY: 0 }, { scale: 1 }] },
   hover: { opacity: 1, transform: [{ translateY: -2 }, { scale: 1.06 }] },
   hidden: { opacity: 0, transform: [{ translateY: 16 }, { scale: 0.8 }] },
