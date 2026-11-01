@@ -126,7 +126,7 @@ function Asistente({
   const soloSaludo = mensajes.length === 1;
 
   return (
-    <View style={[s.card, { backgroundColor: p.card, borderColor: p.cardBorder }]}>
+    <View style={[s.card, { backgroundColor: p.card, borderColor: p.cardBorder, boxShadow: p.sombra }]}>
       <View style={s.botHead}>
         <View style={s.botAvatar}>
           <Bot size={20} color={colors.ink} strokeWidth={2.2} />
@@ -176,7 +176,7 @@ function Asistente({
                       key={r.id}
                       accessibilityRole="button"
                       onPress={() => preguntar(r.pregunta)}
-                      style={[s.chip, { borderColor: p.cardBorder }]}>
+                      style={[s.chip, { borderColor: p.cardBorder, boxShadow: p.sombra }]}>
                       <Text style={[s.chipText, { color: p.text }]}>{r.pregunta}</Text>
                     </Pressable>
                   ))}
@@ -199,7 +199,7 @@ function Asistente({
               key={q}
               accessibilityRole="button"
               onPress={() => preguntar(q)}
-              style={[s.chip, { borderColor: p.cardBorder }]}>
+              style={[s.chip, { borderColor: p.cardBorder, boxShadow: p.sombra }]}>
               <Text style={[s.chipText, { color: p.text }]}>{q}</Text>
             </Pressable>
           ))}
@@ -237,7 +237,7 @@ function Frecuentes({ p, rol, onAccion }: { p: Paleta; rol: RolAyuda; onAccion: 
   const categorias = [...new Set(preguntas.map((q) => q.categoria))];
 
   return (
-    <View style={[s.card, { backgroundColor: p.card, borderColor: p.cardBorder }]}>
+    <View style={[s.card, { backgroundColor: p.card, borderColor: p.cardBorder, boxShadow: p.sombra }]}>
       <Text style={[s.titulo, { color: p.text }]}>Preguntas frecuentes</Text>
       {categorias.map((cat) => (
         <View key={cat} style={{ gap: 2 }}>
@@ -310,7 +310,7 @@ function MisConsultas({ p, version, onNueva }: { p: Paleta; version: number; onN
   const actual = res?.clave === clave ? res : null;
 
   return (
-    <View style={[s.card, { backgroundColor: p.card, borderColor: p.cardBorder }]}>
+    <View style={[s.card, { backgroundColor: p.card, borderColor: p.cardBorder, boxShadow: p.sombra }]}>
       <View style={s.botHead}>
         <View style={[s.iconoSoporte, { backgroundColor: p.chip }]}>
           <LifeBuoy size={19} color={p.text} strokeWidth={2} />
@@ -331,7 +331,7 @@ function MisConsultas({ p, version, onNueva }: { p: Paleta; version: number; onN
         <View style={{ gap: 10 }}>
           <Text style={[s.categoria, { color: p.muted }]}>Mis consultas</Text>
           {actual.consultas.map((c) => (
-            <View key={c.id} style={[s.consulta, { borderColor: p.cardBorder }]}>
+            <View key={c.id} style={[s.consulta, { borderColor: p.cardBorder, boxShadow: p.sombra }]}>
               <View style={s.consultaHead}>
                 <Text style={[s.faqPregunta, { color: p.text, flex: 1 }]} numberOfLines={1}>
                   {c.asunto}

@@ -5,10 +5,11 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { IconButton } from '@/components/IconButton';
-import { colors, radius, shadow } from '@/theme';
+import { Vidrio } from '@/plataforma/estilo';
+import { colors, radius } from '@/theme';
 
-// Layout de celular con mapa arriba y panel blanco deslizable abajo
-// (canvas: "Elegí tu vehículo", "Seguimiento en vivo").
+// Layout de celular con mapa arriba y panel de vidrio abajo (canvas "color con
+// volumen": Pedir flete, Pedir grúa, Seguimiento).
 export function MobileMapLayout({
   map,
   children,
@@ -31,12 +32,14 @@ export function MobileMapLayout({
         style={[styles.back, { top: insets.top + 12 }]}>
         <ChevronLeft size={22} color={colors.ink} strokeWidth={2.2} />
       </IconButton>
-      <View style={[styles.sheet, { top: mapHeight }]}>
-        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 24 + insets.bottom }]} keyboardShouldPersistTaps="handled">
+      <Vidrio intensidad={50} style={[styles.sheet, { top: mapHeight }]}>
+        <ScrollView
+          contentContainerStyle={[styles.content, { paddingBottom: 24 + insets.bottom }]}
+          keyboardShouldPersistTaps="handled">
           <View style={styles.handle} />
           {children}
         </ScrollView>
-      </View>
+      </Vidrio>
     </View>
   );
 }
@@ -50,11 +53,14 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: colors.white,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
+    backgroundColor: 'rgba(255,255,255,0.86)',
+    borderTopLeftRadius: radius.sheet + 2,
+    borderTopRightRadius: radius.sheet + 2,
+    borderWidth: 0,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.95)',
     zIndex: 1000,
-    ...shadow.sheet,
+    boxShadow: '0px -16px 40px -12px rgba(18,22,28,0.25)',
   },
   content: { paddingHorizontal: 20, paddingTop: 12, gap: 16, width: '100%', maxWidth: 560, alignSelf: 'center' },
   handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.handle, alignSelf: 'center' },

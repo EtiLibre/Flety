@@ -79,7 +79,7 @@ export function FleteCard({
       onPress={onPress}
       style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [
         styles.card,
-        { backgroundColor: p.card, borderColor: p.cardBorder },
+        { backgroundColor: p.card, borderColor: p.cardBorder, boxShadow: p.sombra },
         hovered && !!onPress && { borderColor: p.muted },
         pressed && { opacity: 0.9 },
       ]}>
@@ -147,7 +147,11 @@ export function FleteCard({
           accessibilityRole="button"
           accessibilityLabel="Pedir de nuevo este flete"
           onPress={onRepetir}
-          style={({ pressed }) => [styles.repetir, { borderColor: p.cardBorder }, pressed && { opacity: 0.8 }]}>
+          style={({ pressed }) => [
+            styles.repetir,
+            { borderColor: p.cardBorder, boxShadow: p.sombra },
+            pressed && { opacity: 0.8 },
+          ]}>
           <RotateCcw size={15} color={p.text} strokeWidth={2.2} />
           <Text style={[styles.repetirText, { color: p.text }]}>Pedir de nuevo</Text>
         </Pressable>

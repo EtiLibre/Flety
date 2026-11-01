@@ -17,8 +17,14 @@ import {
 } from '@/lib/cuenta';
 import { iniciales } from '@/lib/empresa';
 import { supabase } from '@/lib/supabase';
+import { Degrade } from '@/plataforma/estilo';
 import { colors, fonts, radius } from '@/theme';
 import { paleta, type Paleta, type Tema } from '@/theme/tema';
+
+const SOMBRAS_ICONO = {
+  claro: '0px 6px 12px -6px rgba(255,159,28,0.8)',
+  oscuro: '0px 6px 12px -6px rgba(0,0,0,0.8)',
+};
 
 // "Mi cuenta", igual para cliente, chofer y empresa: datos personales, usuario,
 // correo y contraseña. `children` agrega accesos propios de cada rol.
@@ -94,7 +100,7 @@ const ROL_LABEL: Record<string, string> = {
 function Cabecera({ p, cuenta, rol }: { p: Paleta; cuenta: Cuenta | null; rol: string | null }) {
   const completo = cuenta ? [cuenta.nombre, cuenta.apellido].filter(Boolean).join(' ') : '';
   return (
-    <View style={[s.card, s.cabecera, { backgroundColor: p.card, borderColor: p.cardBorder }]}>
+    <View style={[s.card, s.cabecera, { backgroundColor: p.card, borderColor: p.cardBorder, boxShadow: p.sombra }]}>
       <View style={s.avatar}>
         <Text style={s.avatarText}>{iniciales(completo || cuenta?.email || 'F')}</Text>
       </View>
@@ -138,12 +144,15 @@ export function FilaCuenta({
       style={({ pressed }) => [
         s.card,
         s.fila,
-        { backgroundColor: p.card, borderColor: p.cardBorder },
+        { backgroundColor: p.card, borderColor: p.cardBorder, boxShadow: p.sombra },
         pressed && { opacity: 0.85 },
       ]}>
-      <View style={[s.filaIcon, { backgroundColor: p.chip }]}>
-        <Icon size={19} color={p.text} strokeWidth={2} />
-      </View>
+      <Degrade
+        nombre={tema === 'oscuro' ? 'grafito' : 'sol'}
+        diagonal
+        style={[s.filaIcon, { boxShadow: SOMBRAS_ICONO[tema] }]}>
+        <Icon size={19} color={tema === 'oscuro' ? '#FFD452' : colors.ink} strokeWidth={2.1} />
+      </Degrade>
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={[s.filaTitulo, { color: p.text }]}>{titulo}</Text>
         {detalle ? <Text style={[s.muted, { color: p.muted }]}>{detalle}</Text> : null}
@@ -194,7 +203,7 @@ function DatosPersonales({ p, userId, inicial }: { p: Paleta; userId: string | n
   }
 
   return (
-    <View style={[s.card, { backgroundColor: p.card, borderColor: p.cardBorder }]}>
+    <View style={[s.card, { backgroundColor: p.card, borderColor: p.cardBorder, boxShadow: p.sombra }]}>
       <Text style={[s.titulo, { color: p.text }]}>Datos personales</Text>
       <View style={s.filaCampos}>
         <Campo p={p} label="Nombre" value={f.nombre} onChangeText={set('nombre')} error={errores.nombre} />
@@ -277,7 +286,7 @@ function CambiarCorreo({ p, actual, habilitado }: { p: Paleta; actual: string; h
   }
 
   return (
-    <View style={[s.card, { backgroundColor: p.card, borderColor: p.cardBorder }]}>
+    <View style={[s.card, { backgroundColor: p.card, borderColor: p.cardBorder, boxShadow: p.sombra }]}>
       <Plegable
         p={p}
         Icon={Mail}
@@ -353,7 +362,7 @@ function CambiarContrasena({ p, email, habilitado }: { p: Paleta; email: string;
   );
 
   return (
-    <View style={[s.card, { backgroundColor: p.card, borderColor: p.cardBorder }]}>
+    <View style={[s.card, { backgroundColor: p.card, borderColor: p.cardBorder, boxShadow: p.sombra }]}>
       <Plegable
         p={p}
         Icon={KeyRound}
