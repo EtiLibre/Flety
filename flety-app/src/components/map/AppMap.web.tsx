@@ -127,16 +127,15 @@ export function AppMap({
         interactive: !estaticoRef.current,
       });
       map.touchZoomRotate.disableRotation();
-      // En los mapas chicos la atribución queda plegada en el botón (i); MapLibre
-      // la vuelve a abrir al cambiar de tamaño.
-      if (estaticoRef.current) {
-        const plegar = () =>
-          setTimeout(() =>
-            container.querySelector('.maplibregl-compact-show')?.classList.remove('maplibregl-compact-show')
-          );
-        map.on('load', plegar);
-        map.on('resize', plegar);
-      }
+      // La atribución (obligatoria por la licencia de OpenStreetMap/OpenFreeMap)
+      // queda plegada en el botón (i): se lee al tocarlo. MapLibre la vuelve a
+      // abrir al cargar y al cambiar de tamaño.
+      const plegar = () =>
+        setTimeout(() =>
+          container.querySelector('.maplibregl-compact-show')?.classList.remove('maplibregl-compact-show')
+        );
+      map.on('load', plegar);
+      map.on('resize', plegar);
       map.on('movestart', () => moveStartRef.current?.());
       map.on('moveend', () => {
         const c = map.getCenter();
