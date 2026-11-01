@@ -7,7 +7,7 @@ import { Button } from '@/components/Button';
 import { AppMap } from '@/components/map/AppMap';
 import { MENDOZA, type MapMarker } from '@/components/map/types';
 import { MobileMapLayout } from '@/components/MobileMapLayout';
-import { AddressField } from '@/components/pedido/AddressField';
+import { RutaCampos } from '@/components/pedido/RutaCampos';
 import { Segmented } from '@/components/pedido/Choice';
 import { PhotoPicker } from '@/components/pedido/PhotoPicker';
 import { ClienteShell } from '@/components/web/ClienteShell';
@@ -218,19 +218,17 @@ export default function PedirGrua() {
       ) : null}
       {errorCatalogo ? <Text style={styles.error}>{errorCatalogo}</Text> : null}
 
-      <AddressField
-        label="¿Dónde está el vehículo?"
-        placeholder="Buscá la dirección o usá tu ubicación"
-        value={origen}
-        onChange={setOrigen}
-        allowCurrentLocation
-        tipo="origen"
-      />
-      <AddressField
-        label={enLugar ? '¿A dónde lo llevamos? (opcional)' : '¿A dónde lo llevamos?'}
-        placeholder="Taller, casa, concesionaria…"
-        value={destino}
-        onChange={setDestino}
+      <RutaCampos
+        origen={origen}
+        destino={destino}
+        onOrigen={setOrigen}
+        onDestino={setDestino}
+        labelOrigen="Dónde está el vehículo"
+        labelDestino={enLugar ? 'A dónde lo llevamos (opcional)' : 'A dónde lo llevamos'}
+        placeholderOrigen="Buscá la dirección o usá tu ubicación"
+        placeholderDestino="Taller, casa, concesionaria…"
+        acentoDestino={G.acento}
+        sobreVidrio
       />
 
       <Seccion titulo="¿Qué le pasa?" falta={intento && !motivo}>
@@ -267,7 +265,7 @@ export default function PedirGrua() {
       </Seccion>
 
       {catalogo?.situaciones.length ? (
-        <Seccion titulo="¿Alguna de estas situaciones? (opcional)">
+        <Seccion titulo="¿Alguna de estas situaciones?" opcional>
           <OpcionesConMas
             multiple
             opciones={[...catalogo.situaciones.filter((t) => t.activo !== false), { id: OTRA, nombre: 'Otra' }]}
@@ -295,7 +293,7 @@ export default function PedirGrua() {
         error={intento && !fotos.length ? 'Subí al menos una foto para pedir la grúa.' : null}
       />
 
-      <Seccion titulo="Tu vehículo (opcional)">
+      <Seccion titulo="Tu vehículo" opcional>
         <View style={styles.filaCampos}>
           <Campo valor={marca} onCambio={setMarca} placeholder="Marca" />
           <Campo valor={modelo} onCambio={setModelo} placeholder="Modelo" />
@@ -463,12 +461,23 @@ const MOTIVOS_COMUNES = ['no_arranca', 'bateria', 'pinchadura', 'choque', 'sin_c
 const SITUACIONES_COMUNES = ['sin_llaves', 'ruedas_trabadas', 'volcado', 'subsuelo'];
 const OTRA = 'otra';
 
-function Seccion({ titulo, falta, children }: { titulo: string; falta?: boolean; children: React.ReactNode }) {
+function Seccion({
+  titulo,
+  opcional,
+  falta,
+  children,
+}: {
+  titulo: string;
+  opcional?: boolean;
+  falta?: boolean;
+  children: React.ReactNode;
+}) {
   return (
-    <View style={{ gap: 8 }}>
+    <View style={{ gap: 10 }}>
       <Text style={[styles.seccion, falta && { color: colors.danger }]}>
         {titulo}
-        {falta ? ' · elegí una opción' : ''}
+        {opcional ? <Text style={styles.opcional}> (opcional)</Text> : null}
+        {falta ? <Text style={styles.opcional}> · elegí una opción</Text> : null}
       </Text>
       {children}
     </View>
@@ -508,7 +517,8 @@ const styles = StyleSheet.create({
   sub: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 19, color: colors.muted },
   activa: { padding: 12, borderRadius: radius.md, backgroundColor: G.suave },
   activaTexto: { fontFamily: fonts.bold, fontSize: 14, color: G.texto },
-  seccion: { fontFamily: fonts.semibold, fontSize: 13, color: colors.muted },
+  seccion: { fontFamily: fonts.bold, fontSize: 16, color: colors.ink },
+  opcional: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted },
   filaCampos: { flexDirection: 'row', gap: 8 },
   campo: {
     height: 48,

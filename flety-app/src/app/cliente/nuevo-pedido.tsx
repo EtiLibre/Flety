@@ -17,6 +17,7 @@ export default function NuevoPedido() {
   return (
     <FormScreen
       illustration={false}
+      perfil
       title={TIPO_LABEL[draft.tipo]}
       subtitle="Contanos qué movés y te mostramos opciones y precios.">
       <PedidoForm onContinue={() => router.push('/cliente/opciones')} />

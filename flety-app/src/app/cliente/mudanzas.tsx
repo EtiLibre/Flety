@@ -8,6 +8,7 @@ import { AppMap } from '@/components/map/AppMap';
 import type { MapMarker } from '@/components/map/types';
 import { AvisoPendiente } from '@/components/pedido/AvisoPendiente';
 import { PedidoForm } from '@/components/pedido/PedidoForm';
+import { BotonPerfil } from '@/components/nav/BotonPerfil';
 import { PedidosList } from '@/components/pedido/PedidosList';
 import { Sheet } from '@/components/Sheet';
 import { ClienteShell } from '@/components/web/ClienteShell';
@@ -111,6 +112,7 @@ function InicioMovil() {
         style={[styles.volver, { top: insets.top + 12 }]}>
         <ArrowLeft size={20} color={colors.ink} strokeWidth={2.2} />
       </Pressable>
+      <BotonPerfil style={[styles.perfil, { top: insets.top + 12 }]} />
 
       <View style={styles.sheetArea} pointerEvents="box-none">
         <Sheet style={styles.sheet}>
@@ -171,6 +173,7 @@ const styles = StyleSheet.create({
   activos: { gap: 10, paddingTop: 18, borderTopWidth: 1, borderTopColor: colors.lineSoft },
   activosTitle: { fontFamily: fonts.bold, fontSize: 14, color: colors.muted },
   screen: { flex: 1, backgroundColor: colors.mapLand },
+  perfil: { position: 'absolute', right: 16, zIndex: 1000 },
   volver: {
     position: 'absolute',
     left: 16,

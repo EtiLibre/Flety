@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AuthIllustration } from '@/components/AuthIllustration';
 import { CANVAS_BG, DotCanvas } from '@/components/DotCanvas';
+import { BotonPerfil } from '@/components/nav/BotonPerfil';
 import { colors, fonts } from '@/theme';
 
 // Esqueleto de las pantallas de cuenta (login, registro, recuperar) y de los
@@ -28,6 +29,7 @@ export function FormScreen({
   children,
   footer,
   illustration = true,
+  perfil,
 }: {
   title: string;
   subtitle?: string;
@@ -35,6 +37,8 @@ export function FormScreen({
   footer?: React.ReactNode;
   // Camioncito animado arriba de la tarjeta.
   illustration?: boolean;
+  // Avatar del cliente arriba a la derecha (pantallas de pedir).
+  perfil?: boolean;
 }) {
   const [entrada] = useState(() => new Animated.Value(0));
   useEffect(() => {
@@ -71,6 +75,7 @@ export function FormScreen({
                 <Text style={styles.brandWord}>flety</Text>
               </Pressable>
             </View>
+            {perfil ? <BotonPerfil /> : null}
           </View>
 
           <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
@@ -109,7 +114,13 @@ export function FormScreen({
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: CANVAS_BG },
   flex: { flex: 1 },
-  topBar: { flexDirection: 'row', paddingHorizontal: 16, paddingTop: 12 },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',

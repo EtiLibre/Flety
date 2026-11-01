@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { IconButton } from '@/components/IconButton';
+import { BotonPerfil } from '@/components/nav/BotonPerfil';
 import { Vidrio } from '@/plataforma/estilo';
 import { colors, radius } from '@/theme';
 
@@ -32,6 +33,7 @@ export function MobileMapLayout({
         style={[styles.back, { top: insets.top + 12 }]}>
         <ChevronLeft size={22} color={colors.ink} strokeWidth={2.2} />
       </IconButton>
+      <BotonPerfil style={[styles.perfil, { top: insets.top + 12 }]} />
       <Vidrio intensidad={50} style={[styles.sheet, { top: mapHeight }]}>
         <ScrollView
           contentContainerStyle={[styles.content, { paddingBottom: 24 + insets.bottom }]}
@@ -48,6 +50,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.mapLand },
   map: { position: 'absolute', left: 0, right: 0, top: 0 },
   back: { position: 'absolute', left: 20, zIndex: 1000 },
+  perfil: { position: 'absolute', right: 20, zIndex: 1000 },
   sheet: {
     position: 'absolute',
     left: 0,

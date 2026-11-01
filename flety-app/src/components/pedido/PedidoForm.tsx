@@ -7,10 +7,10 @@ import { cuandoProgramadoInicial, draftListoParaCotizar, usePedidoDraft } from '
 import { TAMANO_LABEL, TIPO_LABEL, type Tamano, type TipoServicio } from '@/lib/types';
 import { colors, fonts, radius } from '@/theme';
 
-import { AddressField } from './AddressField';
 import { Choice, Segmented } from './Choice';
 import { FechaHoraPicker } from './FechaHoraPicker';
 import { PhotoPicker } from './PhotoPicker';
+import { RutaCampos } from './RutaCampos';
 
 const TIPOS: { tipo: TipoServicio; Icon: typeof Truck }[] = [
   { tipo: 'flete', Icon: Truck },
@@ -55,30 +55,16 @@ export function PedidoForm({ onContinue }: { onContinue: () => void }) {
         })}
       </View>
 
-      <View style={styles.route}>
-        <View style={styles.routeRail}>
-          <View style={styles.dotOrigen} />
-          <View style={styles.railLine} />
-          <View style={styles.dotDestino} />
-        </View>
-        <View style={styles.routeFields}>
-          <AddressField
-            label="Retiro"
-            placeholder="¿Dónde retiramos?"
-            value={draft.origen}
-            onChange={(origen) => update({ origen })}
-            allowCurrentLocation
-            tipo="origen"
-          />
-          <View style={styles.divider} />
-          <AddressField
-            label="Entrega"
-            placeholder="¿A dónde va?"
-            value={draft.destino}
-            onChange={(destino) => update({ destino })}
-          />
-        </View>
-      </View>
+      <RutaCampos
+        origen={draft.origen}
+        destino={draft.destino}
+        onOrigen={(origen) => update({ origen })}
+        onDestino={(destino) => update({ destino })}
+        labelOrigen="Retiro"
+        labelDestino="Entrega"
+        placeholderOrigen="¿Dónde retiramos?"
+        placeholderDestino="¿A dónde va?"
+      />
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>¿Qué vas a mover?</Text>
@@ -197,34 +183,6 @@ const styles = StyleSheet.create({
   tipos: { flexDirection: 'row', gap: 8 },
   tipo: { flex: 1, borderRadius: radius.lg, padding: 12, gap: 10 },
   tipoText: { fontFamily: fonts.bold, fontSize: 14, color: colors.ink },
-  route: {
-    flexDirection: 'row',
-    gap: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 4,
-    borderRadius: radius.xl,
-    backgroundColor: colors.surface,
-  },
-  routeRail: { width: 12, alignItems: 'center', paddingTop: 34, paddingBottom: 30 },
-  dotOrigen: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 3,
-    borderColor: colors.ink,
-    backgroundColor: colors.white,
-  },
-  railLine: { flex: 1, width: 0, borderLeftWidth: 2, borderStyle: 'dotted', borderColor: '#8B95A1', marginVertical: 6 },
-  dotDestino: {
-    width: 12,
-    height: 12,
-    borderRadius: 3,
-    backgroundColor: colors.accent,
-    borderWidth: 2,
-    borderColor: colors.ink,
-  },
-  routeFields: { flex: 1, minWidth: 0 },
-  divider: { height: 1, backgroundColor: colors.line },
   section: { gap: 10 },
   sectionTitle: { fontFamily: fonts.bold, fontSize: 16, color: colors.ink },
   muted: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted },
