@@ -1,7 +1,7 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './map.web.css';
 
-import { LngLatBounds, Map as MapLibreMap, Marker, type GeoJSONSource, type StyleSpecification } from 'maplibre-gl';
+import type { GeoJSONSource, Map as MapLibreMap, Marker, StyleSpecification } from 'maplibre-gl';
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 
@@ -15,6 +15,19 @@ import { GIRA_CON_RUMBO, type AppMapProps, type LatLng, type MapMarker } from '.
 
 // En web: MapLibre + teselas vectoriales de OpenFreeMap (gratis, sin API key),
 // recoloreadas con la paleta de Flety. En iOS/Android se usa AppMap.tsx.
+
+// MapLibre (~1 MB) se descarga recién cuando una pantalla muestra un mapa: así
+// la página de inicio, el login y el resto cargan rápido.
+type MapLibre = typeof import('maplibre-gl');
+let maplibre: MapLibre | null = null;
+let maplibrePromise: Promise<MapLibre> | null = null;
+function cargarMaplibre() {
+  maplibrePromise ??= import('maplibre-gl').then((m) => {
+    maplibre = ((m as unknown as { default?: MapLibre }).default ?? m) as MapLibre;
+    return maplibre;
+  });
+  return maplibrePromise;
+}
 
 const stylePromises: Partial<Record<'light' | 'dark', Promise<StyleSpecification>>> = {};
 function loadStyle(tone: 'light' | 'dark') {
@@ -115,9 +128,9 @@ export function AppMap({
     if (!container) return;
 
     const dark = initialTone.current === 'dark';
-    loadStyle(initialTone.current).then((mapStyle) => {
+    Promise.all([loadStyle(initialTone.current), cargarMaplibre()]).then(([mapStyle, ml]) => {
       if (cancelled) return;
-      const map = new MapLibreMap({
+      const map = new ml.Map({
         container,
         style: mapStyle,
         center: [initialCenter.current.lng, initialCenter.current.lat],
@@ -213,7 +226,7 @@ export function AppMap({
       } else {
         existing?.marker.remove();
         const isTruck = GIRA_CON_RUMBO.has(m.kind);
-        const marker = new Marker({
+        const marker = new maplibre!.Marker({
           element: createMarkerElement(m),
           // El camión "apoya" sobre el mapa: gira con el rumbo y se inclina con la perspectiva.
           rotationAlignment: isTruck ? 'map' : 'viewport',
@@ -264,7 +277,7 @@ export function AppMap({
     // Los vehículos de ambiente (amb-*) no cuentan para el encuadre.
     const aEncuadrar = markers.filter((m) => !m.id.startsWith('amb-'));
     if (fitToMarkers && aEncuadrar.length > 1) {
-      const bounds = new LngLatBounds();
+      const bounds = new maplibre!.LngLatBounds();
       aEncuadrar.forEach((m) => bounds.extend([m.position.lng, m.position.lat]));
       map.fitBounds(bounds, {
         padding: padding ?? { top: 80, right: 80, bottom: 80, left: 80 },
