@@ -1,7 +1,14 @@
+import {
+  Camera,
+  GeoJSONSource,
+  Layer,
+  Map,
+  Marker,
+  type CameraRef,
+  type StyleSpecification,
+} from '@maplibre/maplibre-react-native';
 import { useEffect, useRef, useState } from 'react';
-import Constants from 'expo-constants';
-import { Platform, StyleSheet, Text, View } from 'react-native';
-import MapView, { Marker, Polyline } from 'react-native-maps';
+import { StyleSheet, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 
 import { metrosEntre, rumbo } from '@/lib/geo';
@@ -9,32 +16,25 @@ import { IconoCamioneta } from '@/plataforma/estilo';
 import { IconoGrua } from '@/plataforma/IconoGrua';
 import { colors } from '@/theme';
 
-import { GOOGLE_MAP_STYLE, GOOGLE_MAP_STYLE_DARK } from './flety-style';
+import { applyFletyPalette, MAP_PALETTE, MAP_PALETTE_DARK, OPENFREEMAP_STYLE_URL } from './flety-style';
 import { GRUA_3D_SVG, GRUA_SIZE } from './grua-sprite';
 import { TruckSprite } from './TruckSprite';
 import { GIRA_CON_RUMBO, type AppMapProps, type LatLng, type MapMarker } from './types';
 
-const DELTA = 0.012;
+// En iOS/Android: MapLibre nativo con las mismas teselas de OpenFreeMap y la
+// misma paleta que la web (AppMap.web.tsx). Gratis, sin Google ni API key.
 
-// Android sin clave de Google Maps (ver app.config.js): en vez de cerrarse la
-// app, se muestra un aviso donde iría el mapa.
-const SIN_MAPA = Platform.OS === 'android' && !Constants.expoConfig?.extra?.mapasAndroid;
-
-export function AppMap(props: AppMapProps) {
-  if (SIN_MAPA) {
-    const oscuro = props.tone === 'dark';
-    return (
-      <View style={[props.style, styles.sinMapa, oscuro && { backgroundColor: '#1A1F26' }]}>
-        <Text style={[styles.sinMapaTexto, oscuro && { color: colors.dark.muted }]}>
-          Mapa no disponible en esta versión
-        </Text>
-      </View>
-    );
-  }
-  return <MapaNativo {...props} />;
+const estilos: Partial<Record<'light' | 'dark', Promise<StyleSpecification>>> = {};
+function cargarEstilo(tono: 'light' | 'dark') {
+  estilos[tono] ??= fetch(OPENFREEMAP_STYLE_URL)
+    .then((res) => res.json())
+    .then((style) => applyFletyPalette(style, tono === 'dark' ? MAP_PALETTE_DARK : MAP_PALETTE) as StyleSpecification);
+  return estilos[tono];
 }
 
-function MapaNativo({
+const lngLat = (p: LatLng): [number, number] => [p.lng, p.lat];
+
+export function AppMap({
   center,
   markers = [],
   line,
@@ -47,12 +47,19 @@ function MapaNativo({
   onCenterChange,
   style,
 }: AppMapProps) {
-  // Mismo encuadre que el zoom de MapLibre en web (cada nivel duplica la escala).
-  const delta = DELTA * Math.pow(2, 14 - initialZoom);
-  const mapRef = useRef<MapView>(null);
+  const camara = useRef<CameraRef>(null);
+  const [mapStyle, setMapStyle] = useState<StyleSpecification | null>(null);
+  const [inicial] = useState(() => ({ center: lngLat(center), zoom: initialZoom }));
 
-  // Última posición/rumbo del chofer, para girar el camión hacia donde va
-  // (patrón de React "guardar info del render anterior").
+  useEffect(() => {
+    let cancelled = false;
+    cargarEstilo(tone).then((s) => !cancelled && setMapStyle(s));
+    return () => {
+      cancelled = true;
+    };
+  }, [tone]);
+
+  // Rumbo del chofer: si no viene, sale del movimiento (patrón "info del render anterior").
   const chofer = markers.find((m) => m.kind === 'chofer');
   const choferKey = chofer ? `${chofer.position.lat},${chofer.position.lng}` : '';
   const [truck, setTruck] = useState<{ key: string; position: LatLng | null; heading: number }>({
@@ -68,69 +75,92 @@ function MapaNativo({
   }
   const truckHeading = chofer?.heading ?? truck.heading;
 
-  const fitKey = markers
-    .filter((m) => !m.id.startsWith('amb-'))
+  // Encuadre: puntos fijos (retiro/entrega) y si aparece el chofer; no la
+  // flota de ambiente (amb-*) ni cada paso de los vehículos.
+  const aEncuadrar = markers.filter((m) => !m.id.startsWith('amb-'));
+  const fitKey = aEncuadrar
     .map((m) => (GIRA_CON_RUMBO.has(m.kind) ? m.id : `${m.id}:${m.position.lat},${m.position.lng}`))
     .join('|');
-
+  const listo = !!mapStyle;
   useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-    // Los vehículos de ambiente (amb-*) no cuentan para el encuadre.
-    const aEncuadrar = markers.filter((m) => !m.id.startsWith('amb-'));
+    const cam = camara.current;
+    if (!cam || !listo) return;
     if (fitToMarkers && aEncuadrar.length > 1) {
-      map.fitToCoordinates(
-        aEncuadrar.map((m) => ({ latitude: m.position.lat, longitude: m.position.lng })),
-        { edgePadding: padding ?? { top: 80, right: 60, bottom: 80, left: 60 }, animated: true }
-      );
+      const lats = aEncuadrar.map((m) => m.position.lat);
+      const lngs = aEncuadrar.map((m) => m.position.lng);
+      cam.fitBounds([Math.min(...lngs), Math.min(...lats), Math.max(...lngs), Math.max(...lats)], {
+        padding: padding ?? { top: 80, right: 60, bottom: 80, left: 60 },
+        duration: 600,
+      });
     } else {
-      map.animateToRegion(
-        { latitude: center.lat, longitude: center.lng, latitudeDelta: delta, longitudeDelta: delta },
-        400
-      );
+      cam.easeTo({ center: lngLat(center), duration: 500 });
     }
     // fitKey resume los puntos que importan para el encuadre.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [center.lat, center.lng, fitKey, fitToMarkers]);
+  }, [center.lat, center.lng, fitKey, fitToMarkers, listo]);
+
+  if (!mapStyle) {
+    return <View style={[style, { backgroundColor: tone === 'dark' ? '#1A1F26' : colors.mapLand }]} />;
+  }
 
   return (
-    <MapView
-      ref={mapRef}
-      style={style}
-      initialRegion={{ latitude: center.lat, longitude: center.lng, latitudeDelta: delta, longitudeDelta: delta }}
-      onRegionChange={onMoveStart ? () => onMoveStart() : undefined}
-      onRegionChangeComplete={(r) => onCenterChange?.({ lat: r.latitude, lng: r.longitude })}
-      // Paleta Flety en Google Maps (Android); en iPhone (Apple Maps) se usa la variante atenuada.
-      customMapStyle={tone === 'dark' ? GOOGLE_MAP_STYLE_DARK : GOOGLE_MAP_STYLE}
-      userInterfaceStyle={tone}
-      mapType={Platform.OS === 'ios' ? 'mutedStandard' : 'standard'}
-      showsPointsOfInterests={false}
-      scrollEnabled={!estatico}
-      zoomEnabled={!estatico}
-      pitchEnabled={!estatico}
-      rotateEnabled={false}
-      toolbarEnabled={false}>
-      {line && line.length > 1 ? (
-        <Polyline
-          coordinates={line.map((p) => ({ latitude: p.lat, longitude: p.lng }))}
-          strokeColor={tone === 'dark' ? colors.accent : colors.ink}
-          strokeWidth={5}
-        />
-      ) : null}
-      {markers.map((marker) => (
-        <Marker
-          key={marker.id}
-          coordinate={{ latitude: marker.position.lat, longitude: marker.position.lng }}
-          anchor={{ x: 0.5, y: 0.5 }}
-          // El camión "apoya" sobre el mapa y gira con el rumbo del chofer.
-          flat={GIRA_CON_RUMBO.has(marker.kind)}
-          rotation={marker.kind === 'chofer' ? truckHeading : (marker.heading ?? 0)}
-          tracksViewChanges={false}
-          accessibilityLabel={marker.label}>
-          <MarkerView kind={marker.kind} />
-        </Marker>
-      ))}
-    </MapView>
+    <View style={style}>
+      <Map
+        style={StyleSheet.absoluteFill}
+        mapStyle={mapStyle}
+        logo={false}
+        compass={false}
+        touchRotate={false}
+        touchPitch={false}
+        dragPan={!estatico}
+        touchZoom={!estatico}
+        doubleTapZoom={!estatico}
+        doubleTapHoldZoom={!estatico}
+        attributionPosition={{ bottom: 6, right: 6 }}
+        onRegionWillChange={(e) => {
+          if (e.nativeEvent.userInteraction) onMoveStart?.();
+        }}
+        onRegionDidChange={(e) => {
+          const [lng, lat] = e.nativeEvent.center;
+          onCenterChange?.({ lat, lng });
+        }}>
+        <Camera ref={camara} initialViewState={inicial} />
+        {line && line.length > 1 ? (
+          <GeoJSONSource
+            id="flety-ruta"
+            data={{
+              type: 'Feature',
+              properties: {},
+              geometry: { type: 'LineString', coordinates: line.map(lngLat) },
+            }}>
+            <Layer
+              id="flety-ruta-borde"
+              type="line"
+              layout={{ 'line-cap': 'round', 'line-join': 'round' }}
+              paint={{ 'line-color': tone === 'dark' ? colors.ink : colors.white, 'line-width': 9 }}
+            />
+            <Layer
+              id="flety-ruta"
+              type="line"
+              layout={{ 'line-cap': 'round', 'line-join': 'round' }}
+              paint={{ 'line-color': tone === 'dark' ? colors.accent : colors.ink, 'line-width': 5 }}
+            />
+          </GeoJSONSource>
+        ) : null}
+        {markers.map((m) => (
+          <Marker key={m.id} id={m.id} lngLat={lngLat(m.position)} anchor="center" accessibilityLabel={m.label}>
+            <View
+              style={
+                GIRA_CON_RUMBO.has(m.kind)
+                  ? { transform: [{ rotate: `${m.kind === 'chofer' ? truckHeading : (m.heading ?? 0)}deg` }] }
+                  : undefined
+              }>
+              <MarkerView kind={m.kind} />
+            </View>
+          </Marker>
+        ))}
+      </Map>
+    </View>
   );
 }
 
@@ -168,8 +198,6 @@ function MarkerView({ kind }: { kind: MapMarker['kind'] }) {
 }
 
 const styles = StyleSheet.create({
-  sinMapa: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#E9ECEF' },
-  sinMapaTexto: { fontSize: 13, color: '#5B6470' },
   fletero: {
     width: 32,
     height: 32,

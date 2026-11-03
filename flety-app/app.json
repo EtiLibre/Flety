@@ -61,7 +61,8 @@
           "photosPermission": "Flety usa tus fotos para que la empresa y el chofer vean qué vas a mover.",
           "cameraPermission": "Flety usa la cámara para sacar fotos de tu carga."
         }
-      ]
+      ],
+      "@maplibre/maplibre-react-native"
     ],
     "experiments": {
       "typedRoutes": true,
