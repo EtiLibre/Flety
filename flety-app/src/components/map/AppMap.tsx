@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import Constants from 'expo-constants';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { SvgXml } from 'react-native-svg';
 
@@ -15,7 +16,25 @@ import { GIRA_CON_RUMBO, type AppMapProps, type LatLng, type MapMarker } from '.
 
 const DELTA = 0.012;
 
-export function AppMap({
+// Android sin clave de Google Maps (ver app.config.js): en vez de cerrarse la
+// app, se muestra un aviso donde iría el mapa.
+const SIN_MAPA = Platform.OS === 'android' && !Constants.expoConfig?.extra?.mapasAndroid;
+
+export function AppMap(props: AppMapProps) {
+  if (SIN_MAPA) {
+    const oscuro = props.tone === 'dark';
+    return (
+      <View style={[props.style, styles.sinMapa, oscuro && { backgroundColor: '#1A1F26' }]}>
+        <Text style={[styles.sinMapaTexto, oscuro && { color: colors.dark.muted }]}>
+          Mapa no disponible en esta versión
+        </Text>
+      </View>
+    );
+  }
+  return <MapaNativo {...props} />;
+}
+
+function MapaNativo({
   center,
   markers = [],
   line,
@@ -149,6 +168,8 @@ function MarkerView({ kind }: { kind: MapMarker['kind'] }) {
 }
 
 const styles = StyleSheet.create({
+  sinMapa: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#E9ECEF' },
+  sinMapaTexto: { fontSize: 13, color: '#5B6470' },
   fletero: {
     width: 32,
     height: 32,
